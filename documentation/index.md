@@ -16,3 +16,4 @@
 ## Device-specific documentation
 
 - [EL3xxx: Beckhoff analog I/O devices](el3xxx.md)
+- [EL7041: Beckhoff EL7041 Stepper driver](el7041.md)
