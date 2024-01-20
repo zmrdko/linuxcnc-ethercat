@@ -54,7 +54,7 @@ static lcec_typelist_t types[] = {
     {NULL},
 };
 
-ADD_TYPES(types);
+ADD_TYPES(types)
 
 static void lcec_el1xxx_read(struct lcec_slave *slave, long period);
 

@@ -149,8 +149,6 @@ static int lcec_ep2316_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   int i, err;
   int pin_count = 8;
 
-  ec_pdo_entry_reg_t *initial_pdo = pdo_entry_regs;
-
   // initialize callbacks
   slave->proc_read = lcec_ep2316_read;
   slave->proc_write = lcec_ep2316_write;

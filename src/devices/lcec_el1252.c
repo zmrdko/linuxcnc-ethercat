@@ -43,7 +43,7 @@ static lcec_typelist_t types[] = {
     {"EL1252", LCEC_BECKHOFF_VID, 0x04E43052, LCEC_EL1252_PDOS, 0, NULL, lcec_el1252_init},  // 2 fast channels with timestamp
     {NULL},
 };
-ADD_TYPES(types);
+ADD_TYPES(types)
 
 static void lcec_el1252_read(struct lcec_slave *slave, long period);
 

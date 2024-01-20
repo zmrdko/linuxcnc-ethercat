@@ -55,7 +55,7 @@ static lcec_typelist_t types[] = {
     {"EPP2349", LCEC_BECKHOFF_VID, 0x647658d9, LCEC_EP2338_PDOS, 0, NULL, lcec_el1859_init, NULL, 8},
     {NULL},
 };
-ADD_TYPES(types);
+ADD_TYPES(types)
 
 typedef struct {
   lcec_class_din_pins_t *pins_in;
@@ -90,6 +90,7 @@ static int lcec_el1859_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
     hal_data->pins_in->pins[i] = lcec_din_register_pin(&pdo_entry_regs, slave, i, 0x6000 + (i << 4), 0x01);
     hal_data->pins_out->pins[i] = lcec_dout_register_pin(&pdo_entry_regs, slave, i, 0x7000 + (i << 4), 0x01);
   }
+  return 0;
 }
 
 static void lcec_el1859_read(struct lcec_slave *slave, long period) {
