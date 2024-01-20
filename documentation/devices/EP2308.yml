@@ -8,4 +8,4 @@ DocumentationURL: https://www.beckhoff.com/EP2308-0000
 DeviceType: Digital Input/Output
 Notes: ""
 TestingStatus: ""
-SrcFile: src/devices/lcec_el1859.c
+SrcFile: src/devices/lcec_digitalcombo.c

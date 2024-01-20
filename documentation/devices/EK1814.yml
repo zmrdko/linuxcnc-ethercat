@@ -7,5 +7,5 @@ Description: Beckhoff EK1814 EtherCAT IO-Coupler  (0,5A E-Bus, 4 Ch. Dig. In, 3m
 DocumentationURL: http://www.beckhoff.com/EK1814
 DeviceType: System Couplers
 Notes: ""
-SrcFile: src/devices/lcec_el1859.c
+SrcFile: src/devices/lcec_digitalcombo.c
 TestingStatus: "New, @scottlaird will be using in testing."

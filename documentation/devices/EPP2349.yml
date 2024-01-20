@@ -7,5 +7,5 @@ Description: Beckhoff EPP2349-0021 16 Ch. Dig. Input/Output 24V, 10µs, 0,5A, M8
 DocumentationURL: https://www.beckhoff.com/EPP2349-0021
 DeviceType: Digital Input/Output
 Notes: ""
-SrcFile: src/devices/lcec_el1859.c
+SrcFile: src/devices/lcec_digitalcombo.c
 TestingStatus: ""

@@ -6,6 +6,6 @@ PID: "0x09224052"
 Description: Beckhoff EP2338-0001 8 Ch. Dig. Input/Output 24V, 0,5A, M8
 DocumentationURL: https://www.beckhoff.com/EP2338-0001
 Notes: ""
-SrcFile: src/devices/lcec_el1859.c
+SrcFile: src/devices/lcec_digitalcombo.c
 DeviceType: Digital Input/Output
 TestingStatus: ""

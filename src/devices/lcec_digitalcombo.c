@@ -17,22 +17,53 @@
 //
 
 /// @file
-/// @brief Driver for Beckhoff EL1859 and related digital input/output modules
-
-#include "lcec_el1859.h"
+/// @brief Driver for Beckhoff digital input/output modules
+///
+/// This driver should support any Beckhoff digital in/out board with
+/// digital input and output ports.  As it stands, it's limited to 31
+/// ports of each type, but that'd be relatively simple to overcome,
+/// if a 32i/32o device existed.
+///
+/// It's technically capable of supporting input-only and output-only
+/// devices, so we *could* roll lcec_el1xxx.c and lcec_el2xxx.c into
+/// this driver, but they're each so simple that I don't want to mess
+/// with them.
+///
+/// This driver uses flags in `types[]` describe the number of ports
+/// for each device, as well as a couple "oddball" configurations that
+/// some devices use.
+///
+/// When adding new devices, please use the `BECKHOFF_IO_DEVICE` macro
+/// if possible.  It takes 3 parameters: the text name of the device
+/// (which needs to match `type` in the XML configuration), the device
+/// PID, and then a set of flags.  All other paramters in
+/// `lcec_typelist_t` are auto-derived from these.
+///
+/// There are 4 basic flag settings to be aware of:
+///
+/// - `F_IN(x)`: this device has `x` digital input ports.
+/// - `F_OUT(x)`: this device has `x` digital output ports.
+/// - `F_OUTOFFSET`: the output PODs start at 0x7080, not 0x7000.  This
+///   is needed for EL185x devices.
+/// - `F_DENSEPDOS`: device's PDOs are packed into 0x6000:0n, instead of
+///   being spread out over 0x60x0:01.  The EP2316 and several other
+///   devices use this addressing model.
+///
+/// For any specific new device, just binary-OR (`|`) the various
+/// flags for the device together.  For 8 input ports, 4 output ports,
+/// and dense addressing, just say `F_IN(8)|F_OUT(4)|F_DENSEPDOS`.
+///
+/// You can tell which PDOs a device uses through a few means:
+///
+/// - run `ethercat pdos` and look at the output.
+/// - look at the manufacturer's documentation.
+/// - look at http://linuxcnc-ethercat.github.io/esi-data/devices
 
 #include "../lcec.h"
 #include "lcec_class_din.h"
 #include "lcec_class_dout.h"
 
-// This driver should support any Beckhoff digital in/out board with
-// equal numbers of in and out ports, with input PDOs on 0x60n0:01 and
-// output PDOs on 0x70n0:01.  This covers most devices in Beckhoff's
-// catalog, but not all.  Some (like the EP2316-0008) have PDOs on
-// 0x6000:0n and 0x7000:0n instead; these will need a different
-// driver.
-
-static int lcec_el1859_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
+static int lcec_digitalcombo_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
 
 #define F_IN(x)     (x)       // Input channels
 #define F_OUT(x)    (x * 32)  // Output channels
@@ -44,9 +75,9 @@ static int lcec_el1859_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
 
 /// Macro to avoid repeating all of the unchanging fields in
 /// `lcec_typelist_t`.  Calculates the `pdo_count` based on total port
-/// count.
+/// count.  Digital I/O devices need one PDO per pin.
 #define BECKHOFF_IO_DEVICE(name, pid, flags) \
-  { name, LCEC_BECKHOFF_VID, pid, INPORTS(flags) + OUTPORTS(flags), 0, NULL, lcec_el1859_init, NULL, flags }
+  { name, LCEC_BECKHOFF_VID, pid, INPORTS(flags) + OUTPORTS(flags), 0, NULL, lcec_digitalcombo_init, NULL, flags }
 
 static lcec_typelist_t types[] = {
     BECKHOFF_IO_DEVICE("EL1252", 0x04E43052, F_IN(2) | F_DENSEPDOS),
@@ -80,28 +111,28 @@ ADD_TYPES(types)
 typedef struct {
   lcec_class_din_pins_t *pins_in;
   lcec_class_dout_pins_t *pins_out;
-} lcec_el1859_data_t;
+} lcec_digitalcombo_data_t;
 
-static void lcec_el1859_read(struct lcec_slave *slave, long period);
-static void lcec_el1859_write(struct lcec_slave *slave, long period);
+static void lcec_digitalcombo_read(struct lcec_slave *slave, long period);
+static void lcec_digitalcombo_write(struct lcec_slave *slave, long period);
 
-static int lcec_el1859_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
-  lcec_el1859_data_t *hal_data;
+static int lcec_digitalcombo_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
+  lcec_digitalcombo_data_t *hal_data;
   int i;
   int in_channels = INPORTS(slave->flags);
   int out_channels = OUTPORTS(slave->flags);
   int idx, sidx;
 
   // initialize callbacks
-  if (in_channels>0) slave->proc_read = lcec_el1859_read;
-  if (out_channels>0) slave->proc_write = lcec_el1859_write;
+  if (in_channels>0) slave->proc_read = lcec_digitalcombo_read;
+  if (out_channels>0) slave->proc_write = lcec_digitalcombo_write;
 
   // alloc hal memory
-  if ((hal_data = hal_malloc(sizeof(lcec_el1859_data_t))) == NULL) {
+  if ((hal_data = hal_malloc(sizeof(lcec_digitalcombo_data_t))) == NULL) {
     rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "hal_malloc() for slave %s.%s failed\n", slave->master->name, slave->name);
     return -EIO;
   }
-  memset(hal_data, 0, sizeof(lcec_el1859_data_t));
+  memset(hal_data, 0, sizeof(lcec_digitalcombo_data_t));
   slave->hal_data = hal_data;
 
   // Allocate memory for I/O pin definitions
@@ -143,8 +174,8 @@ static int lcec_el1859_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   return 0;
 }
 
-static void lcec_el1859_read(struct lcec_slave *slave, long period) {
-  lcec_el1859_data_t *hal_data = (lcec_el1859_data_t *)slave->hal_data;
+static void lcec_digitalcombo_read(struct lcec_slave *slave, long period) {
+  lcec_digitalcombo_data_t *hal_data = (lcec_digitalcombo_data_t *)slave->hal_data;
 
   // wait for slave to be operational
   if (!slave->state.operational) {
@@ -154,8 +185,8 @@ static void lcec_el1859_read(struct lcec_slave *slave, long period) {
   if (hal_data->pins_in != NULL) lcec_din_read_all(slave, hal_data->pins_in);
 }
 
-static void lcec_el1859_write(struct lcec_slave *slave, long period) {
-  lcec_el1859_data_t *hal_data = (lcec_el1859_data_t *)slave->hal_data;
+static void lcec_digitalcombo_write(struct lcec_slave *slave, long period) {
+  lcec_digitalcombo_data_t *hal_data = (lcec_digitalcombo_data_t *)slave->hal_data;
 
   // wait for slave to be operational
   if (!slave->state.operational) {

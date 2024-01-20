@@ -7,5 +7,5 @@ Description: Beckhoff EK1818 EtherCAT IO-Coupler  (1A E-Bus, 8 Ch. Dig. In, 3ms,
 DocumentationURL: http://www.beckhoff.com/EK1818
 DeviceType: System Couplers
 Notes: ""
-SrcFile: devices/lcec_el1859.c
+SrcFile: devices/lcec_digitalcombo.c
 TestingStatus: ""

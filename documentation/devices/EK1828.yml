@@ -7,5 +7,5 @@ Description: Beckhoff EK1828 EtherCAT IO-Coupler  (1A E-Bus, 4 Ch. Dig. In, 3ms,
 DocumentationURL: http://www.beckhoff.com/EK1828
 DeviceType: System Couplers
 Notes: ""
-SrcFile: devices/lcec_el1859.c
+SrcFile: devices/lcec_digitalcombo.c
 TestingStatus: ""
