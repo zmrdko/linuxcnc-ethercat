@@ -49,6 +49,7 @@ static int lcec_el1859_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   { name, LCEC_BECKHOFF_VID, pid, INPORTS(flags) + OUTPORTS(flags), 0, NULL, lcec_el1859_init, NULL, flags }
 
 static lcec_typelist_t types[] = {
+    BECKHOFF_IO_DEVICE("EL1252", 0x04E43052, F_IN(2) | F_DENSEPDOS),
     BECKHOFF_IO_DEVICE("EL1852", 0x73c3052, F_IN(8) | F_OUT(8) | F_OUTOFFSET),
     BECKHOFF_IO_DEVICE("EL1859", 0x07433052, F_IN(8) | F_OUT(8) | F_OUTOFFSET),
     BECKHOFF_IO_DEVICE("EJ1859", 0x07432852, F_IN(8) | F_OUT(8) | F_OUTOFFSET),
