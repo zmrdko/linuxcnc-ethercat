@@ -21,17 +21,16 @@
 
 #include "lcec_class_enc.h"
 
-static int lcec_deasda_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
+#define FLAG_A2      1 << 0  // Device is A2 series
+#define FLAG_A3      1 << 1  // Device is A3 series
 
-static lcec_typelist_t types[]={
-  { "DeASDA", LCEC_DELTA_VID, 0x10305070, LCEC_DEASDA_PDOS, 0, NULL, lcec_deasda_init},
-  { "DeASDA3", LCEC_DELTA_VID, 0x00006010, LCEC_DEASDA_PDOS, 0, NULL, lcec_deasda_init},
-  { NULL },
-};
+#define LCEC_DESDA_MODPARAM_MODE     0
 
-ADD_TYPES(types);
+#define DEASDA_PULSES_PER_REV_DEFLT (1280000) // this is the legacy default value
+#define DEASDA_PULSES_PER_REV_DEFLT_A2 (1280000) // this is the default value for A2
+#define DEASDA_PULSES_PER_REV_DEFLT_A3 (16777216) // this is the default value for A3
 
-#define DEASDA_PULSES_PER_REV_DEFLT (1280000)
+
 #define DEASDA_RPM_FACTOR           (0.1)
 #define DEASDA_RPM_RCPT             (1.0 / DEASDA_RPM_FACTOR)
 #define DEASDA_RPM_MUL              (60.0)
@@ -39,6 +38,35 @@ ADD_TYPES(types);
 
 #define DEASDA_FAULT_AUTORESET_CYCLES  100
 #define DEASDA_FAULT_AUTORESET_RETRIES 3
+
+static int lcec_deasda_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
+
+static const lcec_modparam_desc_t modparams_mode[] = {
+    {"mode", LCEC_DESDA_MODPARAM_MODE + 0, MODPARAM_TYPE_STRING},
+    {NULL},
+};
+
+typedef struct {
+  char *name;       // Mode type name
+  uint16_t value;   // Which value needs to be set in 0x6060:00 to enable this mode
+} drive_modes_t;
+
+static const drive_modes_t drive_modes[] = {
+    {"CSV", 9},          // CSV Mode,
+    {"CSP", 8},          // CSP Mode
+    {NULL},
+};
+
+
+static lcec_typelist_t types[]={
+  { "DeASDA", LCEC_DELTA_VID, 0x10305070, LCEC_DEASDA_PDOS, 0, NULL, lcec_deasda_init, modparams_mode, FLAG_A2},
+  { "DeASDA3", LCEC_DELTA_VID, 0x00006010, LCEC_DEASDA_PDOS, 0, NULL, lcec_deasda_init, modparams_mode, FLAG_A3},
+  { NULL },
+};
+
+ADD_TYPES(types);
+
+
 
 typedef struct {
   hal_float_t *vel_fb;
@@ -63,7 +91,7 @@ typedef struct {
   hal_bit_t *enable;
   hal_bit_t *fault_reset;
   hal_bit_t *halt;
-  hal_float_t *vel_cmd;
+  hal_float_t *cmd_value; //*vel_cmd
 
   hal_float_t pos_scale;
   hal_float_t extenc_scale;
@@ -82,7 +110,7 @@ typedef struct {
   unsigned int currvel_pdo_os;
   unsigned int extenc_pdo_os;
   unsigned int control_pdo_os;
-  unsigned int cmdvel_pdo_os;
+  unsigned int cmdvalue_pdo_os; //was cmdvel_pdo_os
 
   hal_bit_t last_switch_on;
   hal_bit_t internal_fault;
@@ -93,7 +121,7 @@ typedef struct {
 
 } lcec_deasda_data_t;
 
-static const lcec_pindesc_t slave_pins[] = {
+static const lcec_pindesc_t slave_pins_csv[] = {
   { HAL_FLOAT, HAL_OUT, offsetof(lcec_deasda_data_t, vel_fb), "%s.%s.%s.srv-vel-fb" },
   { HAL_FLOAT, HAL_OUT, offsetof(lcec_deasda_data_t, vel_fb_rpm), "%s.%s.%s.srv-vel-fb-rpm" },
   { HAL_FLOAT, HAL_OUT, offsetof(lcec_deasda_data_t, vel_fb_rpm_abs), "%s.%s.%s.srv-vel-fb-rpm-abs" },
@@ -116,9 +144,38 @@ static const lcec_pindesc_t slave_pins[] = {
   { HAL_BIT, HAL_IN, offsetof(lcec_deasda_data_t, enable), "%s.%s.%s.srv-enable" },
   { HAL_BIT, HAL_IN, offsetof(lcec_deasda_data_t, fault_reset), "%s.%s.%s.srv-fault-reset" },
   { HAL_BIT, HAL_IN, offsetof(lcec_deasda_data_t, halt), "%s.%s.%s.srv-halt" },
-  { HAL_FLOAT, HAL_IN, offsetof(lcec_deasda_data_t, vel_cmd), "%s.%s.%s.srv-vel-cmd" },
+  { HAL_FLOAT, HAL_IN, offsetof(lcec_deasda_data_t, cmd_value), "%s.%s.%s.srv-vel-cmd" }, // requires srv-pos-cmd instead
   { HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL }
 };
+
+static const lcec_pindesc_t slave_pins_csp[] = {
+  { HAL_FLOAT, HAL_OUT, offsetof(lcec_deasda_data_t, vel_fb), "%s.%s.%s.srv-vel-fb" },
+  { HAL_FLOAT, HAL_OUT, offsetof(lcec_deasda_data_t, vel_fb_rpm), "%s.%s.%s.srv-vel-fb-rpm" },
+  { HAL_FLOAT, HAL_OUT, offsetof(lcec_deasda_data_t, vel_fb_rpm_abs), "%s.%s.%s.srv-vel-fb-rpm-abs" },
+  { HAL_FLOAT, HAL_OUT, offsetof(lcec_deasda_data_t, vel_rpm), "%s.%s.%s.srv-vel-rpm" },
+  { HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, ready), "%s.%s.%s.srv-ready" },
+  { HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, switched_on), "%s.%s.%s.srv-switched-on" },
+  { HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, oper_enabled), "%s.%s.%s.srv-oper-enabled" },
+  { HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, fault), "%s.%s.%s.srv-fault" },
+  { HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, volt_enabled), "%s.%s.%s.srv-volt-enabled" },
+  { HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, quick_stoped), "%s.%s.%s.srv-quick-stoped" },
+  { HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, on_disabled), "%s.%s.%s.srv-on-disabled" },
+  { HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, warning), "%s.%s.%s.srv-warning" },
+  { HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, remote), "%s.%s.%s.srv-remote" },
+  { HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, at_speed), "%s.%s.%s.srv-at-speed" },
+  { HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, limit_active), "%s.%s.%s.srv-limit-active" },
+  { HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, zero_speed), "%s.%s.%s.srv-zero-speed" },
+  { HAL_BIT, HAL_IN, offsetof(lcec_deasda_data_t, switch_on), "%s.%s.%s.srv-switch-on" },
+  { HAL_BIT, HAL_IN, offsetof(lcec_deasda_data_t, enable_volt), "%s.%s.%s.srv-enable-volt" },
+  { HAL_BIT, HAL_IN, offsetof(lcec_deasda_data_t, quick_stop), "%s.%s.%s.srv-quick-stop" },
+  { HAL_BIT, HAL_IN, offsetof(lcec_deasda_data_t, enable), "%s.%s.%s.srv-enable" },
+  { HAL_BIT, HAL_IN, offsetof(lcec_deasda_data_t, fault_reset), "%s.%s.%s.srv-fault-reset" },
+  { HAL_BIT, HAL_IN, offsetof(lcec_deasda_data_t, halt), "%s.%s.%s.srv-halt" },
+  { HAL_FLOAT, HAL_IN, offsetof(lcec_deasda_data_t, cmd_value), "%s.%s.%s.srv-pos-cmd" }, // requires srv-pos-cmd instead
+  { HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL }
+};
+
+
 
 static const lcec_pindesc_t slave_params[] = {
   { HAL_FLOAT, HAL_RW, offsetof(lcec_deasda_data_t, pos_scale), "%s.%s.%s.pos-scale" },
@@ -136,31 +193,51 @@ static ec_pdo_entry_info_t lcec_deasda_in[] = {
    {0x2511, 0x00, 32}  // external encoder
 };
 
-static ec_pdo_entry_info_t lcec_deasda_out[] = {
+static ec_pdo_entry_info_t lcec_deasda_out_csv[] = {
    {0x6040, 0x00, 16}, // Control Word
    {0x60FF, 0x00, 32}  // Target Velocity
 };
 
-static ec_pdo_info_t lcec_deasda_pdos_out[] = {
-    {0x1602,  2, lcec_deasda_out}
+static ec_pdo_entry_info_t lcec_deasda_out_csp[] = {
+   {0x6040, 0x00, 16}, // Control Word
+   {0x607A, 0x00, 32}  // Target Position
+};
+
+static ec_pdo_info_t lcec_deasda_pdos_out_csv[] = {
+    {0x1602,  2, lcec_deasda_out_csv}
+};
+
+static ec_pdo_info_t lcec_deasda_pdos_out_csp[] = {
+    {0x1602,  2, lcec_deasda_out_csp}
 };
 
 static ec_pdo_info_t lcec_deasda_pdos_in[] = {
     {0x1a02, 4, lcec_deasda_in}
 };
 
-static ec_sync_info_t lcec_deasda_syncs[] = {
+static ec_sync_info_t lcec_deasda_syncs_csv[] = {
     {0, EC_DIR_OUTPUT, 0, NULL},
     {1, EC_DIR_INPUT,  0, NULL},
-    {2, EC_DIR_OUTPUT, 1, lcec_deasda_pdos_out},
+    {2, EC_DIR_OUTPUT, 1, lcec_deasda_pdos_out_csv},
     {3, EC_DIR_INPUT,  1, lcec_deasda_pdos_in},
     {0xff}
 };
+
+static ec_sync_info_t lcec_deasda_syncs_csp[] = {
+    {0, EC_DIR_OUTPUT, 0, NULL},
+    {1, EC_DIR_INPUT,  0, NULL},
+    {2, EC_DIR_OUTPUT, 1, lcec_deasda_pdos_out_csp},
+    {3, EC_DIR_INPUT,  1, lcec_deasda_pdos_in},
+    {0xff}
+};
+
 
 static void lcec_deasda_check_scales(lcec_deasda_data_t *hal_data);
 
 static void lcec_deasda_read(struct lcec_slave *slave, long period);
 static void lcec_deasda_write(struct lcec_slave *slave, long period);
+static const drive_modes_t *drive_mode(char *drivemode);
+
 
 static int lcec_deasda_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
   lcec_master_t *master = slave->master;
@@ -168,8 +245,37 @@ static int lcec_deasda_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   int err;
   uint32_t tu;
   int8_t ti;
+  drive_modes_t  *drivemode;
+  // STEP 1: Reads Flags and MODPARAM to then trigger all the different assignments
+  // <modParam name="mode" value="???"/>
+  LCEC_CONF_MODPARAM_VAL_T *pval;
+  rtapi_print_msg(RTAPI_MSG_DBG, LCEC_MSG_PFX "  - checking modparam mode for %s \n", slave->name);
+  pval = lcec_modparam_get(slave, LCEC_DESDA_MODPARAM_MODE);
 
+  if (pval != NULL) {
+    rtapi_print_msg(RTAPI_MSG_DBG, LCEC_MSG_PFX "    - found mode param\n");
+    drivemode = drive_mode(pval->str);
+    if (drivemode != NULL) {
+      rtapi_print_msg(RTAPI_MSG_DBG, LCEC_MSG_PFX "    - setting mode for %s to %d\n", slave->name, drivemode->value);
+      
+    } else {
+      rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "unknown mode \"%s\" for slave %s.%s !\n", pval->str, master->name, slave->name);
+      return -1;
+    }
+  }else{
+    // This would be the case when modparam mode has not been set ==> back to CSV
+    drivemode->value = 9;
+  }
+
+
+
+
+  // MODIFY
+  
   // initialize callbacks
+
+
+
   slave->proc_read = lcec_deasda_read;
   slave->proc_write = lcec_deasda_write;
 
@@ -198,7 +304,12 @@ static int lcec_deasda_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   }
 
   // initialize sync info
-  slave->sync_info = lcec_deasda_syncs;
+//CHANGE TO CSV/CSP CLASSIFIER
+
+  slave->sync_info = lcec_deasda_syncs_csv;
+
+  slave->sync_info = lcec_deasda_syncs_csp;
+
 
   // initialize POD entries
   LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6041, 0x00, &hal_data->status_pdo_os, NULL);
@@ -206,14 +317,17 @@ static int lcec_deasda_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6064, 0x00, &hal_data->currpos_pdo_os, NULL);
   LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x2511, 0x00, &hal_data->extenc_pdo_os, NULL);
   LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6040, 0x00, &hal_data->control_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x60FF, 0x00, &hal_data->cmdvel_pdo_os, NULL);
+
+  // CHANGE CSV/CSP 
+  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x60FF, 0x00, &hal_data->cmdvalue_pdo_os, NULL);
 
   // export pins
+  // CHANGE: BASED ON CSV/CSP
   if ((err = lcec_pin_newf_list(hal_data, slave_pins, LCEC_MODULE_NAME, master->name, slave->name)) != 0) {
     return err;
   }
 
-  // export parameters
+  // export parameters - not affected by CSV/CSP
   if ((err = lcec_param_newf_list(hal_data, slave_params, LCEC_MODULE_NAME, master->name, slave->name)) != 0) {
     return err;
   }
@@ -233,7 +347,11 @@ static int lcec_deasda_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   hal_data->fault_autoreset_retries = DEASDA_FAULT_AUTORESET_RETRIES;
   hal_data->pos_scale_old = hal_data->pos_scale + 1.0;
   hal_data->pos_scale_rcpt = 1.0;
+
+  // change based on FLAG_A2/FLAG_A3
   hal_data->pprev = DEASDA_PULSES_PER_REV_DEFLT;
+
+
   hal_data->last_switch_on = 0;
   hal_data->internal_fault = 0;
 
@@ -261,6 +379,8 @@ void lcec_deasda_check_scales(lcec_deasda_data_t *hal_data) {
     hal_data->pos_scale_rcpt = 1.0 / hal_data->pos_scale;
   }
 }
+
+// read function should not be affected by SP/CSV difference - maybe by A2/A3
 
 static void lcec_deasda_read(struct lcec_slave *slave, long period) {
   lcec_master_t *master = slave->master;
@@ -343,6 +463,8 @@ static void lcec_deasda_read(struct lcec_slave *slave, long period) {
   class_enc_update(&hal_data->extenc, 1, hal_data->extenc_scale, pos_cnt, 0, 0);
 }
 
+// write is going to be affected by CSV/CSP --> change to two seperate functions
+
 static void lcec_deasda_write(struct lcec_slave *slave, long period) {
   lcec_master_t *master = slave->master;
   lcec_deasda_data_t *hal_data = (lcec_deasda_data_t *) slave->hal_data;
@@ -393,8 +515,10 @@ static void lcec_deasda_write(struct lcec_slave *slave, long period) {
   }
   EC_WRITE_U16(&pd[hal_data->control_pdo_os], control);
 
+
+  // all of this is depeding on CSV/CSP
   // calculate rpm command
-  *(hal_data->vel_rpm) = *(hal_data->vel_cmd) * hal_data->pos_scale_rcpt * DEASDA_RPM_MUL;
+  *(hal_data->vel_rpm) = *(hal_data->cmd_value) * hal_data->pos_scale_rcpt * DEASDA_RPM_MUL;
 
   // set RPM
   speed_raw = *(hal_data->vel_rpm) * DEASDA_RPM_RCPT;
@@ -404,6 +528,19 @@ static void lcec_deasda_write(struct lcec_slave *slave, long period) {
   if (speed_raw < (double)-0x7fffffff) {
     speed_raw = (double)-0x7fffffff;
   }
-  EC_WRITE_S32(&pd[hal_data->cmdvel_pdo_os], (int32_t)speed_raw);
+  EC_WRITE_S32(&pd[hal_data->cmdvalue_pdo_os], (int32_t)speed_raw);
 }
 
+// Match the drive mode configuration in modparams and return the settings for that particular operational mode.
+// the value is then used both for setting the mode and to differnetiate between CSV (0) and CSP 
+static const drive_modes_t *drive_mode(char *drivemode) {
+  drive_modes_t const *modes;
+
+  for (modes = drive_modes; modes != NULL; modes++) {
+    if (!strcasecmp(drivemode, modes->name)) {
+      return modes;
+    }
+  }
+
+  return NULL;
+}
