@@ -34,14 +34,10 @@
 
 static int lcec_el1859_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
 
-#define F_IN4       4
-#define F_IN8       8
-#define F_IN16      16
-#define F_OUT4      4 * 32
-#define F_OUT8      8 * 32
-#define F_OUT16     16 * 32
-#define F_DENSEPDOS 1 << 10  // PDOs are 0x6000:01, 0x6000:02, ... instead of 0x6000:01, 0x6010:01
-#define F_OUTOFFSET 1 << 11  // Out PDOs start at 0x7080 instead of 0x7000
+#define F_IN(x)     (x)       // Input channels
+#define F_OUT(x)    (x * 32)  // Output channels
+#define F_DENSEPDOS 1 << 10   // PDOs are 0x6000:01, 0x6000:02, ... instead of 0x6000:01, 0x6010:01
+#define F_OUTOFFSET 1 << 11   // Out PDOs start at 0x7080 instead of 0x7000
 
 #define INPORTS(flag)  ((flag)&31)           // Number of input channels
 #define OUTPORTS(flag) (((flag) >> 5) & 31)  // Number of output channels
@@ -49,33 +45,33 @@ static int lcec_el1859_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
 /// Macro to avoid repeating all of the unchanging fields in
 /// `lcec_typelist_t`.  Calculates the `pdo_count` based on total port
 /// count.
-#define TYPE(name, pid, flags) \
+#define BECKHOFF_IO_DEVICE(name, pid, flags) \
   { name, LCEC_BECKHOFF_VID, pid, INPORTS(flags) + OUTPORTS(flags), 0, NULL, lcec_el1859_init, NULL, flags }
 
 static lcec_typelist_t types[] = {
-    TYPE("EL1852", 0x73c3052, F_IN8 | F_OUT8 | F_OUTOFFSET),
-    TYPE("EL1859", 0x07433052, F_IN8 | F_OUT8 | F_OUTOFFSET),
-    TYPE("EJ1859", 0x07432852, F_IN8 | F_OUT8 | F_OUTOFFSET),
-    TYPE("EK1814", 0x07162c52, F_IN4 | F_OUT4),
-    TYPE("EK1818", 0x071a2c52, F_IN8 | F_OUT4),
-    TYPE("EK1828", 0x07242c52, F_IN4 | F_OUT8),
-    TYPE("EK1828-0010", 0x07242c52, F_OUT8),  // No in
-    TYPE("EP2308", 0x09044052, F_IN4 | F_OUT4),
-    TYPE("EP2316", 0x090C4052, F_IN8 | F_OUT8 | F_DENSEPDOS),
-    TYPE("EP2318", 0x090E4052, F_IN4 | F_OUT4),
-    TYPE("EP2328", 0x09184052, F_IN4 | F_OUT4),
-    TYPE("EP2338", 0x09224052, F_IN8 | F_OUT8),
-    TYPE("EP2339", 0x09234052, F_IN16 | F_OUT16),
-    TYPE("EP2349", 0x092d4052, F_IN16 | F_OUT16),
-    TYPE("EQ2339", 0x092d4052, F_IN16 | F_OUT16),
-    TYPE("EPP2308", 0x64765649, F_IN4 | F_OUT4),
-    TYPE("EPP2316", 0x090c4052, F_IN8 | F_OUT8 | F_DENSEPDOS),
-    TYPE("EPP2318", 0x647656e9, F_IN4 | F_OUT4),
-    TYPE("EPP2328", 0x64765789, F_IN4 | F_OUT4),
-    TYPE("EPP2334", 0x647657e9, F_IN4 | F_OUT4),
-    TYPE("EPP2338", 0x09224052, F_IN8 | F_OUT8),
-    TYPE("EPP2339", 0x64765839, F_IN8 | F_OUT8),
-    TYPE("EPP2349", 0x647658d9, F_IN8 | F_OUT8),
+    BECKHOFF_IO_DEVICE("EL1852", 0x73c3052, F_IN(8) | F_OUT(8) | F_OUTOFFSET),
+    BECKHOFF_IO_DEVICE("EL1859", 0x07433052, F_IN(8) | F_OUT(8) | F_OUTOFFSET),
+    BECKHOFF_IO_DEVICE("EJ1859", 0x07432852, F_IN(8) | F_OUT(8) | F_OUTOFFSET),
+    BECKHOFF_IO_DEVICE("EK1814", 0x07162c52, F_IN(4) | F_OUT(4)),
+    BECKHOFF_IO_DEVICE("EK1818", 0x071a2c52, F_IN(8) | F_OUT(4)),
+    BECKHOFF_IO_DEVICE("EK1828", 0x07242c52, F_IN(4) | F_OUT(8)),
+    BECKHOFF_IO_DEVICE("EK1828-0010", 0x07242c52, F_OUT(8)),  // No in
+    BECKHOFF_IO_DEVICE("EP2308", 0x09044052, F_IN(4) | F_OUT(4)),
+    BECKHOFF_IO_DEVICE("EP2316", 0x090C4052, F_IN(8) | F_OUT(8) | F_DENSEPDOS),
+    BECKHOFF_IO_DEVICE("EP2318", 0x090E4052, F_IN(4) | F_OUT(4)),
+    BECKHOFF_IO_DEVICE("EP2328", 0x09184052, F_IN(4) | F_OUT(4)),
+    BECKHOFF_IO_DEVICE("EP2338", 0x09224052, F_IN(8) | F_OUT(8)),
+    BECKHOFF_IO_DEVICE("EP2339", 0x09234052, F_IN(16) | F_OUT(16)),
+    BECKHOFF_IO_DEVICE("EP2349", 0x092d4052, F_IN(16) | F_OUT(16)),
+    BECKHOFF_IO_DEVICE("EQ2339", 0x092d4052, F_IN(16) | F_OUT(16)),
+    BECKHOFF_IO_DEVICE("EPP2308", 0x64765649, F_IN(4) | F_OUT(4)),
+    BECKHOFF_IO_DEVICE("EPP2316", 0x090c4052, F_IN(8) | F_OUT(8) | F_DENSEPDOS),
+    BECKHOFF_IO_DEVICE("EPP2318", 0x647656e9, F_IN(4) | F_OUT(4)),
+    BECKHOFF_IO_DEVICE("EPP2328", 0x64765789, F_IN(4) | F_OUT(4)),
+    BECKHOFF_IO_DEVICE("EPP2334", 0x647657e9, F_IN(4) | F_OUT(4)),
+    BECKHOFF_IO_DEVICE("EPP2338", 0x09224052, F_IN(8) | F_OUT(8)),
+    BECKHOFF_IO_DEVICE("EPP2339", 0x64765839, F_IN(8) | F_OUT(8)),
+    BECKHOFF_IO_DEVICE("EPP2349", 0x647658d9, F_IN(8) | F_OUT(8)),
     {NULL},
 };
 ADD_TYPES(types)
@@ -96,8 +92,8 @@ static int lcec_el1859_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   int idx, sidx;
 
   // initialize callbacks
-  slave->proc_read = lcec_el1859_read;
-  slave->proc_write = lcec_el1859_write;
+  if (in_channels>0) slave->proc_read = lcec_el1859_read;
+  if (out_channels>0) slave->proc_write = lcec_el1859_write;
 
   // alloc hal memory
   if ((hal_data = hal_malloc(sizeof(lcec_el1859_data_t))) == NULL) {
@@ -107,11 +103,13 @@ static int lcec_el1859_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   memset(hal_data, 0, sizeof(lcec_el1859_data_t));
   slave->hal_data = hal_data;
 
-  hal_data->pins_in = lcec_din_allocate_pins(in_channels);
-  hal_data->pins_out = lcec_dout_allocate_pins(out_channels);
+  // Allocate memory for I/O pin definitions
+  if (in_channels>0) hal_data->pins_in = lcec_din_allocate_pins(in_channels);
+  if (out_channels>0) hal_data->pins_out = lcec_dout_allocate_pins(out_channels);
 
-  // initialize pins
+  // initialize input pins
   for (i = 0; i < in_channels; i++) {
+    // Figure out which addresses to use based on slave->flags
     if (slave->flags & F_DENSEPDOS) {
       idx = 0x6000;
       sidx = 1 + i;
@@ -119,10 +117,14 @@ static int lcec_el1859_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
       idx = 0x6000 + (i << 4);
       sidx = 1;
     }
+
+    // Create pins
     hal_data->pins_in->pins[i] = lcec_din_register_pin(&pdo_entry_regs, slave, i, idx, sidx);
   }
 
+  // initialize output pins
   for (i = 0; i < out_channels; i++) {
+    // Figure out which addresses to use based on slave->flags
     if (slave->flags & F_DENSEPDOS) {
       idx = 0x7000;
       sidx = 1 + i;
@@ -133,6 +135,8 @@ static int lcec_el1859_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
         idx += 0x80;
       }
     }
+
+    // Create pins
     hal_data->pins_out->pins[i] = lcec_dout_register_pin(&pdo_entry_regs, slave, i, idx, sidx);
   }
   return 0;
@@ -146,7 +150,7 @@ static void lcec_el1859_read(struct lcec_slave *slave, long period) {
     return;
   }
 
-  lcec_din_read_all(slave, hal_data->pins_in);
+  if (hal_data->pins_in != NULL) lcec_din_read_all(slave, hal_data->pins_in);
 }
 
 static void lcec_el1859_write(struct lcec_slave *slave, long period) {
@@ -157,5 +161,5 @@ static void lcec_el1859_write(struct lcec_slave *slave, long period) {
     return;
   }
 
-  lcec_dout_write_all(slave, hal_data->pins_out);
+  if (hal_data->pins_out != NULL) lcec_dout_write_all(slave, hal_data->pins_out);
 }
