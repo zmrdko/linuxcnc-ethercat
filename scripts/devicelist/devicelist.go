@@ -7,6 +7,7 @@ import (
 	"gopkg.in/yaml.v3"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -115,12 +116,6 @@ func buildVIDMap(src string) (map[string]string, error) {
 func main() {
 	flag.Parse()
 
-	fmt.Printf("Reading VIDs from lcec.h\n")
-	vidMap, err := buildVIDMap(*srcFlag)
-	if err != nil {
-		log.Fatalf("couldn't build VID map: %v", err)
-	}
-
 	fmt.Printf("Reading ESI file from %s\n", *esiFlag)
 	esiEntries, err := readESIFile(*esiFlag)
 	if err != nil {
@@ -130,115 +125,42 @@ func main() {
 
 	esiMap := buildESIMap(esiEntries)
 
-	cFiles := []string{}
-	entries, err := os.ReadDir(*srcFlag)
+	out, err := exec.Command("../../src/lcec_devices").Output()
 	if err != nil {
-		log.Fatalf("couldn't read source directory (%s): %v", *srcFlag, err)
+		log.Fatalf("couldn't execute lcec_devices: %v", err)
 	}
 
-	for _, entry := range entries {
-		if strings.HasSuffix(entry.Name(), ".h") && strings.Contains(entry.Name(), "lcec_") {
-			cFiles = append(cFiles, filepath.Join(*srcFlag, entry.Name()))
+	defs := []*DeviceDefinition{}
+	stubs := 0
+
+	scanner := bufio.NewScanner(strings.NewReader(string(out)))
+	for scanner.Scan() {
+		split := strings.Split(scanner.Text(), "\t")
+		def := &DeviceDefinition{
+			Device:   split[0],
+			VendorID: split[1],
+			PID:      split[2],
+			SrcFile:  split[3],
+		}
+
+		defs = append(defs, def)
+	}
+
+	for _, def := range defs {
+		esi := esiMap[esiKey(def)]
+		if esi == nil {
+			stubs++
+			def.Description = "UNKNOWN"
+		} else {
+			def.VendorName = esi.VendorName
+			vendorSplit := strings.Split(def.VendorName, " ")
+			def.Description = fmt.Sprintf("%s %s", vendorSplit[0], esi.Name)
+			def.DocumentationURL = esi.URL
+			def.DeviceType = esi.DeviceType
 		}
 	}
 
-	entries, err = os.ReadDir(filepath.Join(*srcFlag, "devices"))
-	if err != nil {
-		log.Fatalf("couldn't read devices directory: %v", err)
-	}
-
-	for _, entry := range entries {
-		if strings.HasSuffix(entry.Name(), ".c") && strings.Contains(entry.Name(), "lcec_") {
-			cFiles = append(cFiles, filepath.Join(*srcFlag, "devices", entry.Name()))
-		}
-	}
-
-	typesRE := regexp.MustCompile("lcec_typelist_t +types\\[\\] *= *\\{")
-	endTypesRE := regexp.MustCompile("{ *NULL *},")
-	typelistEntryRE := regexp.MustCompile("^ *{ *\"([^\"]+)\" *, *([A-Za-z0-9_]+) *, *(0x[a-fA-F0-9]+) *,")
-
-	allDefs := []*DeviceDefinition{}
-
-	deviceLines := 0
-
-	for _, filename := range cFiles {
-		defs := []*DeviceDefinition{}
-		stubs := 0
-
-		fmt.Printf("Looking in %s...", filename)
-
-		file, err := os.Open(filename)
-		if err != nil {
-			log.Fatalf("can't open file %q: %v", filename, err)
-		}
-
-		foundTypes := false
-		scanner := bufio.NewScanner(file)
-		for scanner.Scan() {
-			line := scanner.Text()
-
-			if foundTypes == false {
-				if typesRE.MatchString(line) {
-					// Found types[] start.
-					foundTypes = true
-				}
-			} else {
-				// foundTypes == true
-				if endTypesRE.MatchString(line) {
-					// found the end of types[]
-					break
-				} else {
-					// Inside of the types[] block, parse lines.
-					if match := typelistEntryRE.FindStringSubmatch(line); match != nil {
-						// Found an entry!
-						deviceLines++
-						srcFile, _, _ := strings.Cut(filename[len(*srcFlag)+1:], ".h")
-						srcFile = fmt.Sprintf("src/%s", srcFile)
-
-						def := &DeviceDefinition{
-							Device:   match[1],
-							VendorID: vidMap[match[2]],
-							PID:      strings.ToLower(match[3]),
-							SrcFile:  srcFile,
-						}
-
-						defs = append(defs, def)
-					}
-				}
-			}
-		}
-
-		for _, def := range defs {
-			esi := esiMap[esiKey(def)]
-			if esi == nil {
-				//fmt.Printf("(ESI missing for %q, creating stub) ", esiKey(def))
-				stubs++
-				def.Description = "UNKNOWN"
-			} else {
-				def.VendorName = esi.VendorName
-				vendorSplit := strings.Split(def.VendorName, " ")
-				def.Description = fmt.Sprintf("%s %s", vendorSplit[0], esi.Name)
-				def.DocumentationURL = esi.URL
-				def.DeviceType = esi.DeviceType
-			}
-
-			//fmt.Printf("Got def: %#v\n", def)
-		}
-
-		fmt.Printf("found %d devices", len(defs))
-		if foundTypes == false {
-			fmt.Printf(", no types[]");
-		}
-
-		if stubs > 0 {
-			fmt.Printf(" (%d not found in ESI data)", stubs)
-		}
-		fmt.Printf("\n")
-		allDefs = append(allDefs, defs...)
-
-	}
-
-	for _, def := range allDefs {
+	for _, def := range defs {
 		y, err := yaml.Marshal(def)
 		if err != nil {
 			log.Fatalf("unable to marshal yaml: %v", err)

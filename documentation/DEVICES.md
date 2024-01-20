@@ -25,6 +25,9 @@ Description | Driver | EtherCAT VID:PID | Device Type | Testing Status | Notes
 [Beckhoff EK1110 EtherCAT extension](http://www.beckhoff.com/EK1110) | [passive](../src/devices/lcec_passive.c) | 0x2:0x04562c52 | System Terminals | Part of @scottlaird's test suite | Passive device
 [Beckhoff EK1122 2 port EtherCAT junction](http://www.beckhoff.com/EK1122) | [passive](../src/devices/lcec_passive.c) | 0x2:0x04622c52 | System Terminals |  | Passive device
 [Beckhoff EK1814 EtherCAT IO-Coupler  (0,5A E-Bus, 4 Ch. Dig. In, 3ms, 4 Ch. Dig. Out 24V, 0,5A)](http://www.beckhoff.com/EK1814) | [el1859](../src/devices/lcec_el1859.c) | 0x2:0x07162c52 | System Couplers | New, @scottlaird will be using in testing. | 
+[Beckhoff EK1818 EtherCAT IO-Coupler  (1A E-Bus, 8 Ch. Dig. In, 3ms, 4 Ch. Dig. Out 24V, 0,5A)](http://www.beckhoff.com/EK1818) | [el1859](../devices/lcec_el1859.c) | 0x2:0x071a2c52 | System Couplers |  | 
+[Beckhoff EK1828 EtherCAT IO-Coupler  (1A E-Bus, 4 Ch. Dig. In, 3ms, 8 Ch. Dig. Out 24V, 0,5A)](http://www.beckhoff.com/EK1828) | [el1859](../devices/lcec_el1859.c) | 0x2:0x07242c52 | System Couplers |  | 
+[Beckhoff EK1828 EtherCAT IO-Coupler  (1A E-Bus, 4 Ch. Dig. In, 3ms, 8 Ch. Dig. Out 24V, 0,5A)](http://www.beckhoff.com/EK1828) | [el1859](../devices/lcec_el1859.c) | 0x2:0x07242c52 | System Couplers |  | 
 [Beckhoff EL1002 2Ch. Dig. Input 24V, 3ms](http://www.beckhoff.com/EL1002) | [el1xxx](../src/devices/lcec_el1xxx.c) | 0x2:0x03ea3052 | Digital Input Terminals |  | 
 [Beckhoff EL1004 4Ch. Dig. Input 24V, 3ms](http://www.beckhoff.com/EL1004) | [el1xxx](../src/devices/lcec_el1xxx.c) | 0x2:0x03ec3052 | Digital Input Terminals |  | 
 [Beckhoff EL1008 8Ch. Dig. Input 24V, 3ms](http://www.beckhoff.com/EL1008) | [el1xxx](../src/devices/lcec_el1xxx.c) | 0x2:0x03f03052 | Digital Input Terminals |  | 
@@ -183,6 +186,7 @@ Description | Driver | EtherCAT VID:PID | Device Type | Testing Status | Notes
 [Beckhoff EP3204-0002 4Ch. Ana. Input PT100 (RTD)](https://www.beckhoff.com/EP3204-0002) | [el3xxx](../src/devices/lcec_el3xxx.c) | 0x2:0x0c844052 | Analog Input |  | 
 [Beckhoff EL7041 1Ch. Stepper motor output stage (50V, 5A)](http://www.beckhoff.com/EL7041) | [el7041](../src/devices/lcec_el7041.c) | 0x2:0x1b813052 | Stepper Drive | Uncertain; @scottlaird has several EP7041-0002 | 
 [Beckhoff EPP2308-0001 4 Ch. Dig. In, 3ms, 4 Ch. Dig. Out 24V, 0,5A, M8](https://www.beckhoff.com/EPP2308-0001) | [el1859](../src/devices/lcec_el1859.c) | 0x2:0x64765649 | Digital Input/Output |  | 
+[Beckhoff EP2316-0003 8 Ch. Dig. In, 10µs, 8Ch. Dig. Out 24V, 0,5A, Diagnostic, 10-Pole Plug Connector](https://www.beckhoff.com/EP2316-0003) | [el1859](../devices/lcec_el1859.c) | 0x2:0x090c4052 | EtherCAT Fieldbus Boxes (EP23xx) |  | 
 [Beckhoff EPP2318-0001 4 Ch. Dig. In, 10µs, 4 Ch. Dig. Out 24V, 0,5A, M8](https://www.beckhoff.com/EPP2318-0001) | [el1859](../src/devices/lcec_el1859.c) | 0x2:0x647656e9 | Digital Input/Output |  | 
 [Beckhoff EPP2328-0001 4 CH. Dig. In, 3ms, 4 Ch. Dig. Out 24V, 2A, M8](https://www.beckhoff.com/EPP2328-0001) | [el1859](../src/devices/lcec_el1859.c) | 0x2:0x64765789 | Digital Input/Output |  | 
 [Beckhoff EPP2334-0061 4 Ch. Dig. Input/Output 24V, 0,5A, M8](https://www.beckhoff.com/EPP2334-0061) | [el1859](../src/devices/lcec_el1859.c) | 0x2:0x647657e9 | Digital Input/Output |  | 
@@ -221,6 +225,6 @@ Description | Driver | EtherCAT VID:PID | Device Type | Testing Status | Notes
 [Omron R88D-KNA5L-ECT G5 Series ServoDrive/Motor](http://www.ia.omron.com/) | [omrg5](../src/devices/lcec_omrg5.c) | 0x83:0x00000001 | Servo Drive |  | 
 [Stoeber Posidrive MDS 5000](https://www.ethercat.org/en/products/CE4C65D2ED8B4F39A8166D6CEDB2C872.htm) | [stmds5k](../src/devices/lcec_stmds5k.c) | 0xb9:0x00001388 | Servo Drive |  | 
 
-There are an additional 3 device(s) supported that do not have enough
+There are an additional 4 device(s) supported that do not have enough
 documentation to display here.  Please look at the `documentation/devices/` files
 and update them if you're able.
