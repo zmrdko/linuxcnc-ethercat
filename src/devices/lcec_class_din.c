@@ -93,7 +93,7 @@ lcec_class_din_pin_t *lcec_din_register_pin(
 void lcec_din_read(struct lcec_slave *slave, lcec_class_din_pin_t *data) {
   lcec_master_t *master = slave->master;
   uint8_t *pd = master->process_data;
-  int s;
+  hal_bit_t s;
 
   s = EC_READ_BIT(&pd[data->pdo_os], data->pdo_bp);
   *(data->in) = s;

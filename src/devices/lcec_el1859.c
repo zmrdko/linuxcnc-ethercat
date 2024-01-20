@@ -34,25 +34,43 @@
 
 static int lcec_el1859_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
 
+#define F_IN4       4
+#define F_IN8       8
+#define F_IN16      16
+#define F_OUT4      4 * 32
+#define F_OUT8      8 * 32
+#define F_OUT16     16 * 32
+#define F_DENSEPDOS 1 << 10  // PDOs are 0x6000:01, 0x6000:02, ... instead of 0x6000:01, 0x6010:01
+#define F_OUTOFFSET 1 << 11  // Out PDOs start at 0x7080 instead of 0x7000
+
+#define INPORTS(flag)  ((flag)&31)           // Number of input channels
+#define OUTPORTS(flag) (((flag) >> 5) & 31)  // Number of output channels
+
+/// Macro to avoid repeating all of the unchanging fields in
+/// `lcec_typelist_t`.  Calculates the `pdo_count` based on total port
+/// count.
+#define TYPE(name, pid, flags) \
+  { name, LCEC_BECKHOFF_VID, pid, INPORTS(flags) + OUTPORTS(flags), 0, NULL, lcec_el1859_init, NULL, flags }
+
 static lcec_typelist_t types[] = {
-    {"EL1852", LCEC_BECKHOFF_VID, 0x073c3052, LCEC_EL1859_PDOS, 0, NULL, lcec_el1859_init, NULL, 8},
-    {"EL1859", LCEC_BECKHOFF_VID, 0x07433052, LCEC_EL1859_PDOS, 0, NULL, lcec_el1859_init, NULL, 8},
-    {"EJ1859", LCEC_BECKHOFF_VID, 0x07432852, LCEC_EL1859_PDOS, 0, NULL, lcec_el1859_init, NULL, 8},
-    {"EK1814", LCEC_BECKHOFF_VID, 0x07162c52, LCEC_EP2308_PDOS, 0, NULL, lcec_el1859_init, NULL, 4},
-    {"EP2308", LCEC_BECKHOFF_VID, 0x09044052, LCEC_EP2308_PDOS, 0, NULL, lcec_el1859_init, NULL, 4},
-    {"EP2318", LCEC_BECKHOFF_VID, 0x090E4052, LCEC_EP2318_PDOS, 0, NULL, lcec_el1859_init, NULL, 4},
-    {"EP2328", LCEC_BECKHOFF_VID, 0x09184052, LCEC_EP2328_PDOS, 0, NULL, lcec_el1859_init, NULL, 4},
-    {"EP2338", LCEC_BECKHOFF_VID, 0x09224052, LCEC_EP2338_PDOS, 0, NULL, lcec_el1859_init, NULL, 8},
-    {"EP2339", LCEC_BECKHOFF_VID, 0x09234052, LCEC_EP2349_PDOS, 0, NULL, lcec_el1859_init, NULL, 16},
-    {"EP2349", LCEC_BECKHOFF_VID, 0x092d4052, LCEC_EP2349_PDOS, 0, NULL, lcec_el1859_init, NULL, 16},
-    {"EQ2339", LCEC_BECKHOFF_VID, 0x092d4052, LCEC_EP2349_PDOS, 0, NULL, lcec_el1859_init, NULL, 16},
-    {"EPP2308", LCEC_BECKHOFF_VID, 0x64765649, LCEC_EP2308_PDOS, 0, NULL, lcec_el1859_init, NULL, 4},
-    {"EPP2318", LCEC_BECKHOFF_VID, 0x647656e9, LCEC_EP2318_PDOS, 0, NULL, lcec_el1859_init, NULL, 4},
-    {"EPP2328", LCEC_BECKHOFF_VID, 0x64765789, LCEC_EP2318_PDOS, 0, NULL, lcec_el1859_init, NULL, 4},
-    {"EPP2334", LCEC_BECKHOFF_VID, 0x647657e9, LCEC_EP2318_PDOS, 0, NULL, lcec_el1859_init, NULL, 4},
-    {"EPP2338", LCEC_BECKHOFF_VID, 0x09224052, LCEC_EP2338_PDOS, 0, NULL, lcec_el1859_init, NULL, 8},
-    {"EPP2339", LCEC_BECKHOFF_VID, 0x64765839, LCEC_EP2338_PDOS, 0, NULL, lcec_el1859_init, NULL, 8},
-    {"EPP2349", LCEC_BECKHOFF_VID, 0x647658d9, LCEC_EP2338_PDOS, 0, NULL, lcec_el1859_init, NULL, 8},
+    TYPE("EL1852", 0x73c3052, F_IN8 | F_OUT8 | F_OUTOFFSET),
+    TYPE("EL1859", 0x07433052, F_IN8 | F_OUT8 | F_OUTOFFSET),
+    TYPE("EJ1859", 0x07432852, F_IN8 | F_OUT8 | F_OUTOFFSET),
+    TYPE("EK1814", 0x07162c52, F_IN4 | F_OUT4),
+    TYPE("EP2308", 0x09044052, F_IN4 | F_OUT4),
+    TYPE("EP2318", 0x090E4052, F_IN4 | F_OUT4),
+    TYPE("EP2328", 0x09184052, F_IN4 | F_OUT4),
+    TYPE("EP2338", 0x09224052, F_IN8 | F_OUT8),
+    TYPE("EP2339", 0x09234052, F_IN16 | F_OUT16),
+    TYPE("EP2349", 0x092d4052, F_IN16 | F_OUT16),
+    TYPE("EQ2339", 0x092d4052, F_IN16 | F_OUT16),
+    TYPE("EPP2308", 0x64765649, F_IN4 | F_OUT4),
+    TYPE("EPP2318", 0x647656e9, F_IN4 | F_OUT4),
+    TYPE("EPP2328", 0x64765789, F_IN4 | F_OUT4),
+    TYPE("EPP2334", 0x647657e9, F_IN4 | F_OUT4),
+    TYPE("EPP2338", 0x09224052, F_IN8 | F_OUT8),
+    TYPE("EPP2339", 0x64765839, F_IN8 | F_OUT8),
+    TYPE("EPP2349", 0x647658d9, F_IN8 | F_OUT8),
     {NULL},
 };
 ADD_TYPES(types)
@@ -68,7 +86,9 @@ static void lcec_el1859_write(struct lcec_slave *slave, long period);
 static int lcec_el1859_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
   lcec_el1859_data_t *hal_data;
   int i;
-  int channels = slave->flags;
+  int in_channels = INPORTS(slave->flags);
+  int out_channels = OUTPORTS(slave->flags);
+  int idx, sidx;
 
   // initialize callbacks
   slave->proc_read = lcec_el1859_read;
@@ -82,13 +102,33 @@ static int lcec_el1859_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   memset(hal_data, 0, sizeof(lcec_el1859_data_t));
   slave->hal_data = hal_data;
 
-  hal_data->pins_in = lcec_din_allocate_pins(channels);
-  hal_data->pins_out = lcec_dout_allocate_pins(channels);
+  hal_data->pins_in = lcec_din_allocate_pins(in_channels);
+  hal_data->pins_out = lcec_dout_allocate_pins(out_channels);
 
   // initialize pins
-  for (i = 0; i < channels; i++) {
-    hal_data->pins_in->pins[i] = lcec_din_register_pin(&pdo_entry_regs, slave, i, 0x6000 + (i << 4), 0x01);
-    hal_data->pins_out->pins[i] = lcec_dout_register_pin(&pdo_entry_regs, slave, i, 0x7000 + (i << 4), 0x01);
+  for (i = 0; i < in_channels; i++) {
+    if (slave->flags & F_DENSEPDOS) {
+      idx = 0x6000;
+      sidx = 1 + i;
+    } else {
+      idx = 0x6000 + (i << 4);
+      sidx = 1;
+    }
+    hal_data->pins_in->pins[i] = lcec_din_register_pin(&pdo_entry_regs, slave, i, idx, sidx);
+  }
+
+  for (i = 0; i < out_channels; i++) {
+    if (slave->flags & F_DENSEPDOS) {
+      idx = 0x7000;
+      sidx = 1 + i;
+    } else {
+      idx = 0x7000 + (i << 4);
+      sidx = 1;
+      if (slave->flags & F_OUTOFFSET) {
+        idx += 0x80;
+      }
+    }
+    hal_data->pins_out->pins[i] = lcec_dout_register_pin(&pdo_entry_regs, slave, i, idx, sidx);
   }
   return 0;
 }
