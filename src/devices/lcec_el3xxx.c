@@ -132,7 +132,7 @@ static const temp_wires_t temp_wires[] = {
 };
 
 /// @brief Devices supported by this driver.
-static const lcec_typelist_t types[] = {
+static lcec_typelist_t types[] = {
     // 12-bit devices
     {"EL3001", LCEC_BECKHOFF_VID, 0x0bb93052, LCEC_EL30X1_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS12},
     {"EL3002", LCEC_BECKHOFF_VID, 0x0bba3052, LCEC_EL30X2_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS12},
