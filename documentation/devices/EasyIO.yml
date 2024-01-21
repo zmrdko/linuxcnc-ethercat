@@ -1,0 +1,11 @@
+---
+Device: EasyIO
+VendorID: "0x0000079a"
+VendorName: "AB&T"
+PID: "0x0debacca"
+Description: AB&T EasyIO 16 din, 16 dout, 4 ain, 2 aout module
+DocumentationURL: "https://www.bausano.net/en/hardware/easyio.html"
+DeviceType: "Analog/Digital Combo"
+Notes: ""
+SrcFile: devices/lcec_easyio.c
+TestingStatus: "COMPLETELY UNTESTED.  Written without hardware."

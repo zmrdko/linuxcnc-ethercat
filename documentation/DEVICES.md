@@ -112,6 +112,7 @@ Description | Driver | EtherCAT VID:PID | Device Type | Testing Status | Notes
 [Beckhoff EL3114 4Ch. Ana. Input 0-20mA, Diff.](http://www.beckhoff.com/EL3114) | [el3xxx](../src/devices/lcec_el3xxx.c) | 0x2:0x0c2a3052 | Analog Input | New, untested. | 
 [Beckhoff EL3121 1Ch. Ana. Input 4-20mA Diff.](http://www.beckhoff.com/EL3121) | [el3xxx](../src/devices/lcec_el3xxx.c) | 0x2:0x0c313052 | Analog Input | New, untested. | 
 [Beckhoff EL3122 2Ch. Ana. Input 4-20mA, Diff.](http://www.beckhoff.com/EL3122) | [el3xxx](../src/devices/lcec_el3xxx.c) | 0x2:0x0c323052 | Analog Input |  | 
+[Beckhoff EL3124 4Ch. Ana. Input 4-20mA Diff.](http://www.beckhoff.com/EL3124) | [el3xxx](../devices/lcec_el3xxx.c) | 0x2:0x0c343052 | Analog Input |  | 
 [Beckhoff EL3141 1Ch. Ana. Input 0-20mA](http://www.beckhoff.com/EL3141) | [el3xxx](../src/devices/lcec_el3xxx.c) | 0x2:0x0c453052 | Analog Input | New, untested. | 
 [Beckhoff EL3142 2Ch. Ana. Input 0-20mA](http://www.beckhoff.com/EL3142) | [el3xxx](../src/devices/lcec_el3xxx.c) | 0x2:0x0c463052 | Analog Input |  | 
 [Beckhoff EL3144 4Ch. Ana. Input 0-20mA](http://www.beckhoff.com/EL3144) | [el3xxx](../src/devices/lcec_el3xxx.c) | 0x2:0x0c483052 | Analog Input | New, untested. | 
@@ -213,6 +214,7 @@ Description | Driver | EtherCAT VID:PID | Device Type | Testing Status | Notes
 [SMC EX260-SEC1](https://www.smcpneumatics.com/EX260-SEC2.html) | [ex260](../src/devices/lcec_ex260.c) | 0x114:0x01000002 | Valve Controller | Merged 2023-12-31, untested | by @satiowadahc
 [SMC EX260-SEC3](https://www.smcpneumatics.com/EX260-SEC3.html) | [ex260](../src/devices/lcec_ex260.c) | 0x114:0x01000003 | Valve Controller | Merged 2023-12-31, untested | by @satiowadahc
 [SMC EX260-SEC4](https://www.smcpneumatics.com/EX260-SEC4.html) | [ex260](../src/devices/lcec_ex260.c) | 0x114:0x01000004 | Valve Controller | Merged 2023-12-31, untested | by @satiowadahc
+[AB&T EasyIO 16 din, 16 dout, 4 ain, 2 aout module](https://www.bausano.net/en/hardware/easyio.html) | [easyio](../devices/lcec_easyio.c) | 0x79a:0x0debacca | Analog/Digital Combo | COMPLETELY UNTESTED.  Written without hardware. | 
 [AB&T EpoCAT FR4000](https://www.bausano.net/en/hardware/epocat-fr-1000.html) | [epocat](../src/devices/lcec_epocat.c) | 0x79a:0x00decade | Stepper Drive | Merged 2023-12-31, untested | by @abausano
 [Omron R88D-KN01H-ECT G5 Series ServoDrive/Motor](http://www.ia.omron.com/) | [omrg5](../src/devices/lcec_omrg5.c) | 0x83:0x00000005 | Servo Drive |  | 
 [Omron R88D-KN01L-ECT G5 Series ServoDrive/Motor](http://www.ia.omron.com/) | [omrg5](../src/devices/lcec_omrg5.c) | 0x83:0x00000002 | Servo Drive |  | 
