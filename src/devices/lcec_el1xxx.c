@@ -59,28 +59,28 @@ ADD_TYPES(types)
 static void lcec_el1xxx_read(struct lcec_slave *slave, long period);
 
 static int lcec_el1xxx_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
-  lcec_class_din_pins_t *hal_data;
+  lcec_class_din_channels_t *hal_data;
   int i;
 
   // initialize callbacks
   slave->proc_read = lcec_el1xxx_read;
 
-  hal_data = lcec_din_allocate_pins(slave->pdo_entry_count);
+  hal_data = lcec_din_allocate_channels(slave->pdo_entry_count);
   if (hal_data == NULL) { return -EIO; }
   slave->hal_data = hal_data;
 
-  // initialize pins
+  // initialize channels
   for (i = 0; i < slave->pdo_entry_count; i++) {
-    hal_data->pins[i]=lcec_din_register_pin(&pdo_entry_regs, slave, i, 0x6000 + (i<<4), 0x01);
+    hal_data->channels[i]=lcec_din_register_channel(&pdo_entry_regs, slave, i, 0x6000 + (i<<4), 0x01);
 
-    if (hal_data->pins[i]==NULL) { return -EIO; }
+    if (hal_data->channels[i]==NULL) { return -EIO; }
   }
 
   return 0;
 }
 
 static void lcec_el1xxx_read(struct lcec_slave *slave, long period) {
-  lcec_class_din_pins_t *hal_data = (lcec_class_din_pins_t *)slave->hal_data;
+  lcec_class_din_channels_t *hal_data = (lcec_class_din_channels_t *)slave->hal_data;
 
   // wait for slave to be operational
   if (!slave->state.operational) {

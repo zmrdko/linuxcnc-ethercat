@@ -109,8 +109,8 @@ static lcec_typelist_t types[] = {
 ADD_TYPES(types)
 
 typedef struct {
-  lcec_class_din_pins_t *pins_in;
-  lcec_class_dout_pins_t *pins_out;
+  lcec_class_din_channels_t *channels_in;
+  lcec_class_dout_channels_t *channels_out;
 } lcec_digitalcombo_data_t;
 
 static void lcec_digitalcombo_read(struct lcec_slave *slave, long period);
@@ -136,8 +136,8 @@ static int lcec_digitalcombo_init(int comp_id, struct lcec_slave *slave, ec_pdo_
   slave->hal_data = hal_data;
 
   // Allocate memory for I/O pin definitions
-  if (in_channels>0) hal_data->pins_in = lcec_din_allocate_pins(in_channels);
-  if (out_channels>0) hal_data->pins_out = lcec_dout_allocate_pins(out_channels);
+  if (in_channels>0) hal_data->channels_in = lcec_din_allocate_channels(in_channels);
+  if (out_channels>0) hal_data->channels_out = lcec_dout_allocate_channels(out_channels);
 
   // initialize input pins
   for (i = 0; i < in_channels; i++) {
@@ -151,7 +151,7 @@ static int lcec_digitalcombo_init(int comp_id, struct lcec_slave *slave, ec_pdo_
     }
 
     // Create pins
-    hal_data->pins_in->pins[i] = lcec_din_register_pin(&pdo_entry_regs, slave, i, idx, sidx);
+    hal_data->channels_in->channels[i] = lcec_din_register_channel(&pdo_entry_regs, slave, i, idx, sidx);
   }
 
   // initialize output pins
@@ -169,7 +169,7 @@ static int lcec_digitalcombo_init(int comp_id, struct lcec_slave *slave, ec_pdo_
     }
 
     // Create pins
-    hal_data->pins_out->pins[i] = lcec_dout_register_pin(&pdo_entry_regs, slave, i, idx, sidx);
+    hal_data->channels_out->channels[i] = lcec_dout_register_channel(&pdo_entry_regs, slave, i, idx, sidx);
   }
   return 0;
 }
@@ -182,7 +182,7 @@ static void lcec_digitalcombo_read(struct lcec_slave *slave, long period) {
     return;
   }
 
-  if (hal_data->pins_in != NULL) lcec_din_read_all(slave, hal_data->pins_in);
+  if (hal_data->channels_in != NULL) lcec_din_read_all(slave, hal_data->channels_in);
 }
 
 static void lcec_digitalcombo_write(struct lcec_slave *slave, long period) {
@@ -193,5 +193,5 @@ static void lcec_digitalcombo_write(struct lcec_slave *slave, long period) {
     return;
   }
 
-  if (hal_data->pins_out != NULL) lcec_dout_write_all(slave, hal_data->pins_out);
+  if (hal_data->channels_out != NULL) lcec_dout_write_all(slave, hal_data->channels_out);
 }

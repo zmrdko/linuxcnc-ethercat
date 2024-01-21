@@ -55,28 +55,28 @@ ADD_TYPES(types);
 static void lcec_el2xxx_write(struct lcec_slave *slave, long period);
 
 static int lcec_el2xxx_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
-  lcec_class_dout_pins_t *hal_data;
+  lcec_class_dout_channels_t *hal_data;
   int i;
 
   // initialize callbacks
   slave->proc_write = lcec_el2xxx_write;
 
-  hal_data = lcec_dout_allocate_pins(slave->pdo_entry_count);
+  hal_data = lcec_dout_allocate_channels(slave->pdo_entry_count);
   if (hal_data == NULL) {
     return -EIO;
   }
   slave->hal_data = hal_data;
 
-  // initialize pins
+  // initialize channels
   for (i = 0; i < slave->pdo_entry_count; i++) {
-    hal_data->pins[i] = lcec_dout_register_pin(&pdo_entry_regs, slave, i, 0x7000 + (i << 4), 0x01);
+    hal_data->channels[i] = lcec_dout_register_channel(&pdo_entry_regs, slave, i, 0x7000 + (i << 4), 0x01);
   }
 
   return 0;
 }
 
 static void lcec_el2xxx_write(struct lcec_slave *slave, long period) {
-  lcec_class_dout_pins_t *hal_data = (lcec_class_dout_pins_t *)slave->hal_data;
+  lcec_class_dout_channels_t *hal_data = (lcec_class_dout_channels_t *)slave->hal_data;
 
   if (!slave->state.operational) {
     return;
