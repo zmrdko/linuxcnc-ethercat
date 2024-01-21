@@ -135,15 +135,15 @@ lcec_class_ain_channel_t *lcec_ain_register_channel(
   if (opt && opt->is_unsigned) is_unsigned = 1;
   if (opt && opt->max_value) max_value = opt->max_value;
   if (opt && opt->value_idx) value_idx = opt->value_idx;
-  if (opt && opt->value_sidx) value_idx = opt->value_sidx;
-  if (opt && opt->underrange_idx) value_idx = opt->underrange_idx;
-  if (opt && opt->underrange_sidx) value_idx = opt->underrange_sidx;
-  if (opt && opt->overrange_idx) value_idx = opt->overrange_idx;
-  if (opt && opt->overrange_sidx) value_idx = opt->overrange_sidx;
-  if (opt && opt->error_idx) value_idx = opt->error_idx;
-  if (opt && opt->error_sidx) value_idx = opt->error_sidx;
-  if (opt && opt->syncerror_idx) value_idx = opt->syncerror_idx;
-  if (opt && opt->syncerror_sidx) value_idx = opt->syncerror_sidx;
+  if (opt && opt->value_sidx) value_sidx = opt->value_sidx;
+  if (opt && opt->underrange_idx) underrange_idx = opt->underrange_idx;
+  if (opt && opt->underrange_sidx) underrange_sidx = opt->underrange_sidx;
+  if (opt && opt->overrange_idx) overrange_idx = opt->overrange_idx;
+  if (opt && opt->overrange_sidx) overrange_sidx = opt->overrange_sidx;
+  if (opt && opt->error_idx) error_idx = opt->error_idx;
+  if (opt && opt->error_sidx) error_sidx = opt->error_sidx;
+  if (opt && opt->syncerror_idx) syncerror_idx = opt->syncerror_idx;
+  if (opt && opt->syncerror_sidx) syncerror_sidx = opt->syncerror_sidx;
 
   // The default name depends on the port type.
   char *name_prefix = "ain";
@@ -187,7 +187,7 @@ lcec_class_ain_channel_t *lcec_ain_register_channel(
   // values or we can't represent anything below freezing.  I'd rather
   // treat `opt` as read-only after this point.
   data->is_unsigned = is_unsigned;
-  
+
   // Register basic PDO pins
   LCEC_PDO_INIT((*pdo_entry_regs), slave->index, slave->vid, slave->pid, value_idx, value_sidx, &data->val_pdo_os, NULL);
 

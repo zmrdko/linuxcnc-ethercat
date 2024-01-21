@@ -265,22 +265,22 @@ static int lcec_el3xxx_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
       // <modParam name="chXSensor" value="???"/>
       pval = lcec_modparam_get(slave, LCEC_EL3XXX_MODPARAM_SENSOR + i);
       if (pval != NULL) {
-	if (set_sensor_type(slave, pval->str, chan, 0x8000+(i<<4), 0x19) != 0)
-	  return -1;  // set_sensor_type logs an error message so we don't have to.
+        if (set_sensor_type(slave, pval->str, chan, 0x8000 + (i << 4), 0x19) != 0)
+          return -1;  // set_sensor_type logs an error message so we don't have to.
       }
 
       // <modParam name="chXResolution" value="???"/>
       pval = lcec_modparam_get(slave, LCEC_EL3XXX_MODPARAM_RESOLUTION + i);
       if (pval != NULL) {
-	if (set_resolution(slave, pval->str, chan, 0x8000+(i<<4), 0x2) != 0)
-	  return -1;  // set_resolution logs an error message.
+        if (set_resolution(slave, pval->str, chan, 0x8000 + (i << 4), 0x2) != 0)
+          return -1;  // set_resolution logs an error message so we don't have to.
       }
 
       // <modParam name="chXWires", value="???"/>
       pval = lcec_modparam_get(slave, LCEC_EL3XXX_MODPARAM_WIRES + i);
       if (pval != NULL) {
-	if (set_wires(slave, pval->str, chan, 0x8000+(i<<4), 0x1a) != 0)
-	  return -1;  // set_resolution logs an error message.
+        if (set_wires(slave, pval->str, chan, 0x8000 + (i << 4), 0x1a) != 0)
+          return -1;  // set_resolution logs an error message so we don't have to.
       }
     }
   }
@@ -325,7 +325,6 @@ static int set_sensor_type(lcec_slave_t *slave, char *sensortype, lcec_class_ain
   if (sensor != NULL) {
     *(chan->scale) = sensor->scale;
     chan->is_unsigned = sensor->is_unsigned;
-    
     if (lcec_write_sdo16(slave, idx, sidx, sensor->value) != 0) {
       rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "failed to configure sensor for slave %s.%s\n", slave->master->name, slave->name);
       return -1;
@@ -337,7 +336,6 @@ static int set_sensor_type(lcec_slave_t *slave, char *sensortype, lcec_class_ain
 
   return 0;
 }
-
 
 /// @brief Match the sensor resolutiuon in modparams and return the settings for that resolution.
 static const temp_resolution_t *sensor_resolution(char *sensorresolution) {
@@ -355,11 +353,10 @@ static const temp_resolution_t *sensor_resolution(char *sensorresolution) {
 /// @brief Set the resolution for a channel.
 static int set_resolution(lcec_slave_t *slave, char *resolution_name, lcec_class_ain_channel_t *chan, int idx, int sidx) {
   temp_resolution_t const *resolution;
-  
+
   resolution = sensor_resolution(resolution_name);
   if (resolution != NULL) {
     *(chan->scale) = *(chan->scale) * resolution->scale_multiplier;
-    
     if (lcec_write_sdo8(slave, idx, sidx, resolution->value) != 0) {
       rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "failed to configure slave %s.%s sdo resolution!\n", slave->master->name, slave->name);
       return -1;
@@ -387,7 +384,7 @@ static const temp_wires_t *sensor_wires(char *sensorwires) {
 /// @brief Set the wire count for a channel.
 static int set_wires(lcec_slave_t *slave, char *wires_name, lcec_class_ain_channel_t *chan, int idx, int sidx) {
   temp_wires_t const *wires;
-  
+
   wires = sensor_wires(wires_name);
   if (wires != NULL) {
     if (lcec_write_sdo16(slave, idx, sidx, wires->value) != 0) {
