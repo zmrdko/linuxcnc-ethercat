@@ -16,19 +16,23 @@
 //    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 //
 
+/// @file
+/// @brief Code for manipulating device definitions and finding devices by name
+
 #include "lcec.h"
 
-static lcec_typelinkedlist_t *typeslist = NULL;
+lcec_typelinkedlist_t *typeslist = NULL;
 
-// Add a single slave type to the `typeslist` linked-list, so it can
-// be looked up by name.
-void lcec_addtype(const lcec_typelist_t *type) {
+/// @brief Register a single slave type with LinuxCNC-Ethercat.
+/// @param[in] type the definition of the device type to add.
+void lcec_addtype(lcec_typelist_t *type, char *sourcefile) {
   lcec_typelinkedlist_t *t, *l;
 
   // using malloc instead of hal_malloc because this can be called
   // from either lcec.so (inside of LinuxCNC) or lcec_conf (a
   // standalone binary).
   t = malloc(sizeof(lcec_typelinkedlist_t));
+  type->sourcefile = sourcefile;
   t->type = type;
   t->next = NULL;
 
@@ -48,16 +52,19 @@ void lcec_addtype(const lcec_typelist_t *type) {
   }
 }
 
-// Add an array of slavetypes to the `typeslist` linked-lisk.
-void lcec_addtypes(const lcec_typelist_t types[]) {
-  lcec_typelist_t const *type;
+/// @brief Register an array of new slave types with LinuxCNC-Ethercat.
+/// @param[in] types A list of types to add, terminated with a `NULL`.
+void lcec_addtypes(lcec_typelist_t types[], char *sourcefile) {
+  lcec_typelist_t *type;
 
   for (type = types; type->name != NULL; type++) {
-    lcec_addtype(type);
+    lcec_addtype(type, sourcefile);
   }
 }
 
-// Find a slave type by name.
+/// @brief Find a slave type by name.
+/// @param[in] name the name to find.
+/// @returns a pointer to the `lcec_typelist_t` for the slave, or NULL if the type is not found.
 const lcec_typelist_t *lcec_findslavetype(const char *name) {
   lcec_typelinkedlist_t *tl;
 

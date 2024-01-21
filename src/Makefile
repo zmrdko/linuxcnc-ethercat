@@ -8,6 +8,9 @@ include Makefile.clean
 RTLDFLAGS += -Wl,-rpath,$(LIBDIR)
 RTEXTRA_LDFLAGS += -Wl,--whole-archive liblcecdevices.a -Wl,--no-whole-archive -L$(LIBDIR) -llinuxcnchal -lethercat -lrt
 
+#EXTRA_CFLAGS += --std=c2x
+EXTRA_CFLAGS += -Wall  # Increase debugging level
+
 ## targets
 lcec-common-objs := lcec_devicelist.o lcec_ethercat.o lcec_pins.o
 lcec-objs := lcec_main.o $(lcec-common-objs)
@@ -74,7 +77,7 @@ install: install-user install-realtime
 	true  # override 'install' from $(MODINC)
 
 realtime: lcec.so
-user: lcec_conf
+user: lcec_conf lcec_devices
 
 install-user: user
 	mkdir -p $(DESTDIR)$(EMC2_HOME)/bin
@@ -95,3 +98,6 @@ lcec.so: lcec_main.o $(lcec-common-objs) liblcecdevices.a
 
 lcec_conf: $(lcec-conf-objs) $(lcec-common-objs) liblcecdevices.a
 	$(CC) -o $@ $(lcec-conf-objs) $(lcec-common-objs) -Wl,-rpath,$(LIBDIR) -L$(LIBDIR) -llinuxcnchal -lexpat -Wl,--whole-archive liblcecdevices.a -Wl,--no-whole-archive -lethercat -lm
+
+lcec_devices: lcec_devices.o $(lcec-common-objs) liblcecdevices.a
+	$(CC) -o $@ lcec_devices.o $(lcec-common-objs) -Wl,-rpath,$(LIBDIR) -L$(LIBDIR) -llinuxcnchal -lexpat -Wl,--whole-archive liblcecdevices.a -Wl,--no-whole-archive -lethercat -lm

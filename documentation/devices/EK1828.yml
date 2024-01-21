@@ -1,0 +1,11 @@
+---
+Device: EK1828
+VendorID: "0x00000002"
+VendorName: Beckhoff Automation GmbH & Co. KG
+PID: "0x07242c52"
+Description: Beckhoff EK1828 EtherCAT IO-Coupler  (1A E-Bus, 4 Ch. Dig. In, 3ms, 8 Ch. Dig. Out 24V, 0,5A)
+DocumentationURL: http://www.beckhoff.com/EK1828
+DeviceType: System Couplers
+Notes: ""
+SrcFile: devices/lcec_digitalcombo.c
+TestingStatus: ""

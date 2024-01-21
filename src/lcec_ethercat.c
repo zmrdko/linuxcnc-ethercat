@@ -16,12 +16,16 @@
 //    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 //
 
+/// @file
+/// @brief Ethercat library code
+
 #include "lcec.h"
 
 static int lcec_param_newfv(hal_type_t type, hal_pin_dir_t dir, void *data_addr, const char *fmt, va_list ap);
 static int lcec_param_newfv_list(void *base, const lcec_pindesc_t *list, va_list ap);
 int lcec_comp_id = -1;
 
+/// @brief Find the slave with a specified index underneath a specific master.
 lcec_slave_t *lcec_slave_by_index(struct lcec_master *master, int index) {
   lcec_slave_t *slave;
 
@@ -34,6 +38,7 @@ lcec_slave_t *lcec_slave_by_index(struct lcec_master *master, int index) {
   return NULL;
 }
 
+/// @brief Copy FSoE (Safety over EtherCAT / FailSafe over EtherCAT) data between slaves and masters.
 void copy_fsoe_data(struct lcec_slave *slave, unsigned int slave_offset, unsigned int master_offset) {
   lcec_master_t *master = slave->master;
   uint8_t *pd = master->process_data;
@@ -52,8 +57,10 @@ void copy_fsoe_data(struct lcec_slave *slave, unsigned int slave_offset, unsigne
   }
 }
 
+/// @brief Initialize syncs to 0.
 void lcec_syncs_init(lcec_syncs_t *syncs) { memset(syncs, 0, sizeof(lcec_syncs_t)); }
 
+/// @brief Add a new EtherCAT sync manager configuration.
 void lcec_syncs_add_sync(lcec_syncs_t *syncs, ec_direction_t dir, ec_watchdog_mode_t watchdog_mode) {
   syncs->curr_sync = &syncs->syncs[syncs->sync_count];
 
@@ -65,6 +72,7 @@ void lcec_syncs_add_sync(lcec_syncs_t *syncs, ec_direction_t dir, ec_watchdog_mo
   syncs->syncs[syncs->sync_count].index = 0xff;
 }
 
+/// @brief Add a new PDO to an existing sync manager.
 void lcec_syncs_add_pdo_info(lcec_syncs_t *syncs, uint16_t index) {
   syncs->curr_pdo_info = &syncs->pdo_infos[syncs->pdo_info_count];
 
@@ -78,6 +86,7 @@ void lcec_syncs_add_pdo_info(lcec_syncs_t *syncs, uint16_t index) {
   (syncs->pdo_info_count)++;
 }
 
+/// @brief Add a new PDO entry to an existing PDO.
 void lcec_syncs_add_pdo_entry(lcec_syncs_t *syncs, uint16_t index, uint8_t subindex, uint8_t bit_length) {
   syncs->curr_pdo_entry = &syncs->pdo_entries[syncs->pdo_entry_count];
 
@@ -93,6 +102,7 @@ void lcec_syncs_add_pdo_entry(lcec_syncs_t *syncs, uint16_t index, uint8_t subin
   (syncs->pdo_entry_count)++;
 }
 
+/// @brief Read an SDO configuration from a slave device.
 int lcec_read_sdo(struct lcec_slave *slave, uint16_t index, uint8_t subindex, uint8_t *target, size_t size) {
   lcec_master_t *master = slave->master;
   int err;
@@ -114,6 +124,7 @@ int lcec_read_sdo(struct lcec_slave *slave, uint16_t index, uint8_t subindex, ui
   return 0;
 }
 
+/// @brief Read IDN data from a slave device.
 int lcec_read_idn(struct lcec_slave *slave, uint8_t drive_no, uint16_t idn, uint8_t *target, size_t size) {
   lcec_master_t *master = slave->master;
   int err;
@@ -174,6 +185,7 @@ static int lcec_param_newfv(hal_type_t type, hal_pin_dir_t dir, void *data_addr,
   return 0;
 }
 
+/// @brief Create a new LinuxCNC `param` dynamically.
 int lcec_param_newf(hal_type_t type, hal_pin_dir_t dir, void *data_addr, const char *fmt, ...) {
   va_list ap;
   int err;
@@ -202,6 +214,7 @@ static int lcec_param_newfv_list(void *base, const lcec_pindesc_t *list, va_list
   return 0;
 }
 
+/// @brief Create a list of new LinuxCNC params dynamically, using sprintf() to create names.
 int lcec_param_newf_list(void *base, const lcec_pindesc_t *list, ...) {
   va_list ap;
   int err;
@@ -213,6 +226,7 @@ int lcec_param_newf_list(void *base, const lcec_pindesc_t *list, ...) {
   return err;
 }
 
+/// @brief Get an XML `<modParam>` value for a specified slave.
 LCEC_CONF_MODPARAM_VAL_T *lcec_modparam_get(struct lcec_slave *slave, int id) {
   lcec_slave_modparam_t *p;
 

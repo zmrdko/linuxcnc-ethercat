@@ -16,6 +16,9 @@
 //    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 //
 
+/// @file
+/// @brief Driver for Beckhoff EL1xxx digital input modules
+
 #include "lcec_el1xxx.h"
 #include "lcec_class_din.h"
 
@@ -51,12 +54,11 @@ static lcec_typelist_t types[] = {
     {NULL},
 };
 
-ADD_TYPES(types);
+ADD_TYPES(types)
 
 static void lcec_el1xxx_read(struct lcec_slave *slave, long period);
 
 static int lcec_el1xxx_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
-  lcec_master_t *master = slave->master;
   lcec_class_din_pins_t *hal_data;
   int i;
 

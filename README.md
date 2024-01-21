@@ -4,7 +4,7 @@ This is a LinuxCNC EtherCAT HAL driver.
 
 It was forked from
 [sittner/linuxcnc-ethercat](https://github.com/sittner/linuxcnc-ethercat),
-and it intended to become the new default version of LinuxCNC
+and is intended to become the new default version of LinuxCNC
 EtherCAT.  Please bear with us while we do a bit of cleanup here, and
 then we'll start looking at adding additional maintainers and merging
 the backlog of drivers that has built up over the past few years.
@@ -19,7 +19,7 @@ minimal manual work.
 ### Initial setup
 
 First, you need to tell `apt` how to find the Etherlab repository,
-hosted at https://build.opensuse.org/projects/science:EtherLab.  This
+hosted at https://build.opensuse.org/project/show/science:EtherLab.  This
 is the preferred mechanism from the [LinuxCNC
 forum](https://forum.linuxcnc.org/ethercat/45336-ethercat-installation-from-repositories-how-to-step-by-step):
 
@@ -42,7 +42,7 @@ just change `Debian_12` to `Debian_11`.)
 
 You will then need to do a bit of setup for Ethercat; at a minimum
 you'll need to edit `/etc/ethercat.conf` to tell it which interface it
-should use.  See the forum link, above, for additional details.
+should use.  See the forum link (above) for additional details.
 
 You can verify that Ethercat is working when `ethercat slaves` shows
 the devices attached to your system.  See the forum link above for
@@ -57,7 +57,7 @@ is upgraded, then you *may* need to re-run this command in order to
 get Ethercat working again:
 
 ```
-sudo apt install -y linux-headers-$(uname -r
+sudo apt install -y linux-headers-$(uname -r)
 ```
 
 This is because the real-time kernel that LinuxCNC prefers doesn't get
@@ -71,11 +71,15 @@ See [the contributing documentation](CONTRIBUTING.md) for details.  If
 you have any issues with the contributing process, *please* file an
 issue here.  Everything is new, and it may be broken.
 
+[API Documentation](https://linuxcnc-ethercat.github.io/linuxcnc-ethercat/doxygen/) via Doxygen is available, but incomplete.
+
 
 ## Devices Supported
 
 See [the device documentation](documentation/DEVICES.md) for a partial
-list of Ethercat devices supported by this project.
+list of Ethercat devices supported by this project.  Not all devices
+are equally supported.  If you have any problems, please [file a
+bug](https://github.com/linuxcnc-ethercat/linuxcnc-ethercat/issues/new/choose).
 
 
 ## Differences That Will Impact You
@@ -84,7 +88,8 @@ There are several differences between this version of
 LinuxCNC-Ethercat and [the
 original](https://github.com/sittner/linuxcnc-ethercat) that will
 (eventually) make life easier, but in the short term will make
-patching more complicated.
+patching more complicated.  If you're just *using* EtherCAT with
+LinuxCNC, then you can safely ignore all of this.
 
 1. In this version, all device-specific code
 ([`lcec_el1xxx.c`](src/devices/lcec_el1xxx.c), for example) lives in

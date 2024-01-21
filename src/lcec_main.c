@@ -16,15 +16,19 @@
 //    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 //
 
+/// @file
+/// @brief Initialization code for LinuxCNC-Ethercat
+
 #include "devices/lcec_generic.h"
 #include "lcec.h"
 #include "rtapi_app.h"
 //#include <linuxcnc/rtapi_mutex.h>
 
-MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Sascha Ittner <sascha.ittner@modusoft.de>");
-MODULE_DESCRIPTION("Driver for EtherCAT devices");
+MODULE_LICENSE("GPL")
+MODULE_AUTHOR("Sascha Ittner <sascha.ittner@modusoft.de>")
+MODULE_DESCRIPTION("Driver for EtherCAT devices")
 
+/// @brief Global HAL Pins
 static const lcec_pindesc_t master_global_pins[] = {
     {HAL_U32, HAL_OUT, offsetof(lcec_master_data_t, slaves_responding), "%s.slaves-responding"},
     {HAL_BIT, HAL_OUT, offsetof(lcec_master_data_t, state_init), "%s.state-init"},
@@ -36,6 +40,7 @@ static const lcec_pindesc_t master_global_pins[] = {
     {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
+/// @brief Master HAL pins
 static const lcec_pindesc_t master_pins[] = {
 #ifdef RTAPI_TASK_PLL_SUPPORT
     {HAL_S32, HAL_OUT, offsetof(lcec_master_data_t, pll_err), "%s.pll-err"},
@@ -45,6 +50,7 @@ static const lcec_pindesc_t master_pins[] = {
     {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
+/// @brief Master params
 static const lcec_pindesc_t master_params[] = {
 #ifdef RTAPI_TASK_PLL_SUPPORT
     {HAL_U32, HAL_RW, offsetof(lcec_master_data_t, pll_step), "%s.pll-step"},
@@ -53,6 +59,7 @@ static const lcec_pindesc_t master_params[] = {
     {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
+/// @brief Basic Slave pins
 static const lcec_pindesc_t slave_pins[] = {
     {HAL_BIT, HAL_OUT, offsetof(lcec_slave_state_t, online), "%s.%s.%s.slave-online"},
     {HAL_BIT, HAL_OUT, offsetof(lcec_slave_state_t, operational), "%s.%s.%s.slave-oper"},
@@ -73,22 +80,23 @@ static ec_master_state_t global_ms;
 int lcec_parse_config(void);
 void lcec_clear_config(void);
 
-void lcec_request_lock(void *data);
-void lcec_release_lock(void *data);
+#ifdef __KERNEL__
+static void lcec_request_lock(void *data);
+static void lcec_release_lock(void *data);
+#endif
 
 lcec_master_data_t *lcec_init_master_hal(const char *pfx, int global);
 lcec_slave_state_t *lcec_init_slave_state_hal(char *master_name, char *slave_name);
 void lcec_update_master_hal(lcec_master_data_t *hal_data, ec_master_state_t *ms);
 void lcec_update_slave_state_hal(lcec_slave_state_t *hal_data, ec_slave_config_state_t *ss);
+static int lcec_check_pdo_regs(ec_pdo_entry_reg_t *pdo_entry_regs, int pdo_entry_count);
 
 void lcec_read_all(void *arg, long period);
 void lcec_write_all(void *arg, long period);
 void lcec_read_master(void *arg, long period);
 void lcec_write_master(void *arg, long period);
 
-static int lcec_param_newfv(hal_type_t type, hal_pin_dir_t dir, void *data_addr, const char *fmt, va_list ap);
-static int lcec_param_newfv_list(void *base, const lcec_pindesc_t *list, va_list ap);
-
+/// @brief Main entrypoint from LinuxCNC
 int rtapi_app_main(void) {
   int slave_count;
   lcec_master_t *master;
@@ -184,6 +192,10 @@ int rtapi_app_main(void) {
           rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "failure in proc_init for slave %s.%s\n", master->name, slave->name);
           goto fail2;
         }
+      }
+      if (lcec_check_pdo_regs(pdo_entry_regs, slave->pdo_entry_count) != 0) {
+          rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "PDO reg check failure for slave %s.%s\n", master->name, slave->name);
+          goto fail2;
       }
       pdo_entry_regs += slave->pdo_entry_count;
 
@@ -314,6 +326,7 @@ fail0:
   return -EINVAL;
 }
 
+/// @brief Shut down LinuxCNC-Ethercat
 void rtapi_app_exit(void) {
   lcec_master_t *master;
 
@@ -326,6 +339,7 @@ void rtapi_app_exit(void) {
   hal_exit(lcec_comp_id);
 }
 
+/// @brief Parse configuration from `lcec_conf`.
 int lcec_parse_config(void) {
   int shmem_id;
   void *shmem_ptr;
@@ -521,6 +535,7 @@ int lcec_parse_config(void) {
           if (generic_pdos == NULL) {
             rtapi_print_msg(
                 RTAPI_MSG_ERR, LCEC_MSG_PFX "Unable to allocate slave %s.%s generic pdo memory\n", master->name, slave_conf->name);
+            lcec_free(generic_pdo_entries);
             goto fail2;
           }
 
@@ -529,6 +544,8 @@ int lcec_parse_config(void) {
           if (generic_sync_managers == NULL) {
             rtapi_print_msg(
                 RTAPI_MSG_ERR, LCEC_MSG_PFX "Unable to allocate slave %s.%s generic sync manager memory\n", master->name, slave_conf->name);
+            lcec_free(generic_pdo_entries);
+            lcec_free(generic_pdos);
             goto fail2;
           }
           generic_sync_managers->index = 0xff;
@@ -540,6 +557,9 @@ int lcec_parse_config(void) {
           if (sdo_config == NULL) {
             rtapi_print_msg(
                 RTAPI_MSG_ERR, LCEC_MSG_PFX "Unable to allocate slave %s.%s sdo entry memory\n", master->name, slave_conf->name);
+            lcec_free(generic_pdo_entries);
+            lcec_free(generic_pdos);
+            lcec_free(generic_sync_managers);
             goto fail2;
           }
         }
@@ -550,6 +570,10 @@ int lcec_parse_config(void) {
           if (idn_config == NULL) {
             rtapi_print_msg(
                 RTAPI_MSG_ERR, LCEC_MSG_PFX "Unable to allocate slave %s.%s idn entry memory\n", master->name, slave_conf->name);
+            lcec_free(generic_pdo_entries);
+            lcec_free(generic_pdos);
+            lcec_free(generic_sync_managers);
+            lcec_free(sdo_config);
             goto fail2;
           }
         }
@@ -559,6 +583,11 @@ int lcec_parse_config(void) {
           modparams = lcec_zalloc(sizeof(lcec_slave_modparam_t) * (slave_conf->modParamCount + 1));
           if (modparams == NULL) {
             rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "Unable to allocate slave %s.%s modparam memory\n", master->name, slave_conf->name);
+            lcec_free(generic_pdo_entries);
+            lcec_free(generic_pdos);
+            lcec_free(generic_sync_managers);
+            lcec_free(sdo_config);
+            lcec_free(idn_config);
             goto fail2;
           }
           modparams[slave_conf->modParamCount].id = -1;
@@ -801,6 +830,11 @@ int lcec_parse_config(void) {
         sdo_conf = (LCEC_CONF_SDOCONF_T *)conf;
         conf += sizeof(LCEC_CONF_SDOCONF_T) + sdo_conf->length;
 
+        if (sdo_config == NULL) {
+          rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "sdo_config is NULL\n");
+          goto fail2;
+        }
+
         // copy attributes
         sdo_config->index = sdo_conf->index;
         sdo_config->subindex = sdo_conf->subindex;
@@ -817,6 +851,11 @@ int lcec_parse_config(void) {
         // get config token
         idn_conf = (LCEC_CONF_IDNCONF_T *)conf;
         conf += sizeof(LCEC_CONF_IDNCONF_T) + idn_conf->length;
+
+        if (idn_config == NULL) {
+          rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "idn_config is NULL\n");
+          goto fail2;
+        }
 
         // copy attributes
         idn_config->drive = idn_conf->drive;
@@ -838,6 +877,11 @@ int lcec_parse_config(void) {
         // check for slave
         if (slave == NULL) {
           rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "Slave node for modparam config missing\n");
+          goto fail2;
+        }
+
+        if (modparams == NULL) {
+          rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "modparams is nullg\n");
           goto fail2;
         }
 
@@ -902,6 +946,7 @@ fail0:
   return -1;
 }
 
+/// @brief Clear configuration.
 void lcec_clear_config(void) {
   lcec_master_t *master, *prev_master;
   lcec_slave_t *slave, *prev_slave;
@@ -966,16 +1011,21 @@ void lcec_clear_config(void) {
   }
 }
 
-void lcec_request_lock(void *data) {
+#ifdef __KERNEL__
+/// @brief Lock LCEC.
+static void lcec_request_lock(void *data) {
   lcec_master_t *master = (lcec_master_t *)data;
   rtapi_mutex_get(&master->mutex);
 }
 
-void lcec_release_lock(void *data) {
+/// @brief Unlock LCEC.
+static void lcec_release_lock(void *data) {
   lcec_master_t *master = (lcec_master_t *)data;
   rtapi_mutex_give(&master->mutex);
 }
+#endif
 
+/// @brief Initialize LinuxCNC HAL pins for the master device.
 lcec_master_data_t *lcec_init_master_hal(const char *pfx, int global) {
   lcec_master_data_t *hal_data;
 
@@ -1002,6 +1052,7 @@ lcec_master_data_t *lcec_init_master_hal(const char *pfx, int global) {
   return hal_data;
 }
 
+/// @brief Initialize generic LinuxCNC HAL pins for a slave
 lcec_slave_state_t *lcec_init_slave_state_hal(char *master_name, char *slave_name) {
   lcec_slave_state_t *hal_data;
 
@@ -1020,6 +1071,21 @@ lcec_slave_state_t *lcec_init_slave_state_hal(char *master_name, char *slave_nam
   return hal_data;
 }
 
+/// @brief Verify that the correct number of PDOs were added by the slave.
+/// @param pdo_entry_regs The PDOs for the driver.
+/// @param pdo_entry_count The number of expected PDOs.
+/// @return 0 for success, nonzero for failure.
+static int lcec_check_pdo_regs(ec_pdo_entry_reg_t *pdo_entry_regs, int pdo_entry_count) {
+  for (int i =0; i<pdo_entry_count; i++) {
+    if (pdo_entry_regs[i].vendor_id == 0) {
+      rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "Missing PDO entry found!  Should have %d, but entry %d is unset.\n", pdo_entry_count, i);
+      return -1;
+    }
+  }
+  return 0;
+}
+
+/// @brief Update HAL pins for the master.
 void lcec_update_master_hal(lcec_master_data_t *hal_data, ec_master_state_t *ms) {
   *(hal_data->slaves_responding) = ms->slaves_responding;
   *(hal_data->state_init) = (ms->al_states & 0x01) != 0;
@@ -1030,6 +1096,7 @@ void lcec_update_master_hal(lcec_master_data_t *hal_data, ec_master_state_t *ms)
   *(hal_data->all_op) = (ms->al_states == 0x08);
 }
 
+/// @brief Update generic HAL pins for a slave.
 void lcec_update_slave_state_hal(lcec_slave_state_t *hal_data, ec_slave_config_state_t *ss) {
   *(hal_data->online) = ss->online;
   *(hal_data->operational) = ss->operational;
@@ -1039,6 +1106,7 @@ void lcec_update_slave_state_hal(lcec_slave_state_t *hal_data, ec_slave_config_s
   *(hal_data->state_op) = (ss->al_state & 0x08) != 0;
 }
 
+/// @brief Update all input pins across all masters and slaves.
 void lcec_read_all(void *arg, long period) {
   lcec_master_t *master;
 
@@ -1056,6 +1124,7 @@ void lcec_read_all(void *arg, long period) {
   lcec_update_master_hal(global_hal_data, &global_ms);
 }
 
+/// @brief Update all output pins across all masters and slaves.
 void lcec_write_all(void *arg, long period) {
   lcec_master_t *master;
 
@@ -1065,6 +1134,7 @@ void lcec_write_all(void *arg, long period) {
   }
 }
 
+/// @brief Read all input pins on a master and its slaves.
 void lcec_read_master(void *arg, long period) {
   lcec_master_t *master = (lcec_master_t *)arg;
   lcec_slave_t *slave;
@@ -1124,6 +1194,7 @@ void lcec_read_master(void *arg, long period) {
   }
 }
 
+/// @brief Write all output pins on a master and its slaves.
 void lcec_write_master(void *arg, long period) {
   lcec_master_t *master = (lcec_master_t *)arg;
   lcec_slave_t *slave;

@@ -16,6 +16,9 @@
 //    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 //
 
+/// @file
+/// @brief Driver for Beckhoff EL3xxx Analog input modules
+
 #include "lcec_el3xxx.h"
 
 #include "../lcec.h"
@@ -25,8 +28,6 @@
 //   Specifically, support disabling the filter (0x8000:06) and DC mode.
 //
 // TODO(scottlaird): using generic support, add EL3255 pot input.
-//
-// TODO(scottlaird): using generic support, add EM37xx pressure sensor input.
 //
 // TODO(scottlaird): Figure out what to do with older EL31xx devices
 //   without 0x6000:e (the sync error PDO).  It looks like it was
@@ -44,6 +45,7 @@
 
 static int lcec_el3xxx_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
 
+/// @brief Modparams settings available via XML.
 static const lcec_modparam_desc_t modparams_temperature[] = {
     {"ch0Sensor", LCEC_EL3XXX_MODPARAM_SENSOR + 0, MODPARAM_TYPE_STRING},
     {"ch1Sensor", LCEC_EL3XXX_MODPARAM_SENSOR + 1, MODPARAM_TYPE_STRING},
@@ -72,14 +74,17 @@ static const lcec_modparam_desc_t modparams_temperature[] = {
     {NULL},
 };
 
+/// @brief Sensor types available for `<modParams name="sensor">`
 typedef struct {
-  char *name;       // Sensor type name
-  uint16_t value;   // Which value needs to be set in 0x80x0:19 to enable this sensor
-  int is_unsigned;  // Ohm measurements are unsigned, and need the extra bit to cover the documented range.
-  double scale;     // Default conversion factor for this sensor type
+  char *name;       ///< Sensor type name
+  uint16_t value;   ///< Which value needs to be set in 0x80x0:19 to enable this sensor
+  int is_unsigned;  ///< Ohm measurements are unsigned, and need the extra bit to cover the documented range.
+  double scale;     ///< Default conversion factor for this sensor type
 } temp_sensor_t;
 
-// From https://download.beckhoff.com/download/Document/io/ethercat-terminals/el32xxen.pdf#page=223
+/// @brief List of known temperature sensor types.
+///
+/// From https://download.beckhoff.com/download/Document/io/ethercat-terminals/el32xxen.pdf#page=223
 static const temp_sensor_t temp_sensors[] = {
     {"Pt100", 0, 0, 0.1},          // Pt100 sensor,
     {"Ni100", 1, 0, 0.1},          // Ni100 sensor, -60 to 250C
@@ -94,13 +99,16 @@ static const temp_sensor_t temp_sensors[] = {
     {NULL},
 };
 
+/// @brief Resolutions available for `<modParams name="resolution"/>`
 typedef struct {
-  char *name;
-  uint16_t value;
-  double scale_multiplier;
+  char *name;               ///< The name of the `resolution` modParam value, as found in `ethercat.xml`.
+  uint16_t value;           ///< The value for this `resolution` setting that needs to be set in hardware.
+  double scale_multiplier;  ///< The amount that the `scale` needs to be adjusted when this resolution is selected.
 } temp_resolution_t;
 
-// From https://download.beckhoff.com/download/Document/io/ethercat-terminals/el32xxen.pdf#page=222
+/// @brief List of available values for the `resolutions` modParam setting.
+///
+/// From https://download.beckhoff.com/download/Document/io/ethercat-terminals/el32xxen.pdf#page=222
 static const temp_resolution_t temp_resolutions[] = {
     {"Signed", 0, 1.0},    // 0.1C per bit, default on most devices
     {"Standard", 0, 1.0},  // Same as "signed", but easier to remember WRT "High".
@@ -109,11 +117,13 @@ static const temp_resolution_t temp_resolutions[] = {
     {NULL},
 };
 
+/// @brief Wire settings available for `<modParams name="wires" value="..."/>`
 typedef struct {
-  char *name;
-  uint16_t value;
+  char *name;      ///< Name of the 'wires' modParam value, as found in `ethercat.xml`.
+  uint16_t value;  ///< The value for this `wires` setting that needs to be set in hardware.
 } temp_wires_t;
 
+/// @brief List of available values for the `wires` modParam setting.
 static const temp_wires_t temp_wires[] = {
     {"2", 0},
     {"3", 1},
@@ -121,7 +131,8 @@ static const temp_wires_t temp_wires[] = {
     {NULL},
 };
 
-static const lcec_typelist_t types[] = {
+/// @brief Devices supported by this driver.
+static lcec_typelist_t types[] = {
     // 12-bit devices
     {"EL3001", LCEC_BECKHOFF_VID, 0x0bb93052, LCEC_EL30X1_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS12},
     {"EL3002", LCEC_BECKHOFF_VID, 0x0bba3052, LCEC_EL30X2_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS12},
@@ -195,17 +206,18 @@ static const lcec_typelist_t types[] = {
     {"EM3712", LCEC_BECKHOFF_VID, 0x0e803452, LCEC_EM37X2_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS16 | FLAG_PRESSURE},
     {NULL},
 };
-ADD_TYPES(types);
+ADD_TYPES(types)
 
+/// @brief Data for a single analog channel.
 typedef struct {
-  hal_bit_t *overrange;
-  hal_bit_t *underrange;
-  hal_bit_t *error;
-  hal_bit_t *sync_err;
-  hal_s32_t *raw_val;
-  hal_float_t *scale;
-  hal_float_t *bias;
-  hal_float_t *val;
+  hal_bit_t *overrange;   ///< Device reading is over-range.
+  hal_bit_t *underrange;  ///< Device reading is under-range.
+  hal_bit_t *error;       ///< Device is in an error state.
+  hal_bit_t *sync_err;    ///< Device has a sync error.
+  hal_s32_t *raw_val;     ///< The raw value read from the device.
+  hal_float_t *scale;     ///< The scale used to convert `raw_val` into `val`.
+  hal_float_t *bias;      ///< The offset used to convert `raw_val` into `val`.
+  hal_float_t *val;       ///< The final result returned to LinuxCNC.
   unsigned int ovr_pdo_os;
   unsigned int ovr_pdo_bp;
   unsigned int udr_pdo_os;
@@ -215,9 +227,10 @@ typedef struct {
   unsigned int sync_err_pdo_os;
   unsigned int sync_err_pdo_bp;
   unsigned int val_pdo_os;
-  unsigned int is_unsigned;
+  unsigned int is_unsigned;  ///< Sensor type is unsigned, such as resistance or temperature sensors.
 } lcec_el3xxx_chan_t;
 
+/// @brief List of HAL pins for analog devices with sync support.
 static const lcec_pindesc_t slave_pins_sync[] = {
     {HAL_BIT, HAL_OUT, offsetof(lcec_el3xxx_chan_t, error), "%s.%s.%s.ain-%d-error"},
     {HAL_BIT, HAL_OUT, offsetof(lcec_el3xxx_chan_t, sync_err), "%s.%s.%s.ain-%d-sync-err"},
@@ -230,6 +243,7 @@ static const lcec_pindesc_t slave_pins_sync[] = {
     {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
+/// @brief List of HAL pins for analog devices without sync support.
 static const lcec_pindesc_t slave_pins_nosync[] = {
     {HAL_BIT, HAL_OUT, offsetof(lcec_el3xxx_chan_t, error), "%s.%s.%s.ain-%d-error"},
     {HAL_BIT, HAL_OUT, offsetof(lcec_el3xxx_chan_t, overrange), "%s.%s.%s.ain-%d-overrange"},
@@ -241,6 +255,7 @@ static const lcec_pindesc_t slave_pins_nosync[] = {
     {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
+/// @brief List of HAL pins for temperature sensors.
 static const lcec_pindesc_t slave_pins_temperature[] = {
     {HAL_BIT, HAL_OUT, offsetof(lcec_el3xxx_chan_t, error), "%s.%s.%s.temp-%d-error"},
     {HAL_BIT, HAL_OUT, offsetof(lcec_el3xxx_chan_t, overrange), "%s.%s.%s.temp-%d-overrange"},
@@ -251,6 +266,7 @@ static const lcec_pindesc_t slave_pins_temperature[] = {
     {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
+/// @brief List of HAL pins for pressure sensors.
 static const lcec_pindesc_t slave_pins_pressure[] = {
     {HAL_BIT, HAL_OUT, offsetof(lcec_el3xxx_chan_t, error), "%s.%s.%s.press-%d-error"},
     {HAL_BIT, HAL_OUT, offsetof(lcec_el3xxx_chan_t, overrange), "%s.%s.%s.press-%d-overrange"},
@@ -262,9 +278,10 @@ static const lcec_pindesc_t slave_pins_pressure[] = {
     {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
+/// @brief Data for an analog input device.
 typedef struct {
-  uint32_t channels;
-  lcec_el3xxx_chan_t chans[LCEC_EL3XXX_MAXCHANS];
+  uint32_t channels;                               ///< The number of channels this device supports.
+  lcec_el3xxx_chan_t chans[LCEC_EL3XXX_MAXCHANS];  ///< Data for each channel.
 } lcec_el3xxx_data_t;
 
 static void lcec_el3xxx_read_temp16(struct lcec_slave *slave, long period);
@@ -274,6 +291,7 @@ static const temp_sensor_t *sensor_type(char *sensortype);
 static const temp_resolution_t *sensor_resolution(char *sensorresolution);
 static const temp_wires_t *sensor_wires(char *sensorwires);
 
+/// @brief Initialize an EL3xxx device.
 static int lcec_el3xxx_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
   lcec_master_t *master = slave->master;
   lcec_el3xxx_data_t *hal_data;
@@ -440,6 +458,7 @@ static int lcec_el3xxx_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   return 0;
 }
 
+/// @brief Read values from the device.
 static void lcec_el3xxx_read(struct lcec_slave *slave, long period, uint32_t mask, int has_sync) {
   lcec_master_t *master = slave->master;
   lcec_el3xxx_data_t *hal_data = (lcec_el3xxx_data_t *)slave->hal_data;
@@ -471,8 +490,12 @@ static void lcec_el3xxx_read(struct lcec_slave *slave, long period, uint32_t mas
   }
 }
 
+/// @brief Read data from a 16-bit analog sensor.
 static void lcec_el3xxx_read_16(struct lcec_slave *slave, long period) { lcec_el3xxx_read(slave, period, 0x7fff, true); }
 
+/// @brief Read data from a 12-bit analog sensor.
+///
+/// Note that this is currently identical to `lcec_el3xxx_read_16`.
 static void lcec_el3xxx_read_12(struct lcec_slave *slave, long period) {
   // According to
   // https://download.beckhoff.com/download/Document/io/ethercat-terminals/el30xxen.pdf,
@@ -483,6 +506,9 @@ static void lcec_el3xxx_read_12(struct lcec_slave *slave, long period) {
   lcec_el3xxx_read(slave, period, 0x7fff, false);
 }
 
+/// @brief Read data from a 16-bit analog temperature sensor.
+///
+/// This applies different transform logic to return a temperature rather than a generic floating point value.
 static void lcec_el3xxx_read_temp16(struct lcec_slave *slave, long period) {
   lcec_master_t *master = slave->master;
   lcec_el3xxx_data_t *hal_data = (lcec_el3xxx_data_t *)slave->hal_data;
@@ -517,9 +543,10 @@ static void lcec_el3xxx_read_temp16(struct lcec_slave *slave, long period) {
   }
 }
 
-// Match the sensor_type in modparams and return the definition
-// associated with that sensor, from
-// https://download.beckhoff.com/download/Document/io/ethercat-terminals/el32xxen.pdf#page=223
+/// @brief Match the sensor_type in modparams and return the definition
+/// associated with that sensor.
+///
+/// From https://download.beckhoff.com/download/Document/io/ethercat-terminals/el32xxen.pdf#page=223
 static const temp_sensor_t *sensor_type(char *sensortype) {
   temp_sensor_t const *type;
 
@@ -532,7 +559,7 @@ static const temp_sensor_t *sensor_type(char *sensortype) {
   return NULL;
 }
 
-// Match the sensor resolutiuon in modparams and return the settings for that resolution.
+/// @brief Match the sensor resolutiuon in modparams and return the settings for that resolution.
 static const temp_resolution_t *sensor_resolution(char *sensorresolution) {
   temp_resolution_t const *res;
 
@@ -545,7 +572,7 @@ static const temp_resolution_t *sensor_resolution(char *sensorresolution) {
   return NULL;
 }
 
-// Match the sensor wire configuration in modparams and return the settings for that number of wires.
+/// @brief Match the sensor wire configuration in modparams and return the settings for that number of wires.
 static const temp_wires_t *sensor_wires(char *sensorwires) {
   temp_wires_t const *wires;
 

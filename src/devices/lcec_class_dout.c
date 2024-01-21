@@ -16,13 +16,20 @@
 //    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 //
 
+/// @file
+/// @brief Library for digital output devices
+
 #include "lcec_class_dout.h"
 
 #include "../lcec.h"
 
 static const lcec_pindesc_t slave_pins[] = {
-    {HAL_BIT, HAL_OUT, offsetof(lcec_class_dout_pin_t, out), "%s.%s.%s.dout-%d"},
-    {HAL_BIT, HAL_OUT, offsetof(lcec_class_dout_pin_t, invert), "%s.%s.%s.dout-%d-invert"},
+    {HAL_BIT, HAL_IN, offsetof(lcec_class_dout_pin_t, out), "%s.%s.%s.dout-%d"},
+    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
+};
+
+static const lcec_pindesc_t slave_params[] = {
+    {HAL_BIT, HAL_RW, offsetof(lcec_class_dout_pin_t, invert), "%s.%s.%s.dout-%d-invert"},
     {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
@@ -67,13 +74,16 @@ lcec_class_dout_pin_t *lcec_dout_register_pin(
     return NULL;
   }
   memset(data, 0, sizeof(lcec_class_dout_pin_t));
-  // data->idx = idx;
-  // data->sidx = sidx;
 
   LCEC_PDO_INIT((*pdo_entry_regs), slave->index, slave->vid, slave->pid, idx, sidx, &data->pdo_os, &data->pdo_bp);
   err = lcec_pin_newf_list(data, slave_pins, LCEC_MODULE_NAME, slave->master->name, slave->name, id);
   if (err != 0) {
     rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "lcec_pin_newf_list for slave %s.%s pin %d failed\n", slave->master->name, slave->name, id);
+    return NULL;
+  }
+  err = lcec_param_newf_list(data, slave_params, LCEC_MODULE_NAME, slave->master->name, slave->name, id);
+  if (err != 0) {
+    rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "lcec_params_newf_list for slave %s.%s pin %d failed\n", slave->master->name, slave->name, id);
     return NULL;
   }
 
@@ -92,7 +102,7 @@ lcec_class_dout_pin_t *lcec_dout_register_pin(
 void lcec_dout_write(struct lcec_slave *slave, lcec_class_dout_pin_t *data) {
   lcec_master_t *master = slave->master;
   uint8_t *pd = master->process_data;
-  int s;
+  hal_bit_t s;
 
   s = *(data->out);
   if (data->invert) {
@@ -109,10 +119,6 @@ void lcec_dout_write(struct lcec_slave *slave, lcec_class_dout_pin_t *data) {
 // - slave: the slave, passed from the per-device `_write`.
 // - pins: a lcec_class_dout_pins_t *, as returned by lcec_dout_register_pin.
 void lcec_dout_write_all(struct lcec_slave *slave, lcec_class_dout_pins_t *pins) {
-  lcec_master_t *master = slave->master;
-  uint8_t *pd = master->process_data;
-  int s;
-
   for (int i = 0; i < pins->count; i++) {
     lcec_class_dout_pin_t *pin = pins->pins[i];
 

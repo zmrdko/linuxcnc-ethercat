@@ -1,0 +1,11 @@
+---
+Device: generic
+VendorID: "0x00000000"
+VendorName: ""
+PID: "0x00000000"
+Description: UNKNOWN
+DocumentationURL: ""
+DeviceType: ""
+Notes: ""
+SrcFile: devices/lcec_generic.c
+TestingStatus: ""
