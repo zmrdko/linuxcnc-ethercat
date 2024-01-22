@@ -19,8 +19,6 @@
 /// @file
 /// @brief Driver for Beckhoff EL3xxx Analog input modules
 
-#include "lcec_el3xxx.h"
-
 #include "../lcec.h"
 
 // TODO(scottlaird): add support for additional EL31xx operating modes, as per
@@ -33,15 +31,11 @@
 //   without 0x6000:e (the sync error PDO).  It looks like it was
 //   added in r18.  Is there a point in keeping the sync error pin at all?
 
-#define FLAG_BITS16      1 << 0  // Device is 16 bits
-#define FLAG_BITS12      1 << 1  // Device is 12 bits
-#define FLAG_SYNC        1 << 4  // on for SYNC, off for no sync
-#define FLAG_TEMPERATURE 1 << 5  // Device is a temperature sensor
-#define FLAG_PRESSURE    1 << 6  // Device is a pressure sensor
-
 #define LCEC_EL3XXX_MODPARAM_SENSOR     0
 #define LCEC_EL3XXX_MODPARAM_RESOLUTION 8
 #define LCEC_EL3XXX_MODPARAM_WIRES      16
+
+#define LCEC_EL3XXX_MAXCHANS 8  // for sizing arrays
 
 static int lcec_el3xxx_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
 
@@ -131,79 +125,91 @@ static const temp_wires_t temp_wires[] = {
     {NULL},
 };
 
+/// Flags for describing devices
+#define F_CHANNELS(x) (x)      ///< Number of input channels
+#define F_SYNC        1 << 14  ///< Device has `sync-error` PDO
+#define F_TEMPERATURE 1 << 15  ///< Device is a temperature sensor
+#define F_PRESSURE    1 << 16  ///< Device is a pressure sensor
+
+#define INPORTS(flag) ((flag)&0xf)  // Number of input channels
+#define PDOS(flag)    (((flag)&F_SYNC) ? (5 * INPORTS(flag)) : (4 * INPORTS(flag)))
+
+/// Macro to avoid repeating all of the unchanging fields in
+/// `lcec_typelist_t`.  Calculates the `pdo_count` based on total port
+/// count and port types.
+#define BECKHOFF_AIN_DEVICE(name, pid, flags) \
+  { name, LCEC_BECKHOFF_VID, pid, PDOS(flags), 0, NULL, lcec_el3xxx_init, NULL, flags }
+
+/// Macro for defining devices that take `<modParam>`s in the XML config.
+#define BECKHOFF_AIN_DEVICE_PARAMS(name, pid, flags, modparams) \
+  { name, LCEC_BECKHOFF_VID, pid, PDOS(flags), 0, NULL, lcec_el3xxx_init, modparams, flags }
+
 /// @brief Devices supported by this driver.
 static lcec_typelist_t types[] = {
     // 12-bit devices
-    {"EL3001", LCEC_BECKHOFF_VID, 0x0bb93052, LCEC_EL30X1_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS12},
-    {"EL3002", LCEC_BECKHOFF_VID, 0x0bba3052, LCEC_EL30X2_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS12},
-    {"EL3004", LCEC_BECKHOFF_VID, 0x0bbc3052, LCEC_EL30X4_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS12},
-    {"EL3008", LCEC_BECKHOFF_VID, 0x0bc03052, LCEC_EL30X8_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS12},
-    {"EL3011", LCEC_BECKHOFF_VID, 0x0bc33052, LCEC_EL30X1_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS12},
-    {"EL3012", LCEC_BECKHOFF_VID, 0x0bc43052, LCEC_EL30X2_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS12},
-    {"EL3014", LCEC_BECKHOFF_VID, 0x0bc63052, LCEC_EL30X4_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS12},
-    {"EL3021", LCEC_BECKHOFF_VID, 0x0bcd3052, LCEC_EL30X1_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS12},
-    {"EL3022", LCEC_BECKHOFF_VID, 0x0bce3052, LCEC_EL30X2_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS12},
-    {"EL3024", LCEC_BECKHOFF_VID, 0x0bd03052, LCEC_EL30X4_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS12},
-    {"EL3041", LCEC_BECKHOFF_VID, 0x0be13052, LCEC_EL30X1_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS12},
-    {"EL3042", LCEC_BECKHOFF_VID, 0x0be23052, LCEC_EL30X2_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS12},
-    {"EL3044", LCEC_BECKHOFF_VID, 0x0be43052, LCEC_EL30X4_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS12},
-    {"EL3048", LCEC_BECKHOFF_VID, 0x0be83052, LCEC_EL30X8_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS12},
-    {"EL3051", LCEC_BECKHOFF_VID, 0x0beb3052, LCEC_EL30X1_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS12},
-    {"EL3052", LCEC_BECKHOFF_VID, 0x0bec3052, LCEC_EL30X2_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS12},
-    {"EL3054", LCEC_BECKHOFF_VID, 0x0bee3052, LCEC_EL30X4_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS12},
-    {"EL3058", LCEC_BECKHOFF_VID, 0x0bf23052, LCEC_EL30X8_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS12},
-    {"EL3061", LCEC_BECKHOFF_VID, 0x0bf53052, LCEC_EL30X1_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS12},
-    {"EL3062", LCEC_BECKHOFF_VID, 0x0bf63052, LCEC_EL30X2_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS12},
-    {"EL3064", LCEC_BECKHOFF_VID, 0x0bf83052, LCEC_EL30X4_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS12},
-    {"EL3068", LCEC_BECKHOFF_VID, 0x0bfc3052, LCEC_EL30X8_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS12},
-    {"EJ3004", LCEC_BECKHOFF_VID, 0x0bbc2852, LCEC_EL30X4_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS12},
+    BECKHOFF_AIN_DEVICE("EL3001", 0x0bb93052, F_CHANNELS(1)),
+    BECKHOFF_AIN_DEVICE("EL3002", 0x0bba3052, F_CHANNELS(2)),
+    BECKHOFF_AIN_DEVICE("EL3004", 0x0bbc3052, F_CHANNELS(4)),
+    BECKHOFF_AIN_DEVICE("EL3008", 0x0bc03052, F_CHANNELS(8)),
+    BECKHOFF_AIN_DEVICE("EL3011", 0x0bc33052, F_CHANNELS(1)),
+    BECKHOFF_AIN_DEVICE("EL3012", 0x0bc43052, F_CHANNELS(2)),
+    BECKHOFF_AIN_DEVICE("EL3014", 0x0bc63052, F_CHANNELS(3)),
+    BECKHOFF_AIN_DEVICE("EL3021", 0x0bcd3052, F_CHANNELS(1)),
+    BECKHOFF_AIN_DEVICE("EL3022", 0x0bce3052, F_CHANNELS(2)),
+    BECKHOFF_AIN_DEVICE("EL3024", 0x0bd03052, F_CHANNELS(4)),
+    BECKHOFF_AIN_DEVICE("EL3041", 0x0be13052, F_CHANNELS(1)),
+    BECKHOFF_AIN_DEVICE("EL3042", 0x0be23052, F_CHANNELS(2)),
+    BECKHOFF_AIN_DEVICE("EL3044", 0x0be43052, F_CHANNELS(4)),
+    BECKHOFF_AIN_DEVICE("EL3048", 0x0be83052, F_CHANNELS(8)),
+    BECKHOFF_AIN_DEVICE("EL3051", 0x0beb3052, F_CHANNELS(1)),
+    BECKHOFF_AIN_DEVICE("EL3052", 0x0bec3052, F_CHANNELS(2)),
+    BECKHOFF_AIN_DEVICE("EL3054", 0x0bee3052, F_CHANNELS(4)),
+    BECKHOFF_AIN_DEVICE("EL3058", 0x0bf23052, F_CHANNELS(8)),
+    BECKHOFF_AIN_DEVICE("EL3061", 0x0bf53052, F_CHANNELS(1)),
+    BECKHOFF_AIN_DEVICE("EL3062", 0x0bf63052, F_CHANNELS(2)),
+    BECKHOFF_AIN_DEVICE("EL3064", 0x0bf83052, F_CHANNELS(4)),
+    BECKHOFF_AIN_DEVICE("EL3068", 0x0bfc3052, F_CHANNELS(8)),
+    BECKHOFF_AIN_DEVICE("EJ3004", 0x0bbc2852, F_CHANNELS(4)),
 
-    // 16-bit devices
-    {"EL3101", LCEC_BECKHOFF_VID, 0x0c1d3052, LCEC_EL31X1_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS16 | FLAG_SYNC},
-    //  { "EL3102", LCEC_BECKHOFF_VID, 0x0c1e3052, LCEC_EL31X2_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS16|FLAG_SYNC},
-    {"EL3104", LCEC_BECKHOFF_VID, 0x0c203052, LCEC_EL31X4_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS16 | FLAG_SYNC},
-    {"EL3111", LCEC_BECKHOFF_VID, 0x0c273052, LCEC_EL31X1_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS16 | FLAG_SYNC},
-    //  { "EL3112", LCEC_BECKHOFF_VID, 0x0c283052, LCEC_EL31X2_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS16|FLAG_SYNC},
-    {"EL3114", LCEC_BECKHOFF_VID, 0x0c2a3052, LCEC_EL31X4_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS16 | FLAG_SYNC},
-    {"EL3121", LCEC_BECKHOFF_VID, 0x0c313052, LCEC_EL31X1_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS16 | FLAG_SYNC},
-    //  { "EL3122", LCEC_BECKHOFF_VID, 0x0c323052, LCEC_EL31X2_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS16|FLAG_SYNC},
-    //  { "EL3124", LCEC_BECKHOFF_VID, 0x0c343052, LCEC_EL31X4_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS16|FLAG_SYNC},
-    {"EL3141", LCEC_BECKHOFF_VID, 0x0c453052, LCEC_EL31X1_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS16 | FLAG_SYNC},
-    //  { "EL3142", LCEC_BECKHOFF_VID, 0x0c463052, LCEC_EL31X2_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS16|FLAG_SYNC},
-    {"EL3144", LCEC_BECKHOFF_VID, 0x0c483052, LCEC_EL31X4_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS16 | FLAG_SYNC},
-    {"EL3151", LCEC_BECKHOFF_VID, 0x0c4f3052, LCEC_EL31X1_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS16 | FLAG_SYNC},
-    //  { "EL3152", LCEC_BECKHOFF_VID, 0x0c503052, LCEC_EL31X2_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS16|FLAG_SYNC},
-    {"EL3154", LCEC_BECKHOFF_VID, 0x0c523052, LCEC_EL31X4_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS16 | FLAG_SYNC},
-    {"EL3161", LCEC_BECKHOFF_VID, 0x0c593052, LCEC_EL31X1_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS16 | FLAG_SYNC},
-    //  { "EL3162", LCEC_BECKHOFF_VID, 0x0c5a3052, LCEC_EL31X2_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS16|FLAG_SYNC},
-    //  { "EL3164", LCEC_BECKHOFF_VID, 0x0c5c3052, LCEC_EL31X4_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS16|FLAG_SYNC},
-    {"EL3182", LCEC_BECKHOFF_VID, 0x0c6e3052, LCEC_EL31X2_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS16 | FLAG_SYNC},
-    {"EP3174", LCEC_BECKHOFF_VID, 0x0c664052, LCEC_EL31X4_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS16 | FLAG_SYNC},
-    {"EP3184", LCEC_BECKHOFF_VID, 0x0c704052, LCEC_EL31X4_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS16 | FLAG_SYNC},
-    {"EPX3158", LCEC_BECKHOFF_VID, 0x9809ab69, LCEC_EL31X8_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS16 | FLAG_SYNC},
+    // 16-bit devices.  These include a `sync-err` PDO that 12-bit devices lack.
+    BECKHOFF_AIN_DEVICE("EL3101", 0x0c1d3052, F_CHANNELS(1) | F_SYNC),
+    BECKHOFF_AIN_DEVICE("EL3102", 0x0c1e3052, F_CHANNELS(2) | F_SYNC),
+    BECKHOFF_AIN_DEVICE("EL3104", 0x0c203052, F_CHANNELS(4) | F_SYNC),
+    BECKHOFF_AIN_DEVICE("EL3111", 0x0c273052, F_CHANNELS(1) | F_SYNC),
+    BECKHOFF_AIN_DEVICE("EL3112", 0x0c283052, F_CHANNELS(2) | F_SYNC),
+    BECKHOFF_AIN_DEVICE("EL3114", 0x0c2a3052, F_CHANNELS(4) | F_SYNC),
+    BECKHOFF_AIN_DEVICE("EL3121", 0x0c313052, F_CHANNELS(1) | F_SYNC),
+    BECKHOFF_AIN_DEVICE("EL3122", 0x0c323052, F_CHANNELS(2) | F_SYNC),
+    BECKHOFF_AIN_DEVICE("EL3124", 0x0c343052, F_CHANNELS(4) | F_SYNC),
+    BECKHOFF_AIN_DEVICE("EL3141", 0x0c453052, F_CHANNELS(1) | F_SYNC),
+    BECKHOFF_AIN_DEVICE("EL3142", 0x0c463052, F_CHANNELS(2) | F_SYNC),
+    BECKHOFF_AIN_DEVICE("EL3144", 0x0c483052, F_CHANNELS(4) | F_SYNC),
+    BECKHOFF_AIN_DEVICE("EL3151", 0x0c4f3052, F_CHANNELS(1) | F_SYNC),
+    BECKHOFF_AIN_DEVICE("EL3152", 0x0c503052, F_CHANNELS(2) | F_SYNC),
+    BECKHOFF_AIN_DEVICE("EL3154", 0x0c523052, F_CHANNELS(4) | F_SYNC),
+    BECKHOFF_AIN_DEVICE("EL3161", 0x0c593052, F_CHANNELS(1) | F_SYNC),
+    BECKHOFF_AIN_DEVICE("EL3162", 0x0c5a3052, F_CHANNELS(2) | F_SYNC),
+    BECKHOFF_AIN_DEVICE("EL3164", 0x0c5c3052, F_CHANNELS(4) | F_SYNC),
+    BECKHOFF_AIN_DEVICE("EL3182", 0x0c6e3052, F_CHANNELS(2) | F_SYNC),
+    BECKHOFF_AIN_DEVICE("EP3174", 0x0c664052, F_CHANNELS(4) | F_SYNC),
+    BECKHOFF_AIN_DEVICE("EP3184", 0x0c704052, F_CHANNELS(4) | F_SYNC),
+    BECKHOFF_AIN_DEVICE("EPX3158", 0x9809ab69, F_CHANNELS(8) | F_SYNC),
 
-    {"EJ3202", LCEC_BECKHOFF_VID, 0x0c822852, LCEC_EL32X2_PDOS, 0, NULL, lcec_el3xxx_init, modparams_temperature,
-        FLAG_BITS16 | FLAG_TEMPERATURE},
-    {"EJ3214", LCEC_BECKHOFF_VID, 0x0c8e2852, LCEC_EL32X4_PDOS, 0, NULL, lcec_el3xxx_init, modparams_temperature,
-        FLAG_BITS16 | FLAG_TEMPERATURE},
-    {"EL3201", LCEC_BECKHOFF_VID, 0x0c813052, LCEC_EL32X1_PDOS, 0, NULL, lcec_el3xxx_init, modparams_temperature,
-        FLAG_BITS16 | FLAG_TEMPERATURE},
-    {"EL3202", LCEC_BECKHOFF_VID, 0x0c823052, LCEC_EL32X2_PDOS, 0, NULL, lcec_el3xxx_init, modparams_temperature,
-        FLAG_BITS16 | FLAG_TEMPERATURE},
-    {"EL3204", LCEC_BECKHOFF_VID, 0x0c843052, LCEC_EL32X4_PDOS, 0, NULL, lcec_el3xxx_init, modparams_temperature,
-        FLAG_BITS16 | FLAG_TEMPERATURE},
-    {"EL3208", LCEC_BECKHOFF_VID, 0x0c883052, LCEC_EL32X8_PDOS, 0, NULL, lcec_el3xxx_init, modparams_temperature,
-        FLAG_BITS16 | FLAG_TEMPERATURE},
-    {"EL3214", LCEC_BECKHOFF_VID, 0x0c8e3052, LCEC_EL32X4_PDOS, 0, NULL, lcec_el3xxx_init, modparams_temperature,
-        FLAG_BITS16 | FLAG_TEMPERATURE},
-    {"EL3218", LCEC_BECKHOFF_VID, 0x0c923052, LCEC_EL32X8_PDOS, 0, NULL, lcec_el3xxx_init, modparams_temperature,
-        FLAG_BITS16 | FLAG_TEMPERATURE},
-    {"EP3204", LCEC_BECKHOFF_VID, 0x0c844052, LCEC_EL32X4_PDOS, 0, NULL, lcec_el3xxx_init, modparams_temperature,
-        FLAG_BITS16 | FLAG_TEMPERATURE},
+    // Temperature devices.  They need to include `modparams_temperature` to allow for sensor-type settings.
+    BECKHOFF_AIN_DEVICE_PARAMS("EJ3202", 0x0c822852, F_CHANNELS(2) | F_TEMPERATURE, modparams_temperature),
+    BECKHOFF_AIN_DEVICE_PARAMS("EJ3214", 0x0c8e2852, F_CHANNELS(4) | F_TEMPERATURE, modparams_temperature),
+    BECKHOFF_AIN_DEVICE_PARAMS("EL3201", 0x0c813052, F_CHANNELS(1) | F_TEMPERATURE, modparams_temperature),
+    BECKHOFF_AIN_DEVICE_PARAMS("EL3202", 0x0c823052, F_CHANNELS(2) | F_TEMPERATURE, modparams_temperature),
+    BECKHOFF_AIN_DEVICE_PARAMS("EL3204", 0x0c843052, F_CHANNELS(4) | F_TEMPERATURE, modparams_temperature),
+    BECKHOFF_AIN_DEVICE_PARAMS("EL3208", 0x0c883052, F_CHANNELS(8) | F_TEMPERATURE, modparams_temperature),
+    BECKHOFF_AIN_DEVICE_PARAMS("EL3214", 0x0c8e3052, F_CHANNELS(4) | F_TEMPERATURE, modparams_temperature),
+    BECKHOFF_AIN_DEVICE_PARAMS("EL3218", 0x0c923052, F_CHANNELS(8) | F_TEMPERATURE, modparams_temperature),
+    BECKHOFF_AIN_DEVICE_PARAMS("EP3204", 0x0c844052, F_CHANNELS(4) | F_TEMPERATURE, modparams_temperature),
 
-    {"EM3701", LCEC_BECKHOFF_VID, 0x0e753452, LCEC_EM37X1_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS16 | FLAG_PRESSURE},
-    {"EM3702", LCEC_BECKHOFF_VID, 0x0e763452, LCEC_EM37X2_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS16 | FLAG_PRESSURE},
-    {"EM3712", LCEC_BECKHOFF_VID, 0x0e803452, LCEC_EM37X2_PDOS, 0, NULL, lcec_el3xxx_init, NULL, FLAG_BITS16 | FLAG_PRESSURE},
+    // Pressure sensors.
+    BECKHOFF_AIN_DEVICE("EM3701", 0x0e753452, F_CHANNELS(1) | F_PRESSURE),
+    BECKHOFF_AIN_DEVICE("EM3702", 0x0e763452, F_CHANNELS(2) | F_PRESSURE),
+    BECKHOFF_AIN_DEVICE("EM3712", 0x0e803452, F_CHANNELS(2) | F_PRESSURE),
     {NULL},
 };
 ADD_TYPES(types)
@@ -284,9 +290,8 @@ typedef struct {
   lcec_el3xxx_chan_t chans[LCEC_EL3XXX_MAXCHANS];  ///< Data for each channel.
 } lcec_el3xxx_data_t;
 
-static void lcec_el3xxx_read_temp16(struct lcec_slave *slave, long period);
-static void lcec_el3xxx_read_16(struct lcec_slave *slave, long period);
-static void lcec_el3xxx_read_12(struct lcec_slave *slave, long period);
+static void lcec_el3xxx_read_temp(struct lcec_slave *slave, long period);
+static void lcec_el3xxx_read(struct lcec_slave *slave, long period);
 static const temp_sensor_t *sensor_type(char *sensortype);
 static const temp_resolution_t *sensor_resolution(char *sensorresolution);
 static const temp_wires_t *sensor_wires(char *sensorwires);
@@ -300,29 +305,18 @@ static int lcec_el3xxx_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   int err;
   const lcec_pindesc_t *slave_pins;
   uint64_t flags;
-  int pdos_per_channel;
 
   flags = slave->flags;
-
-  if (flags & FLAG_SYNC) {
-    pdos_per_channel = 5;
-  } else {
-    pdos_per_channel = 4;
-  }
 
   rtapi_print_msg(RTAPI_MSG_DBG, LCEC_MSG_PFX "initing device as %s, flags %lx\n", slave->name, flags);
   rtapi_print_msg(RTAPI_MSG_DBG, LCEC_MSG_PFX "- slave is %p\n", slave);
   rtapi_print_msg(RTAPI_MSG_DBG, LCEC_MSG_PFX "- pdo_entry_regs is %p\n", pdo_entry_regs);
 
   // initialize settings that vary per bitdepth
-  if (flags & FLAG_BITS12) {
-    slave->proc_read = lcec_el3xxx_read_12;
-  } else if (flags & FLAG_BITS16) {
-    if (flags & FLAG_TEMPERATURE) {
-      slave->proc_read = lcec_el3xxx_read_temp16;
-    } else {
-      slave->proc_read = lcec_el3xxx_read_16;
-    }
+  if (flags & F_TEMPERATURE) {
+    slave->proc_read = lcec_el3xxx_read_temp;
+  } else {
+    slave->proc_read = lcec_el3xxx_read;
   }
 
   // alloc hal memory
@@ -332,7 +326,7 @@ static int lcec_el3xxx_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   }
   memset(hal_data, 0, sizeof(lcec_el3xxx_data_t));
   slave->hal_data = hal_data;
-  hal_data->channels = slave->pdo_entry_count / pdos_per_channel;
+  hal_data->channels = INPORTS(slave->flags);
 
   rtapi_print_msg(RTAPI_MSG_DBG, LCEC_MSG_PFX "- setting up pins\n");
 
@@ -345,7 +339,7 @@ static int lcec_el3xxx_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
     LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i << 4), 0x01, &chan->udr_pdo_os, &chan->udr_pdo_bp);
     LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i << 4), 0x02, &chan->ovr_pdo_os, &chan->ovr_pdo_bp);
     LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i << 4), 0x07, &chan->error_pdo_os, &chan->error_pdo_bp);
-    if (flags & FLAG_SYNC) {
+    if (flags & F_SYNC) {
       // Only EL31xx devices have this PDO, if we try to initialize it
       // with 30xxs, then we get a PDO error and fail out.
       LCEC_PDO_INIT(
@@ -354,11 +348,11 @@ static int lcec_el3xxx_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
     LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i << 4), 0x11, &chan->val_pdo_os, NULL);
 
     // export pins
-    if (flags & FLAG_TEMPERATURE) {
+    if (flags & F_TEMPERATURE) {
       slave_pins = slave_pins_temperature;
-    } else if (flags & FLAG_PRESSURE) {
+    } else if (flags & F_PRESSURE) {
       slave_pins = slave_pins_pressure;
-    } else if (flags & FLAG_SYNC)
+    } else if (flags & F_SYNC)
       slave_pins = slave_pins_sync;
     else
       slave_pins = slave_pins_nosync;
@@ -369,7 +363,7 @@ static int lcec_el3xxx_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
     }
 
     // initialize scale
-    if (flags & FLAG_TEMPERATURE) {
+    if (flags & F_TEMPERATURE) {
       *(chan->scale) = 0.1;
     } else {
       *(chan->scale) = 1.0;
@@ -378,7 +372,7 @@ static int lcec_el3xxx_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
     chan->is_unsigned = 0;
 
     // Handle modparams
-    if (flags & FLAG_TEMPERATURE) {
+    if (flags & F_TEMPERATURE) {
       LCEC_CONF_MODPARAM_VAL_T *pval;
 
       // Handle <modParam> entries from the XML.
@@ -459,13 +453,14 @@ static int lcec_el3xxx_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
 }
 
 /// @brief Read values from the device.
-static void lcec_el3xxx_read(struct lcec_slave *slave, long period, uint32_t mask, int has_sync) {
+static void lcec_el3xxx_read(struct lcec_slave *slave, long period) {
   lcec_master_t *master = slave->master;
   lcec_el3xxx_data_t *hal_data = (lcec_el3xxx_data_t *)slave->hal_data;
   uint8_t *pd = master->process_data;
   int i;
   lcec_el3xxx_chan_t *chan;
   int16_t value;
+  int mask = 0x7fff;
 
   // wait for slave to be operational
   if (!slave->state.operational) {
@@ -481,7 +476,7 @@ static void lcec_el3xxx_read(struct lcec_slave *slave, long period, uint32_t mas
     *(chan->overrange) = EC_READ_BIT(&pd[chan->ovr_pdo_os], chan->ovr_pdo_bp);
     *(chan->underrange) = EC_READ_BIT(&pd[chan->udr_pdo_os], chan->udr_pdo_bp);
     *(chan->error) = EC_READ_BIT(&pd[chan->error_pdo_os], chan->error_pdo_bp);
-    if (has_sync) *(chan->sync_err) = EC_READ_BIT(&pd[chan->sync_err_pdo_os], chan->sync_err_pdo_bp);
+    if (slave->flags & F_SYNC) *(chan->sync_err) = EC_READ_BIT(&pd[chan->sync_err_pdo_os], chan->sync_err_pdo_bp);
 
     // update value
     value = EC_READ_S16(&pd[chan->val_pdo_os]) & mask;
@@ -490,26 +485,10 @@ static void lcec_el3xxx_read(struct lcec_slave *slave, long period, uint32_t mas
   }
 }
 
-/// @brief Read data from a 16-bit analog sensor.
-static void lcec_el3xxx_read_16(struct lcec_slave *slave, long period) { lcec_el3xxx_read(slave, period, 0x7fff, true); }
-
-/// @brief Read data from a 12-bit analog sensor.
-///
-/// Note that this is currently identical to `lcec_el3xxx_read_16`.
-static void lcec_el3xxx_read_12(struct lcec_slave *slave, long period) {
-  // According to
-  // https://download.beckhoff.com/download/Document/io/ethercat-terminals/el30xxen.pdf,
-  // the EL30xx devices still return results between 0 and 0x7FFF --
-  // that is, a 15-bit result, even though it's a "12-bit" device.
-  //
-  // Note that this makes ..._read_12 identical to ..._read_16.
-  lcec_el3xxx_read(slave, period, 0x7fff, false);
-}
-
 /// @brief Read data from a 16-bit analog temperature sensor.
 ///
 /// This applies different transform logic to return a temperature rather than a generic floating point value.
-static void lcec_el3xxx_read_temp16(struct lcec_slave *slave, long period) {
+static void lcec_el3xxx_read_temp(struct lcec_slave *slave, long period) {
   lcec_master_t *master = slave->master;
   lcec_el3xxx_data_t *hal_data = (lcec_el3xxx_data_t *)slave->hal_data;
   uint8_t *pd = master->process_data;

@@ -24,35 +24,35 @@
 #include "../lcec.h"
 
 static const lcec_pindesc_t slave_pins[] = {
-    {HAL_BIT, HAL_IN, offsetof(lcec_class_dout_pin_t, out), "%s.%s.%s.dout-%d"},
+    {HAL_BIT, HAL_IN, offsetof(lcec_class_dout_channel_t, out), "%s.%s.%s.dout-%d"},
     {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
 static const lcec_pindesc_t slave_params[] = {
-    {HAL_BIT, HAL_RW, offsetof(lcec_class_dout_pin_t, invert), "%s.%s.%s.dout-%d-invert"},
+    {HAL_BIT, HAL_RW, offsetof(lcec_class_dout_channel_t, invert), "%s.%s.%s.dout-%d-invert"},
     {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
 // lcec_dout_allocate_pins returns a block of memory for holdintg the
 // result of `count` calls to `lcec_dout_register_device()`.  It is the
 // caller's responsibility to verify that the result is not NULL.
-lcec_class_dout_pins_t *lcec_dout_allocate_pins(int count) {
-  lcec_class_dout_pins_t *pins;
+lcec_class_dout_channels_t *lcec_dout_allocate_channels(int count) {
+  lcec_class_dout_channels_t *channels;
 
-  pins = hal_malloc(sizeof(lcec_class_dout_pins_t));
-  if (pins == NULL) {
+  channels = hal_malloc(sizeof(lcec_class_dout_channels_t));
+  if (channels == NULL) {
     return NULL;
   }
-  pins->count = count;
-  pins->pins = hal_malloc(sizeof(lcec_class_dout_pin_t *) * count);
-  if (pins->pins == NULL) {
+  channels->count = count;
+  channels->channels = hal_malloc(sizeof(lcec_class_dout_channel_t *) * count);
+  if (channels->channels == NULL) {
     return NULL;
   }
 
-  return pins;
+  return channels;
 }
 
-// lcec_dout_register_pin registers a single digital-output channel and publishes it as a LinuxCNC HAL pin.
+// lcec_dout_register_channel registers a single digital-output channel and publishes it as a LinuxCNC HAL pin.
 //
 // Parameters:
 //
@@ -63,17 +63,17 @@ lcec_class_dout_pins_t *lcec_dout_allocate_pins(int count) {
 // - sindx: the PDO sub-index for the digital output.
 //
 // See lcec_el2xxx.c for an example of use.
-lcec_class_dout_pin_t *lcec_dout_register_pin(
+lcec_class_dout_channel_t *lcec_dout_register_channel(
     ec_pdo_entry_reg_t **pdo_entry_regs, struct lcec_slave *slave, int id, uint16_t idx, uint16_t sidx) {
-  lcec_class_dout_pin_t *data;
+  lcec_class_dout_channel_t *data;
   int err;
 
-  data = hal_malloc(sizeof(lcec_class_dout_pin_t));
+  data = hal_malloc(sizeof(lcec_class_dout_channel_t));
   if (data == NULL) {
     rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "hal_malloc() for slave %s.%s pin %d failed\n", slave->master->name, slave->name, id);
     return NULL;
   }
-  memset(data, 0, sizeof(lcec_class_dout_pin_t));
+  memset(data, 0, sizeof(lcec_class_dout_channel_t));
 
   LCEC_PDO_INIT((*pdo_entry_regs), slave->index, slave->vid, slave->pid, idx, sidx, &data->pdo_os, &data->pdo_bp);
   err = lcec_pin_newf_list(data, slave_pins, LCEC_MODULE_NAME, slave->master->name, slave->name, id);
@@ -95,11 +95,11 @@ lcec_class_dout_pin_t *lcec_dout_register_pin(
 // Parameters:
 //
 // - slave: the slave, passed from the per-device `_write`.
-// - data: a lcec_class_dout_pin_t *, as returned by lcec_dout_register_pin.
+// - data: a lcec_class_dout_channel_t *, as returned by lcec_dout_register_channel.
 //
-// Call this once per pin registered, from inside of your device's
+// Call this once per channel registered, from inside of your device's
 // write function.
-void lcec_dout_write(struct lcec_slave *slave, lcec_class_dout_pin_t *data) {
+void lcec_dout_write(struct lcec_slave *slave, lcec_class_dout_channel_t *data) {
   lcec_master_t *master = slave->master;
   uint8_t *pd = master->process_data;
   hal_bit_t s;
@@ -117,11 +117,11 @@ void lcec_dout_write(struct lcec_slave *slave, lcec_class_dout_pin_t *data) {
 // Parameters:
 //
 // - slave: the slave, passed from the per-device `_write`.
-// - pins: a lcec_class_dout_pins_t *, as returned by lcec_dout_register_pin.
-void lcec_dout_write_all(struct lcec_slave *slave, lcec_class_dout_pins_t *pins) {
-  for (int i = 0; i < pins->count; i++) {
-    lcec_class_dout_pin_t *pin = pins->pins[i];
+// - channels: a lcec_class_dout_channels_t *, as returned by lcec_dout_register_channel.
+void lcec_dout_write_all(struct lcec_slave *slave, lcec_class_dout_channels_t *channels) {
+  for (int i = 0; i < channels->count; i++) {
+    lcec_class_dout_channel_t *channel = channels->channels[i];
 
-    lcec_dout_write(slave, pin);
+    lcec_dout_write(slave, channel);
   }
 }

@@ -26,15 +26,15 @@ typedef struct {
   hal_bit_t *in_not; ///< `hal_bit_t` pin for the `din-X-not` pin in LinuxCNC
   unsigned int pdo_os;  ///< This bit's offset in the master's PDO data structure.
   unsigned int pdo_bp;  ///< This bit's bit position in the master's PDO data structure.
-} lcec_class_din_pin_t;
+} lcec_class_din_channel_t;
 
 typedef struct {
-  int count;  ///< The number of pins described by this structure.
-  lcec_class_din_pin_t **pins;  ///< a dynamic array of `lcec_class_din_pin_t` pins.
-} lcec_class_din_pins_t;
+  int count;  ///< The number of channels described by this structure.
+  lcec_class_din_channel_t **channels;  ///< a dynamic array of `lcec_class_din_channel_t` channels.
+} lcec_class_din_channels_t;
 
-lcec_class_din_pins_t *lcec_din_allocate_pins(int count);
-lcec_class_din_pin_t *lcec_din_register_pin(
+lcec_class_din_channels_t *lcec_din_allocate_channels(int count);
+lcec_class_din_channel_t *lcec_din_register_channel(
     ec_pdo_entry_reg_t **pdo_entry_regs, struct lcec_slave *slave, int id, uint16_t idx, uint16_t sidx);
-void lcec_din_read(struct lcec_slave *slave, lcec_class_din_pin_t *data);
-void lcec_din_read_all(struct lcec_slave *slave, lcec_class_din_pins_t *pins);
+void lcec_din_read(struct lcec_slave *slave, lcec_class_din_channel_t *data);
+void lcec_din_read_all(struct lcec_slave *slave, lcec_class_din_channels_t *channels);

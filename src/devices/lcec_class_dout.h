@@ -25,15 +25,15 @@ typedef struct {
   hal_bit_t *out;
   hal_bit_t invert;
   unsigned int pdo_os, pdo_bp;
-} lcec_class_dout_pin_t;
+} lcec_class_dout_channel_t;
 
 typedef struct {
   int count;
-  lcec_class_dout_pin_t **pins;
-} lcec_class_dout_pins_t;
+  lcec_class_dout_channel_t **channels;
+} lcec_class_dout_channels_t;
 
-lcec_class_dout_pins_t *lcec_dout_allocate_pins(int count);
-lcec_class_dout_pin_t *lcec_dout_register_pin(
+lcec_class_dout_channels_t *lcec_dout_allocate_channels(int count);
+lcec_class_dout_channel_t *lcec_dout_register_channel(
     ec_pdo_entry_reg_t **pdo_entry_regs, struct lcec_slave *slave, int id, uint16_t idx, uint16_t sidx);
-void lcec_dout_write(struct lcec_slave *slave, lcec_class_dout_pin_t *data);
-void lcec_dout_write_all(struct lcec_slave *slave, lcec_class_dout_pins_t *pins);
+void lcec_dout_write(struct lcec_slave *slave, lcec_class_dout_channel_t *data);
+void lcec_dout_write_all(struct lcec_slave *slave, lcec_class_dout_channels_t *pins);
