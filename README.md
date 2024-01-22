@@ -80,14 +80,6 @@ package manager, then first you'll need to make sure that you have the
 LinuxCNC (with its development tools) installed.  Then download
 linuxcnc-ethercat and run `make install`.
 
-## Contributing
-
-See [the contributing documentation](CONTRIBUTING.md) for details.  If
-you have any issues with the contributing process, *please* file an
-issue here.  Everything is new, and it may be broken.
-
-[API Documentation](https://linuxcnc-ethercat.github.io/linuxcnc-ethercat/doxygen/) via Doxygen is available, but incomplete.
-
 
 ## Configuring
 
@@ -96,14 +88,10 @@ At a minimum, you will need two files.  First, you'll need an XML file
 you'll need a LinuxCNC HAL file that loads the LinuxCNC-Ethercat
 driver and tells LinuxCNC about your CNC.
 
-Examples TBD.
-
-## Devices Supported
-
-See [the device documentation](documentation/DEVICES.md) for a partial
-list of Ethercat devices supported by this project.  Not all devices
-are equally supported.  If you have any problems, please [file a
-bug](https://github.com/linuxcnc-ethercat/linuxcnc-ethercat/issues/new/choose).
+Some examples are available in the [`examples/`](examples/) directory,
+but they're somewhat dated.  The [LinuxCNC
+Forum](https://forum.linuxcnc.org/ethercat) is a better place to
+start.
 
 There are two ways to use EtherCAT hardware with this driver.  First,
 many devices have dedicated drivers which know about all of the
@@ -127,7 +115,16 @@ and it will let you send EtherCAT messages to any hardware, even if
 we've never seen it before.  This is easier than writing a new driver,
 but more difficult than using a pre-written driver.
 
-TODO(): write generic documentation.
+A [reference guide to LinuxCNC-Ethercat's XML
+configuration](documentation/configuration-reference.md) file is
+available.
+
+## Devices Supported
+
+See [the device documentation](documentation/DEVICES.md) for a partial
+list of Ethercat devices supported by this project.  Not all devices
+are equally supported.  If you have any problems, please [file a
+bug](https://github.com/linuxcnc-ethercat/linuxcnc-ethercat/issues/new/choose).
 
 ## Differences from `sittner/linuxcnc-ethercat`
 
@@ -194,3 +191,13 @@ make supporting new devices less complicated.  See
 [`lcec_class_din.c`](src/devices/lcec_class_din.c),
 [`lcec_class_dout.c`](src/devices/lcec_class_dout.c), and
 [`lcec_class_ain.c`](src/devices/lcec_class_ain.c).
+
+## Contributing
+
+See [the contributing documentation](CONTRIBUTING.md) for details.  If
+you have any issues with the contributing process, *please* file an
+issue here.  Everything is new, and it may be broken.
+
+[API
+Documentation](https://linuxcnc-ethercat.github.io/linuxcnc-ethercat/doxygen/)
+via Doxygen is available, but incomplete.
