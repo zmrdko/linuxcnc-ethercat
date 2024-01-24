@@ -95,6 +95,7 @@
     <slave idx="19" type="EL4032" name="D19"/>
     <slave idx="20" type="EL7041" name="D20"/>
     <slave idx="21" type="EK1110" name="D21"/>
+    <slave idx="22" type="EP2308" name="D22"/>
   </master>
 </masters>
     
