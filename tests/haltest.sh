@@ -208,7 +208,6 @@ test-slave-oper D10
 test-pin-exists D10 ain-7-val
 test-pin-notexists D10 ain-7-sync-err
 test-pin-count D10 62
-test-pin-greater D10 ain-0-val 0.1
 
 #echo "=== Testing initial config of D11 (EL6001)"
 #if ! grep 'lcec.0.D11.dout-7' $OUT > /dev/null; then
@@ -259,8 +258,17 @@ test-pin-exists D19 aout-1-value
 test-pin-exists D19 aout-1-min-dc
 test-pin-count D19 28
 
-echo "... Testing initial config of D20 (EK1101)"
+echo "... Testing initial config of D20 (EL7041)"
 test-slave-oper D20
+
+echo "... Testing initial config of D21 (EK1110)"
+test-slave-oper D21
+
+echo "... Testing initial config of D22 (EP2308)"
+test-slave-oper D22
+test-pin-exists D22 din-0
+test-pin-exists D22 dout-1
+test-pin-count D22 22
 
 echo "=== Initial config tests pass"
 
@@ -318,6 +326,9 @@ test-all-din-false
 
 
 echo "=== Testing Analog I/O"
+echo "... Checking D10 current input"
+test-pin-greater D10 ain-0-val 0.1
+
 echo "... Checking D15 power measurements"
 test-pin-greater D15 l0.frequency 59
 test-pin-less D15 l0.frequency 61

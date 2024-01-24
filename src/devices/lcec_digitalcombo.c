@@ -68,7 +68,7 @@ static int lcec_digitalcombo_init(int comp_id, struct lcec_slave *slave, ec_pdo_
 #define F_IN(x)     (x)       // Input channels
 #define F_OUT(x)    (x * 32)  // Output channels
 #define F_DENSEPDOS 1 << 10   // PDOs are 0x6000:01, 0x6000:02, ... instead of 0x6000:01, 0x6010:01
-#define F_OUTOFFSET 1 << 11   // Out PDOs start at 0x7080 instead of 0x7000
+#define F_OUTOFFSET 1 << 11   // Out PDOs start at 0x70n0 instead of 0x7000, where n is the number of input ports.
 
 #define INPORTS(flag)  ((flag)&31)           // Number of input channels
 #define OUTPORTS(flag) (((flag) >> 5) & 31)  // Number of output channels
@@ -88,11 +88,11 @@ static lcec_typelist_t types[] = {
     BECKHOFF_IO_DEVICE("EK1818", 0x071a2c52, F_IN(8) | F_OUT(4)),
     BECKHOFF_IO_DEVICE("EK1828", 0x07242c52, F_IN(4) | F_OUT(8)),
     BECKHOFF_IO_DEVICE("EK1828-0010", 0x07242c52, F_OUT(8)),  // No in
-    BECKHOFF_IO_DEVICE("EP2308", 0x09044052, F_IN(4) | F_OUT(4)),
+    BECKHOFF_IO_DEVICE("EP2308", 0x09044052, F_IN(4) | F_OUT(4) | F_OUTOFFSET),
     BECKHOFF_IO_DEVICE("EP2316", 0x090C4052, F_IN(8) | F_OUT(8) | F_DENSEPDOS),
-    BECKHOFF_IO_DEVICE("EP2318", 0x090E4052, F_IN(4) | F_OUT(4)),
-    BECKHOFF_IO_DEVICE("EP2328", 0x09184052, F_IN(4) | F_OUT(4)),
-    BECKHOFF_IO_DEVICE("EP2338", 0x09224052, F_IN(8) | F_OUT(8)),
+    BECKHOFF_IO_DEVICE("EP2318", 0x090E4052, F_IN(4) | F_OUT(4) | F_OUTOFFSET),
+    BECKHOFF_IO_DEVICE("EP2328", 0x09184052, F_IN(4) | F_OUT(4) | F_OUTOFFSET),
+    BECKHOFF_IO_DEVICE("EP2338", 0x09224052, F_IN(8) | F_OUT(8)),  // Not offset
     BECKHOFF_IO_DEVICE("EP2339", 0x09234052, F_IN(16) | F_OUT(16)),
     BECKHOFF_IO_DEVICE("EP2349", 0x092d4052, F_IN(16) | F_OUT(16)),
     BECKHOFF_IO_DEVICE("EQ2339", 0x092d4052, F_IN(16) | F_OUT(16)),
@@ -164,7 +164,7 @@ static int lcec_digitalcombo_init(int comp_id, struct lcec_slave *slave, ec_pdo_
       idx = 0x7000 + (i << 4);
       sidx = 1;
       if (slave->flags & F_OUTOFFSET) {
-        idx += 0x80;
+        idx += in_channels << 4;
       }
     }
 
