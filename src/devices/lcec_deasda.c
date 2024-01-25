@@ -251,9 +251,10 @@ static int lcec_deasda_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   memset(hal_data, 0, sizeof(lcec_deasda_data_t));
   slave->hal_data = hal_data;
 
-  // set to cyclic synchronous velocity mode
-  if (lcec_write_sdo8(slave, 0x6060, 0x00, 9) != 0) {
-    rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo velo mode\n", master->name, slave->name);
+  // set to 0x6060 to requested mode (CSV, CSP)
+  if (lcec_write_sdo8(slave, 0x6060, 0x00, operationmode) != 0) {
+    rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo to op mode %d\n", master->name, slave->name, operationmode);
+    return -1;
   }
 
   // set interpolation time period
@@ -263,9 +264,13 @@ static int lcec_deasda_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   while ((tu % 10) == 0 || tu > 255) { tu /=  10; ti++; }
   if (lcec_write_sdo8(slave, 0x60C2, 0x01, (uint8_t)tu) != 0) {
     rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo ipol time period units\n", master->name, slave->name);
+    return -1;
   }
   if (lcec_write_sdo8(slave, 0x60C2, 0x02, ti) != 0) {
     rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo ipol time period index\n", master->name, slave->name);
+    return -1;
+  }
+
   if (operationmode == DEASDA_OPMODE_CSV) {
     // initialize sync info
     slave->sync_info = lcec_deasda_syncs_csv;
@@ -293,10 +298,8 @@ static int lcec_deasda_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
     LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x2511, 0x00, &hal_data->extenc_pdo_os, NULL);
     LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6040, 0x00, &hal_data->control_pdo_os, NULL);
     LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x607A, 0x00, &hal_data->cmdvalue_pdo_os, NULL);
-
     // export pins common
     if ((err = lcec_pin_newf_list(hal_data, slave_pins, LCEC_MODULE_NAME, master->name, slave->name)) != 0) return err;
-
     // export pins specific
     if ((err = lcec_pin_newf_list(hal_data, slave_pins_csp, LCEC_MODULE_NAME, master->name, slave->name)) != 0) return err;
 
@@ -305,9 +308,8 @@ static int lcec_deasda_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   // export parameters
   if ((err = lcec_param_newf_list(hal_data, slave_params, LCEC_MODULE_NAME, master->name, slave->name)) != 0) return err;
 
-  // init subclasses
+  // init subclasses for encoders
   if ((err = class_enc_init(slave, &hal_data->enc, 32, "enc")) != 0) return err;
-
   if ((err = class_enc_init(slave, &hal_data->extenc, 32, "extenc")) != 0) return err;
 
   // initialize variables
@@ -321,10 +323,10 @@ static int lcec_deasda_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   // change based on FLAG_A2/FLAG_A3
   if (flags & FLAG_A2) {
     hal_data->pprev = DEASDA_PULSES_PER_REV_DEFLT_A2;
-    rtapi_print_msg(RTAPI_MSG_DBG, LCEC_MSG_PFX "Setting A2 Preset \n");
+    rtapi_print_msg(RTAPI_MSG_DBG, LCEC_MSG_PFX "Setting A2 Preset for device %s.%s.\n", master->name, slave->name);
   } else if (flags & FLAG_A3) {
     hal_data->pprev = DEASDA_PULSES_PER_REV_DEFLT_A3;
-    rtapi_print_msg(RTAPI_MSG_DBG, LCEC_MSG_PFX "Setting A3 Preset \n");
+    rtapi_print_msg(RTAPI_MSG_DBG, LCEC_MSG_PFX "Setting A3 Preset for device %s.%s.\n", master->name, slave->name);
   }
 
   hal_data->last_switch_on = 0;
