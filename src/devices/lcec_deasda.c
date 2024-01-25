@@ -184,7 +184,7 @@ static int lcec_deasda_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   slave->hal_data = hal_data;
 
   // set to cyclic synchronous velocity mode
-  if (ecrt_slave_config_sdo8(slave->config, 0x6060, 0x00, 9) != 0) {
+  if (lcec_write_sdo8(slave, 0x6060, 0x00, 9) != 0) {
     rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo velo mode\n", master->name, slave->name);
   }
 
@@ -192,10 +192,10 @@ static int lcec_deasda_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   tu = master->app_time_period;
   ti = -9;
   while ((tu % 10) == 0 || tu > 255) { tu /=  10; ti++; }
-  if (ecrt_slave_config_sdo8(slave->config, 0x60C2, 0x01, (uint8_t)tu) != 0) {
+  if (lcec_write_sdo8(slave, 0x60C2, 0x01, (uint8_t)tu) != 0) {
     rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo ipol time period units\n", master->name, slave->name);
   }
-  if (ecrt_slave_config_sdo8(slave->config, 0x60C2, 0x02, ti) != 0) {
+  if (lcec_write_sdo8(slave, 0x60C2, 0x02, ti) != 0) {
     rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo ipol time period index\n", master->name, slave->name);
   }
 

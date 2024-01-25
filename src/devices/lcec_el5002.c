@@ -165,67 +165,67 @@ static int lcec_el5002_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
     i = (p->id & LCEC_EL5002_PARAM_CH_MASK) << 4;
     switch(p->id & LCEC_EL5002_PARAM_FNK_MASK) {
       case LCEC_EL5002_PARAM_DIS_FRAME_ERR:
-        if (ecrt_slave_config_sdo8(slave->config, 0x8000 + i, 0x01, p->value.bit) != 0) {
+        if (lcec_write_sdo8(slave, 0x8000 + i, 0x01, p->value.bit) != 0) {
           rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo DisFrameErr\n", master->name, slave->name);
           return -1;
         }
         break;
       case LCEC_EL5002_PARAM_EN_PWR_FAIL_CHK:
-        if (ecrt_slave_config_sdo8(slave->config, 0x8000 + i, 0x02, p->value.bit) != 0) {
+        if (lcec_write_sdo8(slave, 0x8000 + i, 0x02, p->value.bit) != 0) {
           rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo EnPwrFailChk\n", master->name, slave->name);
           return -1;
         }
         break;
       case LCEC_EL5002_PARAM_EN_INHIBIT_TIME:
-        if (ecrt_slave_config_sdo8(slave->config, 0x8000 + i, 0x03, p->value.bit) != 0) {
+        if (lcec_write_sdo8(slave, 0x8000 + i, 0x03, p->value.bit) != 0) {
           rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo EnInhibitTime\n", master->name, slave->name);
           return -1;
         }
         break;
       case LCEC_EL5002_PARAM_CODING:
-        if (ecrt_slave_config_sdo8(slave->config, 0x8000 + i, 0x06, p->value.u32) != 0) {
+        if (lcec_write_sdo8(slave, 0x8000 + i, 0x06, p->value.u32) != 0) {
           rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo Coding\n", master->name, slave->name);
           return -1;
         }
         break;
       case LCEC_EL5002_PARAM_BAUDRATE:
-        if (ecrt_slave_config_sdo8(slave->config, 0x8000 + i, 0x09, p->value.u32) != 0) {
+        if (lcec_write_sdo8(slave, 0x8000 + i, 0x09, p->value.u32) != 0) {
           rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo Baudrate\n", master->name, slave->name);
           return -1;
         }
         break;
       case LCEC_EL5002_PARAM_CLK_JIT_COMP:
-        if (ecrt_slave_config_sdo8(slave->config, 0x8000 + i, 0x0c, p->value.u32) != 0) {
+        if (lcec_write_sdo8(slave, 0x8000 + i, 0x0c, p->value.u32) != 0) {
           rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo ClkJitComp\n", master->name, slave->name);
           return -1;
         }
         break;
       case LCEC_EL5002_PARAM_FRAME_TYPE:
-        if (ecrt_slave_config_sdo8(slave->config, 0x8000 + i, 0x0f, p->value.u32) != 0) {
+        if (lcec_write_sdo8(slave, 0x8000 + i, 0x0f, p->value.u32) != 0) {
           rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo FrameType\n", master->name, slave->name);
           return -1;
         }
         break;
       case LCEC_EL5002_PARAM_FRAME_SIZE:
-        if (ecrt_slave_config_sdo16(slave->config, 0x8000 + i, 0x11, p->value.u32) != 0) {
+        if (lcec_write_sdo16(slave, 0x8000 + i, 0x11, p->value.u32) != 0) {
           rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo FrameSize\n", master->name, slave->name);
           return -1;
         }
         break;
       case LCEC_EL5002_PARAM_DATA_LEN:
-        if (ecrt_slave_config_sdo16(slave->config, 0x8000 + i, 0x12, p->value.u32) != 0) {
+        if (lcec_write_sdo16(slave, 0x8000 + i, 0x12, p->value.u32) != 0) {
           rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo DataLen\n", master->name, slave->name);
           return -1;
         }
         break;
       case LCEC_EL5002_PARAM_MIN_INHIBIT_TIME:
-        if (ecrt_slave_config_sdo16(slave->config, 0x8000 + i, 0x13, p->value.u32) != 0) {
+        if (lcec_write_sdo16(slave, 0x8000 + i, 0x13, p->value.u32) != 0) {
           rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo MinInhibitTime\n", master->name, slave->name);
           return -1;
         }
         break;
       case LCEC_EL5002_PARAM_NO_CLK_BURSTS:
-        if (ecrt_slave_config_sdo16(slave->config, 0x8000 + i, 0x14, p->value.u32) != 0) {
+        if (lcec_write_sdo16(slave, 0x8000 + i, 0x14, p->value.u32) != 0) {
           rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo NoClkBursts\n", master->name, slave->name);
           return -1;
         }

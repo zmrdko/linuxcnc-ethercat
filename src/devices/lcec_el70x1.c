@@ -278,7 +278,7 @@ static int lcec_el70x1_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   slave->proc_write = lcec_el70x1_write;
 
   // set to position mode
-  if (ecrt_slave_config_sdo8(slave->config, 0x8012, 0x01, 3) != 0) {
+  if (lcec_write_sdo8(slave, 0x8012, 0x01, 3) != 0) {
     rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo position mode\n", master->name, slave->name);
     return -1;
   }
@@ -287,31 +287,31 @@ static int lcec_el70x1_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   for (p = slave->modparams; p != NULL && p->id >= 0; p++) {
     switch(p->id) {
       case LCEC_EL70x1_PARAM_MAX_CURR:
-        if (ecrt_slave_config_sdo16(slave->config, 0x8010, 0x01, p->value.u32) != 0) {
+        if (lcec_write_sdo16(slave, 0x8010, 0x01, p->value.u32) != 0) {
           rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo maxCurrent\n", master->name, slave->name);
           return -1;
         }
         break;
       case LCEC_EL70x1_PARAM_RED_CURR:
-        if (ecrt_slave_config_sdo16(slave->config, 0x8010, 0x02, p->value.u32) != 0) {
+        if (lcec_write_sdo16(slave, 0x8010, 0x02, p->value.u32) != 0) {
           rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo redCurrent\n", master->name, slave->name);
           return -1;
         }
         break;
       case LCEC_EL70x1_PARAM_NOM_VOLT:
-        if (ecrt_slave_config_sdo16(slave->config, 0x8010, 0x03, p->value.u32) != 0) {
+        if (lcec_write_sdo16(slave, 0x8010, 0x03, p->value.u32) != 0) {
           rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo nomVoltage\n", master->name, slave->name);
           return -1;
         }
         break;
       case LCEC_EL70x1_PARAM_COIL_RES:
-        if (ecrt_slave_config_sdo16(slave->config, 0x8010, 0x04, p->value.u32) != 0) {
+        if (lcec_write_sdo16(slave, 0x8010, 0x04, p->value.u32) != 0) {
           rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo coilRes\n", master->name, slave->name);
           return -1;
         }
         break;
       case LCEC_EL70x1_PARAM_MOTOR_EMF:
-        if (ecrt_slave_config_sdo16(slave->config, 0x8010, 0x05, p->value.u32) != 0) {
+        if (lcec_write_sdo16(slave, 0x8010, 0x05, p->value.u32) != 0) {
           rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo motorEMF\n", master->name, slave->name);
           return -1;
         }

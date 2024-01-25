@@ -319,7 +319,7 @@ static int lcec_el7201_9014_init(int comp_id, struct lcec_slave *slave, ec_pdo_e
   slave->hal_data = hal_data;
 
   // set info1 to inputs
-  if (ecrt_slave_config_sdo8(slave->config, 0x8010, 0x39, 10) != 0) {
+  if (lcec_write_sdo8(slave, 0x8010, 0x39, 10) != 0) {
     rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo info1 select\n", master->name, slave->name);
     return -1;
   }
