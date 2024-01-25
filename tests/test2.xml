@@ -93,7 +93,20 @@
 <!--    <slave idx="17" type="EL9410" name="D17"/> -->
     <slave idx="18" type="EL1859" name="D18"/>
     <slave idx="19" type="EL4032" name="D19"/>
-    <slave idx="20" type="EL7041" name="D20"/>
+    <slave idx="20" type="EL7041" name="D20">
+      <modParam name="maxCurrent" value="1.0"/>
+      <!--<modParam name="reducedCurrent" value="0.8"/>-->
+      <modParam name="nominalVoltage" value="24"/>
+      <modParam name="encoder" value="true"/>
+      <!-- <modParam name="coilResistance" value="1.0"/> -->
+      <!-- <modParam name="motorEMF" value="0"/> -->
+      <modParam name="encoderIncrements" value="4000"/>
+      <modParam name="startVelocity" value="100"/>
+      <modParam name="driveOnDelay" value="100"/>
+      <modParam name="driveOffDelay" value="150"/>
+      <!-- <modParam name="maxSpeed" value="4000"/> -->
+      <modParam name="microsteps" value="16"/>
+    </slave>
     <slave idx="21" type="EK1110" name="D21"/>
     <slave idx="22" type="EP2308" name="D22"/>
   </master>

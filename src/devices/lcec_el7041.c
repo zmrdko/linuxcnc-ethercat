@@ -28,11 +28,53 @@ static int lcec_el7041_init(int comp_id, struct lcec_slave *s, ec_pdo_entry_reg_
 static void lcec_el7041_read(struct lcec_slave *s, long period);
 static void lcec_el7041_write(struct lcec_slave *s, long period);
 
+#define MODPARAM_MAX_CURRENT        1
+#define MODPARAM_REDUCED_CURRENT    2
+#define MODPARAM_NOMINAL_VOLTAGE    3
+#define MODPARAM_COIL_RESISTANCE    4
+#define MODPARAM_MOTOR_EMF          5
+#define MODPARAM_MOTOR_FULLSTEPS    6
+#define MODPARAM_ENCODER_INCREMENTS 7
+#define MODPARAM_START_VELOCITY     8
+#define MODPARAM_DRIVE_ON_DELAY     9
+#define MODPARAM_DRIVE_OFF_DELAY    10
+#define MODPARAM_KP                 11
+#define MODPARAM_KI                 12
+#define MODPARAM_INNER_WINDOW       13
+#define MODPARAM_OUTER_WINDOW       14
+#define MODPARAM_FILTER_CUTOFF      15
+#define MODPARAM_KA                 16
+#define MODPARAM_KD                 17
+#define MODPARAM_OP_MODE            18
+#define MODPARAM_MAX_SPEED          19
+#define MODPARAM_FEEDBACK           20
+#define MODPARAM_INFO1              21
+#define MODPARAM_INFO2              22
+#define MODPARAM_MICROSTEPS         23
+// More remain, "function for input 1", "function for input 2", output1->brake?, Kp/Ki/Ka/Kd settigns, max velocity, max accel, etc.
+
+static lcec_modparam_desc_t lcec_el7041_modparams[] = {
+    {"maxCurrent", MODPARAM_MAX_CURRENT, MODPARAM_TYPE_FLOAT},
+    {"reducedCurrent", MODPARAM_REDUCED_CURRENT, MODPARAM_TYPE_FLOAT},
+    {"nominalVoltage", MODPARAM_NOMINAL_VOLTAGE, MODPARAM_TYPE_FLOAT},
+    {"coilResistance", MODPARAM_COIL_RESISTANCE, MODPARAM_TYPE_FLOAT},
+    {"motorEMF", MODPARAM_MOTOR_EMF, MODPARAM_TYPE_FLOAT},
+    {"motorFullsteps", MODPARAM_MOTOR_FULLSTEPS, MODPARAM_TYPE_U32},
+    {"encoderIncrements", MODPARAM_ENCODER_INCREMENTS, MODPARAM_TYPE_U32},
+    {"startVelocity", MODPARAM_START_VELOCITY, MODPARAM_TYPE_U32},
+    {"driveOnDelay", MODPARAM_DRIVE_ON_DELAY, MODPARAM_TYPE_U32},
+    {"driveOffDelay", MODPARAM_DRIVE_OFF_DELAY, MODPARAM_TYPE_U32},
+    {"maxSpeed", MODPARAM_MAX_SPEED, MODPARAM_TYPE_U32},
+    {"encoder", MODPARAM_FEEDBACK, MODPARAM_TYPE_BIT},
+    {"microsteps", MODPARAM_MICROSTEPS, MODPARAM_TYPE_U32},
+    {NULL},
+};
+
 static lcec_typelist_t types[] = {
-    {"EL7041", LCEC_BECKHOFF_VID, 0x1B813052, LCEC_EL7041_PDOS, 0, NULL, lcec_el7041_init},
-    {"EL7041_1000", LCEC_BECKHOFF_VID, 0x1B813052, LCEC_EL7041_1000_PDOS, 0, NULL, lcec_el7041_init},
-    {"EL7041-1000", LCEC_BECKHOFF_VID, 0x1B813052, LCEC_EL7041_1000_PDOS, 0, NULL, lcec_el7041_init},
-    {"EP7041", LCEC_BECKHOFF_VID, 0x1B813052, LCEC_EP7041_PDOS, 0, NULL, lcec_el7041_init},
+    {"EL7041", LCEC_BECKHOFF_VID, 0x1B813052, LCEC_EL7041_PDOS, 0, NULL, lcec_el7041_init, lcec_el7041_modparams},
+    {"EL7041_1000", LCEC_BECKHOFF_VID, 0x1B813052, LCEC_EL7041_PDOS, 0, NULL, lcec_el7041_init, lcec_el7041_modparams},
+    {"EL7041-1000", LCEC_BECKHOFF_VID, 0x1B813052, LCEC_EL7041_PDOS, 0, NULL, lcec_el7041_init, lcec_el7041_modparams},
+    {"EP7041", LCEC_BECKHOFF_VID, 0x1B813052, LCEC_EL7041_PDOS, 0, NULL, lcec_el7041_init, lcec_el7041_modparams},
     {NULL},
 };
 ADD_TYPES(types);
@@ -284,6 +326,7 @@ static ec_pdo_entry_info_t lcec_el7041_channel1_dcm_in[] = {
     {0x6010, 0x0e, 1}, /* Sync error */
     {0x0000, 0x00, 1}, /* Gap */
     {0x6010, 0x10, 1}, /* TxPDO Toggle */
+                       // {0x6010, 0x11, ?}, /* Info 1 */
 };
 
 static ec_pdo_info_t lcec_el7041_pdos_out[] = {
@@ -304,6 +347,154 @@ static ec_sync_info_t lcec_el7041_syncs[] = {
     {3, EC_DIR_INPUT, 2, lcec_el7041_pdos_in},
     {0xff},
 };
+
+static int handle_modparams(struct lcec_slave *slave) {
+  lcec_master_t *master = slave->master;
+  lcec_slave_modparam_t *p;
+
+  uint16_t current, voltage, ohms, value;
+  uint8_t value8;
+  // set config patameters
+  for (p = slave->modparams; p != NULL && p->id >= 0; p++) {
+    switch (p->id) {
+      case MODPARAM_MAX_CURRENT:
+        current = p->value.flt * 1000.0;
+        if (lcec_write_sdo16(slave, 0x8010, 0x01, current) != 0) {
+          rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo maxCurrent\n", master->name, slave->name);
+          return -1;
+        }
+        break;
+      case MODPARAM_REDUCED_CURRENT:  // Not allowed on my EL7041-1000 r21, but appears in the paramaterization doc.
+        current = p->value.flt * 1000.0;
+        if (lcec_write_sdo16(slave, 0x8010, 0x02, current) != 0) {
+          rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo redCurrent\n", master->name, slave->name);
+          return -1;
+        }
+        break;
+      case MODPARAM_NOMINAL_VOLTAGE:
+        voltage = p->value.flt * 1000.0;
+        if (lcec_write_sdo16(slave, 0x8010, 0x03, voltage) != 0) {
+          rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo nomVoltage\n", master->name, slave->name);
+          return -1;
+        }
+        break;
+      case MODPARAM_COIL_RESISTANCE:
+        ohms = p->value.flt * 1000;
+        if (lcec_write_sdo16(slave, 0x8010, 0x04, ohms) != 0) {
+          rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo coilResistance\n", master->name, slave->name);
+          return -1;
+        }
+        break;
+      case MODPARAM_MOTOR_EMF:
+        value = p->value.flt * 1000;
+        if (lcec_write_sdo16(slave, 0x8010, 0x05, value) != 0) {
+          rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo motorEMF\n", master->name, slave->name);
+          return -1;
+        }
+      case MODPARAM_MOTOR_FULLSTEPS:
+        if (lcec_write_sdo16(slave, 0x8010, 0x06, p->value.u32) != 0) {
+          rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo motorFullsteps\n", master->name, slave->name);
+          return -1;
+        }
+      case MODPARAM_ENCODER_INCREMENTS:
+        if (lcec_write_sdo16(slave, 0x8010, 0x07, p->value.u32) != 0) {
+          rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo encoderIncrements\n", master->name, slave->name);
+          return -1;
+        }
+      case MODPARAM_START_VELOCITY:
+        if (lcec_write_sdo16(slave, 0x8010, 0x09, p->value.u32) != 0) {
+          rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo startVelocity\n", master->name, slave->name);
+          return -1;
+        }
+      case MODPARAM_DRIVE_ON_DELAY:
+        if (lcec_write_sdo16(slave, 0x8010, 0x10, p->value.u32) != 0) {
+          rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo driveOnDelay\n", master->name, slave->name);
+          return -1;
+        }
+      case MODPARAM_DRIVE_OFF_DELAY:
+        if (lcec_write_sdo16(slave, 0x8010, 0x11, p->value.u32) != 0) {
+          rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo driveOffDelay\n", master->name, slave->name);
+          return -1;
+        }
+        // Kp, Ki, innerWindow, outerWindow, Ka, Kd
+        break;
+
+      case MODPARAM_MAX_SPEED:
+        value = 0;
+        switch (p->value.u32) {
+          case 1000:
+            value = 0;
+            break;
+          case 2000:
+            value = 1;
+            break;
+          case 4000:
+            value = 2;
+            break;
+          case 8000:
+            value = 3;
+            break;
+          case 16000:
+            value = 4;
+            break;
+          case 32000:
+            value = 5;
+            break;
+          default:
+            rtapi_print_msg(
+                RTAPI_MSG_ERR, LCEC_MSG_PFX "unknown speed %d, must be 1000, 2000, 4000, 8000, 16000, or 32000.\n", p->value.u32);
+            return -1;
+        }
+        if (lcec_write_sdo16(slave, 0x8012, 0x05, value) != 0) {
+          rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo maxSpeed\n", master->name, slave->name);
+          return -1;
+        }
+        break;
+      case MODPARAM_FEEDBACK:
+        value8 = !!p->value.bit;
+        if (lcec_write_sdo8(slave, 0x8012, 0x8, value8) != 0) {
+          rtapi_print_msg(
+              RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo feedback to %d\n", master->name, slave->name, value8);
+          return -1;
+        }
+        break;
+      case MODPARAM_MICROSTEPS:
+        value = 0;
+        switch (p->value.u32) {
+          case 1:
+            value = 0;
+            break;
+          case 2:
+            value = 1;
+            break;
+          case 4:
+            value = 2;
+            break;
+          case 8:
+            value = 3;
+            break;
+          case 16:
+            value = 4;
+            break;
+          case 32:
+            value = 5;
+            break;
+          case 64:
+            value = 6;
+            break;
+          default:
+            rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "unknown microstepping %d, must be 1, 2, 4, 8, 16, 32, or 64.\n", p->value.u32);
+            return -1;
+        }
+        if (lcec_write_sdo8(slave, 0x8012, 0x45, value) != 0) {
+          rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo microsteps\n", master->name, slave->name);
+          return -1;
+        }
+        break;
+    }
+  }
+  return 0;
+}
 
 static int lcec_el7041_init(int comp_id, struct lcec_slave *s, ec_pdo_entry_reg_t *r) {
   lcec_master_t *m = s->master;
@@ -327,6 +518,11 @@ static int lcec_el7041_init(int comp_id, struct lcec_slave *s, ec_pdo_entry_reg_
 
   // initialize global data
   hd->last_operational = 0;
+
+  if (handle_modparams(s) < 0) {
+    rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "modParam settings failed for slave %s.%s\n", m->name, s->name);
+    return -EIO;
+  }
 
   // initialize PDO entries
   LCEC_PDO_INIT(r, s->index, s->vid, s->pid, 0x7000, 0x01, &hd->ena_latch_c_pdo_os, &hd->ena_latch_c_pdo_bp);

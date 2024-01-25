@@ -226,7 +226,7 @@ static int lcec_omrg5_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_r
   slave->hal_data = hal_data;
 
   // set to cyclic synchronous position mode
-  if (ecrt_slave_config_sdo8(slave->config, 0x6060, 0x00, 8) != 0) {
+  if (lcec_write_sdo8(slave, 0x6060, 0x00, 8) != 0) {
     rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo velo mode\n", master->name, slave->name);
   }
 

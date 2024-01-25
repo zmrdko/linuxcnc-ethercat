@@ -50,6 +50,16 @@ test-pin-false() {
     fi
 }
 
+test-pin-equal() {
+    var="lcec.0.$1.$2"
+    val=$(halcmd getp $var)
+    if [ $val != $3 ]; then
+	echo "ERROR: $var ($val) is not equal to $3"
+	halrun -U
+	exit 1
+    fi
+}
+
 test-pin-greater() {
     var="lcec.0.$1.$2"
     val=$(halcmd getp $var)
@@ -353,6 +363,18 @@ set-pin D19 aout-0-enable 1
 test-pin-greater D10 ain-1-val 0.99
 set-pin D19 aout-0-value 0
 test-pin-less D10 ain-1-val 0.01
+
+
+echo "=== Testing Steppers"
+set-pin D20 enc-reset true
+set-pin D20 enc-reset false
+test-pin-equal D20 enc-pos 0
+set-pin D20 srv-enable true
+set-pin D20 srv-cmd 0.1
+sleep 0.5  # Let the servo move a bit.
+set-pin D20 srv-cmd 0
+update
+test-pin-greater D20 enc-pos 7000  # Currently hitting ~7500.
 
 echo "=== ALL TESTS PASS ==="
 halrun -U -Q

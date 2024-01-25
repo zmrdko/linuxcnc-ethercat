@@ -390,7 +390,7 @@ static int lcec_el3xxx_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
           *(chan->scale) = sensor->scale;
           chan->is_unsigned = sensor->is_unsigned;
 
-          if (ecrt_slave_config_sdo16(slave->config, 0x8000 + (i << 4), 0x19, sensor->value) != 0) {
+          if (lcec_write_sdo16(slave, 0x8000 + (i << 4), 0x19, sensor->value) != 0) {
             rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "failed to configure slave %s.%s sdo sensor!\n", master->name, slave->name);
             return -1;
           }
@@ -413,7 +413,7 @@ static int lcec_el3xxx_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
           rtapi_print_msg(RTAPI_MSG_DBG, LCEC_MSG_PFX "    - setting resolution for %s %d to %d\n", slave->name, i, resolution->value);
           *(chan->scale) = *(chan->scale) * resolution->scale_multiplier;
 
-          if (ecrt_slave_config_sdo8(slave->config, 0x8000 + (i << 4), 0x2, resolution->value) != 0) {
+          if (lcec_write_sdo8(slave, 0x8000 + (i << 4), 0x2, resolution->value) != 0) {
             rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "failed to configure slave %s.%s sdo resolution!\n", master->name, slave->name);
             return -1;
           }
@@ -435,7 +435,7 @@ static int lcec_el3xxx_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
         if (wires != NULL) {
           rtapi_print_msg(RTAPI_MSG_DBG, LCEC_MSG_PFX "      - setting wires for %s %d to %d\n", slave->name, i, wires->value);
 
-          if (ecrt_slave_config_sdo16(slave->config, 0x8000 + (i << 4), 0x1a, wires->value) != 0) {
+          if (lcec_write_sdo16(slave, 0x8000 + (i << 4), 0x1a, wires->value) != 0) {
             rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "failed to configure slave %s.%s sdo wires!\n", master->name, slave->name);
             return -1;
           }

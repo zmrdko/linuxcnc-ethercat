@@ -251,22 +251,21 @@ static int lcec_deasda_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   memset(hal_data, 0, sizeof(lcec_deasda_data_t));
   slave->hal_data = hal_data;
 
-  if (ecrt_slave_config_sdo8(slave->config, 0x6060, 0x00, operationmode) != 0)
-    rtapi_print_msg(
-        RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo to op mode %d\n", master->name, slave->name, operationmode);
+  // set to cyclic synchronous velocity mode
+  if (lcec_write_sdo8(slave, 0x6060, 0x00, 9) != 0) {
+    rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo velo mode\n", master->name, slave->name);
+  }
 
   // set interpolation time period
   tu = master->app_time_period;
   ti = -9;
-  while ((tu % 10) == 0 || tu > 255) {
-    tu /= 10;
-    ti++;
-  }
-  if (ecrt_slave_config_sdo8(slave->config, 0x60C2, 0x01, (uint8_t)tu) != 0)
-    rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo ipol time period units\n", master->name, slave->name);
-  if (ecrt_slave_config_sdo8(slave->config, 0x60C2, 0x02, ti) != 0)
-    rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo ipol time period index\n", master->name, slave->name);
 
+  while ((tu % 10) == 0 || tu > 255) { tu /=  10; ti++; }
+  if (lcec_write_sdo8(slave, 0x60C2, 0x01, (uint8_t)tu) != 0) {
+    rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo ipol time period units\n", master->name, slave->name);
+  }
+  if (lcec_write_sdo8(slave, 0x60C2, 0x02, ti) != 0) {
+    rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo ipol time period index\n", master->name, slave->name);
   if (operationmode == DEASDA_OPMODE_CSV) {
     // initialize sync info
     slave->sync_info = lcec_deasda_syncs_csv;
@@ -300,6 +299,7 @@ static int lcec_deasda_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
 
     // export pins specific
     if ((err = lcec_pin_newf_list(hal_data, slave_pins_csp, LCEC_MODULE_NAME, master->name, slave->name)) != 0) return err;
+
   }
   *(hal_data->operation_mode) = operationmode;
   // export parameters
