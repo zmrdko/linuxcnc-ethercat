@@ -1,0 +1,11 @@
+---
+Device: EJ4134
+VendorID: "0x00000002"
+VendorName: Beckhoff Automation GmbH
+PID: "0x10262852"
+Description: Beckhoff EJ4134 4Ch. Ana. Output -10/+10V, 16bit
+DocumentationURL: http://www.beckhoff.com/EJ4134
+DeviceType: Analog Output
+Notes: ""
+SrcFile: devices/lcec_el4xxx.c
+TestingStatus: ""

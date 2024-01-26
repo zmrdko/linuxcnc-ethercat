@@ -1,0 +1,11 @@
+---
+Device: EJ4002
+VendorID: "0x00000002"
+VendorName: Beckhoff Automation GmbH
+PID: "0x0fa22852"
+Description: Beckhoff EJ4002 2Ch. Ana. Output 0-10V, 12bit
+DocumentationURL: http://www.beckhoff.com/EJ4002
+DeviceType: Analog Output
+Notes: ""
+SrcFile: devices/lcec_el4xxx.c
+TestingStatus: ""

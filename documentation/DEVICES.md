@@ -19,6 +19,13 @@ Description | Driver | EtherCAT VID:PID | Device Type | Testing Status | Notes
 [Beckhoff EJ3004 4Ch. Ana. Input +/-10V](http://www.beckhoff.com/EJ3004) | [el3xxx](../src/devices/lcec_el3xxx.c) | 0x2:0x0bbc2852 | Analog Input |  | 
 [Beckhoff EJ3202 2Ch. Ana. Input PT100 (RTD)](http://www.beckhoff.com/EJ3202) | [el3xxx](../src/devices/lcec_el3xxx.c) | 0x2:0x0c822852 | Analog Input | New, untested | 
 [Beckhoff EJ3214 4Ch. Ana. Input PT100 (RTD)](http://www.beckhoff.com/EJ3214) | [el3xxx](../src/devices/lcec_el3xxx.c) | 0x2:0x0c8e2852 | Analog Input | New, untested | 
+[Beckhoff EJ4002 2Ch. Ana. Output 0-10V, 12bit](http://www.beckhoff.com/EJ4002) | [el4xxx](../devices/lcec_el4xxx.c) | 0x2:0x0fa22852 | Analog Output |  | 
+[Beckhoff EJ4004 4Ch. Ana. Output 0-10V, 12bit](http://www.beckhoff.com/EJ4004) | [el4xxx](../devices/lcec_el4xxx.c) | 0x2:0x0fa42852 | Analog Output |  | 
+[Beckhoff EJ4008 8Ch. Ana. Output 0-10V, 12bit](http://www.beckhoff.com/EJ4008) | [el4xxx](../devices/lcec_el4xxx.c) | 0x2:0x0fa82852 | Analog Output |  | 
+[Beckhoff EJ4018 8Ch. Ana. Output 0-20mA, 12bit](http://www.beckhoff.com/EJ4018) | [el4xxx](../devices/lcec_el4xxx.c) | 0x2:0x0fb22852 | Analog Output |  | 
+[Beckhoff EJ4024 4Ch. Ana. Output 4-20mA, 12bit](http://www.beckhoff.com/EJ4024) | [el4xxx](../devices/lcec_el4xxx.c) | 0x2:0x0fb82852 | Analog Output |  | 
+[Beckhoff EJ4132 2Ch. Ana. Output -10/+10V, 16bit](http://www.beckhoff.com/EJ4132) | [el4xxx](../devices/lcec_el4xxx.c) | 0x2:0x10242852 | Analog Output |  | 
+[Beckhoff EJ4134 4Ch. Ana. Output -10/+10V, 16bit](http://www.beckhoff.com/EJ4134) | [el4xxx](../devices/lcec_el4xxx.c) | 0x2:0x10262852 | Analog Output |  | 
 [Beckhoff EJ5002 2Ch. SSI Encoder](http://www.beckhoff.com/EJ5002) | [el5002](../src/devices/lcec_el5002.c) | 0x2:0x138a2852 | Encoder Input |  | 
 [Beckhoff EK1100 EtherCAT Coupler (0.5A E-Bus)](http://www.beckhoff.com/EK1100) | [passive](../src/devices/lcec_passive.c) | 0x2:0x044c2c52 | System Terminals | Part of @scottlaird's test suite. | Passive device
 [Beckhoff EK1101 EtherCAT Coupler (2A E-Bus, ID switch)](http://www.beckhoff.com/EK1101) | [passive](../src/devices/lcec_passive.c) | 0x2:0x044d2c52 | System Terminals |  | Passive device
@@ -123,24 +130,30 @@ Description | Driver | EtherCAT VID:PID | Device Type | Testing Status | Notes
 [Beckhoff EL3218-0000 8Ch. Ana. Input PT100 (RTD)](http://www.beckhoff.com/EL3218) | [el3xxx](../src/devices/lcec_el3xxx.c) | 0x2:0x0c923052 | Analog Input | New, untested. | 
 [Beckhoff EL3255 5Ch. potentiometer measurement with sensor supply](http://www.beckhoff.com/EL3255) | [el3255](../src/devices/lcec_el3255.c) | 0x2:0x0cb73052 | Analog Input |  | 
 [Beckhoff EL3403 3Ch. Power Measuring](http://www.beckhoff.com/EL3403) | [el3403](../src/devices/lcec_el3403.c) | 0x2:0x0d4b3052 | Analog Input | Uncertain; @scottlaird has several | 3-phase AC power measurement
-[Beckhoff EL4001 1Ch. Ana. Output 0-10V, 12bit](http://www.beckhoff.com/EL4001) | [el40x1](../src/devices/lcec_el40x1.c) | 0x2:0x0fa13052 | Analog Output |  | 
-[Beckhoff EL4002 2Ch. Ana. Output 0-10V, 12bit](http://www.beckhoff.com/EL4002) | [el40x2](../src/devices/lcec_el40x2.c) | 0x2:0x0fa23052 | Analog Output |  | 
-[Beckhoff EL4008 8Ch. Ana. Output 0-10V, 12bit](http://www.beckhoff.com/EL4008) | [el40x8](../src/devices/lcec_el40x8.c) | 0x2:0x0fa83052 | Analog Output |  | 
-[Beckhoff EL4011 1Ch. Ana. Output 0-20mA, 12bit](http://www.beckhoff.com/EL4011) | [el40x1](../src/devices/lcec_el40x1.c) | 0x2:0x0fab3052 | Analog Output |  | 
-[Beckhoff EL4012 2Ch. Ana. Output 0-20mA, 12bit](http://www.beckhoff.com/EL4012) | [el40x2](../src/devices/lcec_el40x2.c) | 0x2:0x0fac3052 | Analog Output |  | 
-[Beckhoff EL4018 8Ch. Ana. Output 0-20mA, 12bit](http://www.beckhoff.com/EL4018) | [el40x8](../src/devices/lcec_el40x8.c) | 0x2:0x0fb23052 | Analog Output |  | 
-[Beckhoff EL4021 1Ch. Ana. Output 4-20mA, 12bit](http://www.beckhoff.com/EL4021) | [el40x1](../src/devices/lcec_el40x1.c) | 0x2:0x0fb53052 | Analog Output |  | 
-[Beckhoff EL4022 2Ch. Ana. Output 4-20mA, 12bit](http://www.beckhoff.com/EL4022) | [el40x2](../src/devices/lcec_el40x2.c) | 0x2:0x0fb63052 | Analog Output |  | 
-[Beckhoff EL4028 8Ch. Ana. Output 4-20mA, 12bit](http://www.beckhoff.com/EL4028) | [el40x8](../src/devices/lcec_el40x8.c) | 0x2:0x0fbc3052 | Analog Output |  | 
-[Beckhoff EL4031 1Ch. Ana. Output -10/+10V, 12bit](http://www.beckhoff.com/EL4031) | [el40x1](../src/devices/lcec_el40x1.c) | 0x2:0x0fbf3052 | Analog Output |  | 
-[Beckhoff EL4032 2Ch. Ana. Output -10/+10V, 12bit](http://www.beckhoff.com/EL4032) | [el40x2](../src/devices/lcec_el40x2.c) | 0x2:0x0fc03052 | Analog Output |  | 
-[Beckhoff EL4038 8Ch. Ana. Output -10/+10V, 12bit](http://www.beckhoff.com/EL4038) | [el40x8](../src/devices/lcec_el40x8.c) | 0x2:0x0fc63052 | Analog Output |  | 
-[Beckhoff EL4102 2Ch. Ana. Output 0-10V](http://www.beckhoff.com/EL4102) | [el41x2](../src/devices/lcec_el41x2.c) | 0x2:0x10063052 | Analog Output |  | 
-[Beckhoff EL4104 4Ch. Ana. Output 0-10V, 16bit](http://www.beckhoff.com/EL4104) | [el41x4](../src/devices/lcec_el41x4.c) | 0x2:0x10083052 | Analog Output |  | 
-[Beckhoff EL4112 2Ch. Ana. Output 0-20mA](http://www.beckhoff.com/EL4112) | [el41x2](../src/devices/lcec_el41x2.c) | 0x2:0x10103052 | Analog Output |  | 
-[Beckhoff EL4122 2Ch. Ana. Output 4-20mA](http://www.beckhoff.com/EL4122) | [el41x2](../src/devices/lcec_el41x2.c) | 0x2:0x101a3052 | Analog Output |  | 
-[Beckhoff EL4132 2Ch. Ana. Output +/-10V](http://www.beckhoff.com/EL4132) | [el41x2](../src/devices/lcec_el41x2.c) | 0x2:0x10243052 | Analog Output |  | 
-[Beckhoff EL4134 4Ch. Ana. Output -10/+10V, 16bit](http://www.beckhoff.com/EL4134) | [el41x4](../src/devices/lcec_el41x4.c) | 0x2:0x10263052 | Analog Output |  | 
+[Beckhoff EL4001 1Ch. Ana. Output 0-10V, 12bit](http://www.beckhoff.com/EL4001) | [el4xxx](../src/devices/lcec_el4xxx.c) | 0x2:0x0fa13052 | Analog Output |  | 
+[Beckhoff EL4002 2Ch. Ana. Output 0-10V, 12bit](http://www.beckhoff.com/EL4002) | [el4xxx](../src/devices/lcec_el4xxx.c) | 0x2:0x0fa23052 | Analog Output |  | 
+[Beckhoff EL4004 4Ch. Ana. Output 0-10V, 12bit](http://www.beckhoff.com/EL4004) | [el4xxx](../src/devices/lcec_el4xxx.c) | 0x2:0x0fa43052 | Analog Output |  | 
+[Beckhoff EL4008 8Ch. Ana. Output 0-10V, 12bit](http://www.beckhoff.com/EL4008) | [el4xxx](../src/devices/lcec_el4xxx.c) | 0x2:0x0fa83052 | Analog Output |  | 
+[Beckhoff EL4011 1Ch. Ana. Output 0-20mA, 12bit](http://www.beckhoff.com/EL4011) | [el4xxx](../src/devices/lcec_el4xxx.c) | 0x2:0x0fab3052 | Analog Output |  | 
+[Beckhoff EL4012 2Ch. Ana. Output 0-20mA, 12bit](http://www.beckhoff.com/EL4012) | [el4xxx](../src/devices/lcec_el4xxx.c) | 0x2:0x0fac3052 | Analog Output |  | 
+[Beckhoff EL4014 4Ch. Ana. Output 0-20mA, 12bit](http://www.beckhoff.com/EL4014) | [el4xxx](../src/devices/lcec_el4xxx.c) | 0x2:0x0fae3052 | Analog Output |  | 
+[Beckhoff EL4018 8Ch. Ana. Output 0-20mA, 12bit](http://www.beckhoff.com/EL4018) | [el4xxx](../src/devices/lcec_el4xxx.c) | 0x2:0x0fb23052 | Analog Output |  | 
+[Beckhoff EL4021 1Ch. Ana. Output 4-20mA, 12bit](http://www.beckhoff.com/EL4021) | [el4xxx](../src/devices/lcec_el4xxx.c) | 0x2:0x0fb53052 | Analog Output |  | 
+[Beckhoff EL4022 2Ch. Ana. Output 4-20mA, 12bit](http://www.beckhoff.com/EL4022) | [el4xxx](../src/devices/lcec_el4xxx.c) | 0x2:0x0fb63052 | Analog Output |  | 
+[Beckhoff EL4024 4Ch. Ana. Output 4-20mA, 12bit](http://www.beckhoff.com/EL4024) | [el4xxx](../src/devices/lcec_el4xxx.c) | 0x2:0x0fb83052 | Analog Output |  | 
+[Beckhoff EL4028 8Ch. Ana. Output 4-20mA, 12bit](http://www.beckhoff.com/EL4028) | [el4xxx](../src/devices/lcec_el4xxx.c) | 0x2:0x0fbc3052 | Analog Output |  | 
+[Beckhoff EL4031 1Ch. Ana. Output -10/+10V, 12bit](http://www.beckhoff.com/EL4031) | [el4xxx](../src/devices/lcec_el4xxx.c) | 0x2:0x0fbf3052 | Analog Output |  | 
+[Beckhoff EL4032 2Ch. Ana. Output -10/+10V, 12bit](http://www.beckhoff.com/EL4032) | [el4xxx](../src/devices/lcec_el4xxx.c) | 0x2:0x0fc03052 | Analog Output |  | 
+[Beckhoff EL4034 4Ch. Ana. Output +/-10V, 12bit](http://www.beckhoff.com/EL4034) | [el4xxx](../src/devices/lcec_el4xxx.c) | 0x2:0x0fc23052 | Analog Output |  | 
+[Beckhoff EL4038 8Ch. Ana. Output -10/+10V, 12bit](http://www.beckhoff.com/EL4038) | [el4xxx](../src/devices/lcec_el4xxx.c) | 0x2:0x0fc63052 | Analog Output |  | 
+[Beckhoff EL4102 2Ch. Ana. Output 0-10V](http://www.beckhoff.com/EL4102) | [el4xxx](../src/devices/lcec_el4xxx.c) | 0x2:0x10063052 | Analog Output |  | 
+[Beckhoff EL4104 4Ch. Ana. Output 0-10V, 16bit](http://www.beckhoff.com/EL4104) | [el4xxx](../src/devices/lcec_el4xxx.c) | 0x2:0x10083052 | Analog Output |  | 
+[Beckhoff EL4112 2Ch. Ana. Output 0-20mA](http://www.beckhoff.com/EL4112) | [el4xxx](../src/devices/lcec_el4xxx.c) | 0x2:0x10103052 | Analog Output |  | 
+[Beckhoff EL4114 4Ch. Ana. Output 0-20mA, 16bit](http://www.beckhoff.com/EL4114) | [el4xxx](../src/devices/lcec_el4xxx.c) | 0x2:0x10123052 | Analog Output |  | 
+[Beckhoff EL4122 2Ch. Ana. Output 4-20mA](http://www.beckhoff.com/EL4122) | [el4xxx](../src/devices/lcec_el4xxx.c) | 0x2:0x101a3052 | Analog Output |  | 
+[Beckhoff EL4124 4Ch. Ana. Output 4-20mA, 16bit](http://www.beckhoff.com/EL4124) | [el4xxx](../src/devices/lcec_el4xxx.c) | 0x2:0x101c3052 | Analog Output |  | 
+[Beckhoff EL4132 2Ch. Ana. Output +/-10V](http://www.beckhoff.com/EL4132) | [el4xxx](../src/devices/lcec_el4xxx.c) | 0x2:0x10243052 | Analog Output |  | 
+[Beckhoff EL4134 4Ch. Ana. Output -10/+10V, 16bit](http://www.beckhoff.com/EL4134) | [el4xxx](../src/devices/lcec_el4xxx.c) | 0x2:0x10263052 | Analog Output |  | 
 [Beckhoff EL5002 2Ch. SSI Encoder](http://www.beckhoff.com/EL5002) | [el5002](../src/devices/lcec_el5002.c) | 0x2:0x138a3052 | Encoder Input |  | 
 [Beckhoff EL5032 2Ch. EnDat Encoder](http://www.beckhoff.com/EL5032) | [el5032](../src/devices/lcec_el5032.c) | 0x2:0x13a83052 | Encoder Input |  | 
 [Beckhoff EL5101 1Ch. Encoder 5V](http://www.beckhoff.com/EL5101) | [el5101](../src/devices/lcec_el5101.c) | 0x2:0x13ed3052 | Encoder Input |  | 
@@ -184,6 +197,7 @@ Description | Driver | EtherCAT VID:PID | Device Type | Testing Status | Notes
 [Beckhoff EP3174-0002 4Ch. Ana. Input +/-10V, 0-10V, 0/4-20mA configurable](https://www.beckhoff.com/EP3174-0002) | [el3xxx](../src/devices/lcec_el3xxx.c) | 0x2:0x0c664052 | Analog Input |  | 
 [Beckhoff EP3184-0002 4Ch. Ana. Input +/-10V, 0-10V, 0/4-20mA configurable, single ended](https://www.beckhoff.com/EP3184-0002) | [el3xxx](../src/devices/lcec_el3xxx.c) | 0x2:0x0c704052 | Analog Input |  | 
 [Beckhoff EP3204-0002 4Ch. Ana. Input PT100 (RTD)](https://www.beckhoff.com/EP3204-0002) | [el3xxx](../src/devices/lcec_el3xxx.c) | 0x2:0x0c844052 | Analog Input |  | 
+[Beckhoff EP4174-0002 4Ch. Ana. Output +/-10V, 0-10V, 0/4-20mA configurable](https://www.beckhoff.com/EP4174-0002) | [el4xxx](../devices/lcec_el4xxx.c) | 0x2:0x104e4052 | Analog Output | Untested | 
 [Beckhoff EL7041 1Ch. Stepper motor output stage (50V, 5A)](http://www.beckhoff.com/EL7041) | [el7041](../src/devices/lcec_el7041.c) | 0x2:0x1b813052 | Stepper Drive | Uncertain; @scottlaird has several EP7041-0002 | 
 [Beckhoff EPP2308-0001 4 Ch. Dig. In, 3ms, 4 Ch. Dig. Out 24V, 0,5A, M8](https://www.beckhoff.com/EPP2308-0001) | [digitalcombo](../src/devices/lcec_digitalcombo.c) | 0x2:0x64765649 | Digital Input/Output |  | 
 [Beckhoff EP2316-0003 8 Ch. Dig. In, 10µs, 8Ch. Dig. Out 24V, 0,5A, Diagnostic, 10-Pole Plug Connector](https://www.beckhoff.com/EP2316-0003) | [digitalcombo](../devices/lcec_digitalcombo.c) | 0x2:0x090c4052 | Digital Input/Output |  | 
@@ -225,6 +239,6 @@ Description | Driver | EtherCAT VID:PID | Device Type | Testing Status | Notes
 [Omron R88D-KNA5L-ECT G5 Series ServoDrive/Motor](http://www.ia.omron.com/) | [omrg5](../src/devices/lcec_omrg5.c) | 0x83:0x00000001 | Servo Drive |  | 
 [Stoeber Posidrive MDS 5000](https://www.ethercat.org/en/products/CE4C65D2ED8B4F39A8166D6CEDB2C872.htm) | [stmds5k](../src/devices/lcec_stmds5k.c) | 0xb9:0x00001388 | Servo Drive |  | 
 
-There are an additional 4 device(s) supported that do not have enough
+There are an additional 5 device(s) supported that do not have enough
 documentation to display here.  Please look at the `documentation/devices/` files
 and update them if you're able.

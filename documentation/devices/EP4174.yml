@@ -1,0 +1,11 @@
+---
+Device: EP4174
+VendorID: "0x00000002"
+VendorName: Beckhoff Automation GmbH & Co. KG
+PID: "0x104e4052"
+Description: Beckhoff EP4174-0002 4Ch. Ana. Output +/-10V, 0-10V, 0/4-20mA configurable
+DocumentationURL: https://www.beckhoff.com/EP4174-0002
+DeviceType: Analog Output
+Notes: ""
+SrcFile: devices/lcec_el4xxx.c
+TestingStatus: "Untested"

@@ -1,0 +1,11 @@
+---
+Device: EJ4024
+VendorID: "0x00000002"
+VendorName: Beckhoff Automation GmbH
+PID: "0x0fb82852"
+Description: Beckhoff EJ4024 4Ch. Ana. Output 4-20mA, 12bit
+DocumentationURL: http://www.beckhoff.com/EJ4024
+DeviceType: Analog Output
+Notes: ""
+SrcFile: devices/lcec_el4xxx.c
+TestingStatus: ""
