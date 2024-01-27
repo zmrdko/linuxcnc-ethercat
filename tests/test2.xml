@@ -108,7 +108,7 @@
       <modParam name="microsteps" value="16"/>
     </slave>
     <slave idx="21" type="EK1110" name="D21"/>
-    <slave idx="22" type="EP2308" name="D22"/>
+    <slave idx="23" type="EP2308" name="D22"/>
   </master>
 </masters>
     
