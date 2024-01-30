@@ -69,57 +69,56 @@ static const lcec_modparam_desc_t modparams_temperature[] = {
     {NULL},
 };
 
-/// @brief Sensor types available for `<modParams name="sensor">`
-typedef struct {
-  char *name;       ///< Sensor type name
-  uint16_t value;   ///< Which value needs to be set in 0x80x0:19 to enable this sensor
-  int is_unsigned;  ///< Ohm measurements are unsigned, and need the extra bit to cover the documented range.
-  double scale;     ///< Default conversion factor for this sensor type
-} temp_sensor_t;
-
-/// @brief List of known temperature sensor types.
+/// @brief Lookup table of known temperature sensor types and their codes.
 ///
 /// From https://download.beckhoff.com/download/Document/io/ethercat-terminals/el32xxen.pdf#page=223
-static const temp_sensor_t temp_sensors[] = {
-    {"Pt100", 0, 0, 0.1},          // Pt100 sensor,
-    {"Ni100", 1, 0, 0.1},          // Ni100 sensor, -60 to 250C
-    {"Pt1000", 2, 0, 0.1},         // Pt1000 sensor, -200 to 850C
-    {"Pt500", 3, 0, 0.1},          // Pt500 sensor, -200 to 850C
-    {"Pt200", 4, 0, 0.1},          // Pt200 sensor, -200 to 850C
-    {"Ni1000", 5, 0, 0.1},         // Ni1000 sensor, -60 to 250C
-    {"Ni1000-TK5000", 6, 0, 0.1},  // Ni1000-TK5000, -30 to 160C
-    {"Ni120", 7, 0, 0.1},          // Ni120 sensor, -60 to 320C
-    {"Ohm/16", 8, 1, 1.0 / 16},    // no sensor, report Ohms directly.  0-4095 Ohms
-    {"Ohm/64", 9, 1, 1.0 / 64},    // no sensor, report Ohms directly.  0-1023 Ohms
+static const lcec_lookuptable_int_t temp_sensors_setting[] = {
+    {"Pt100", 0},          // Pt100 sensor,
+    {"Ni100", 1},          // Ni100 sensor, -60 to 250C
+    {"Pt1000", 2},         // Pt1000 sensor, -200 to 850C
+    {"Pt500", 3},          // Pt500 sensor, -200 to 850C
+    {"Pt200", 4},          // Pt200 sensor, -200 to 850C
+    {"Ni1000", 5},         // Ni1000 sensor, -60 to 250C
+    {"Ni1000-TK5000", 6},  // Ni1000-TK5000, -30 to 160C
+    {"Ni120", 7},          // Ni120 sensor, -60 to 320C
+    {"Ohm/16", 8},         // no sensor, report Ohms directly.  0-4095 Ohms
+    {"Ohm/64", 9},         // no sensor, report Ohms directly.  0-1023 Ohms
     {NULL},
 };
 
-/// @brief Resolutions available for `<modParams name="resolution"/>`
-typedef struct {
-  char *name;               ///< The name of the `resolution` modParam value, as found in `ethercat.xml`.
-  uint16_t value;           ///< The value for this `resolution` setting that needs to be set in hardware.
-  double scale_multiplier;  ///< The amount that the `scale` needs to be adjusted when this resolution is selected.
-} temp_resolution_t;
+/// @brief Lookup table of known temperature sensor types that return unsigned values.
+static const lcec_lookuptable_int_t temp_sensors_unsigned[] = {
+    {"Ohm/16", 1},
+    {"Ohm/64", 1},
+    {NULL},
+};
 
-/// @brief List of available values for the `resolutions` modParam setting.
+/// @brief Lookup table of known temperature senso types with non-default scales.
+static const lcec_lookuptable_double_t temp_sensors_scale[] = {
+    {"Ohm/16", 1.0 / 16},
+    {"Ohm/64", 1.0 / 64},
+    {NULL},
+};
+
+/// @brief Lookup table of available values for the `resolutions` modParam setting.
 ///
 /// From https://download.beckhoff.com/download/Document/io/ethercat-terminals/el32xxen.pdf#page=222
-static const temp_resolution_t temp_resolutions[] = {
-    {"Signed", 0, 1.0},    // 0.1C per bit, default on most devices
-    {"Standard", 0, 1.0},  // Same as "signed", but easier to remember WRT "High".
-                           // { "Absolute", 1, 1.0 }, // ones-compliment presentation, why?
-    {"High", 2, 0.1},      // 0.01C per bit, default on "high precision" devices.
+static const lcec_lookuptable_int_t temp_resolutions_setting[] = {
+    {"Signed", 0},    // 0.1C per bit, default on most devices
+    {"Standard", 0},  // Same as "signed", but easier to remember WRT "High".
+                      // { "Absolute", 1, 1.0 }, // ones-compliment presentation, why?
+    {"High", 2},      // 0.01C per bit, default on "high precision" devices.
     {NULL},
 };
 
-/// @brief Wire settings available for `<modParams name="wires" value="..."/>`
-typedef struct {
-  char *name;      ///< Name of the 'wires' modParam value, as found in `ethercat.xml`.
-  uint16_t value;  ///< The value for this `wires` setting that needs to be set in hardware.
-} temp_wires_t;
+/// @brief Lookup table of non-default scale values for resolution settings
+static const lcec_lookuptable_double_t temp_resolutions_scale[] = {
+    {"High", 0.1},  // 0.01C per bit, default on "high precision" devices.
+    {NULL},
+};
 
-/// @brief List of available values for the `wires` modParam setting.
-static const temp_wires_t temp_wires[] = {
+/// @brief Lookup table of available values for the `wires` modParam setting.
+static const lcec_lookuptable_int_t temp_wires[] = {
     {"2", 0},
     {"3", 1},
     {"4", 2},
@@ -216,9 +215,6 @@ static lcec_typelist_t types[] = {
 ADD_TYPES(types)
 
 static void lcec_el3xxx_read(struct lcec_slave *slave, long period);
-static const temp_sensor_t *sensor_type(char *sensortype);
-static const temp_resolution_t *sensor_resolution(char *sensorresolution);
-static const temp_wires_t *sensor_wires(char *sensorwires);
 static int set_sensor_type(lcec_slave_t *slave, char *sensortype, lcec_class_ain_channel_t *chan, int idx, int sidx);
 static int set_resolution(lcec_slave_t *slave, char *resolution_name, lcec_class_ain_channel_t *chan, int idx, int sidx);
 static int set_wires(lcec_slave_t *slave, char *wires_name, lcec_class_ain_channel_t *chan, int idx, int sidx);
@@ -301,31 +297,17 @@ static void lcec_el3xxx_read(struct lcec_slave *slave, long period) {
   lcec_ain_read_all(slave, hal_data);
 }
 
-/// @brief Match the sensor_type in modparams and return the definition
-/// associated with that sensor.
-///
-/// From https://download.beckhoff.com/download/Document/io/ethercat-terminals/el32xxen.pdf#page=223
-static const temp_sensor_t *sensor_type(char *sensortype) {
-  temp_sensor_t const *type;
-
-  for (type = temp_sensors; type != NULL; type++) {
-    if (!strcasecmp(sensortype, type->name)) {
-      return type;
-    }
-  }
-
-  return NULL;
-}
-
 /// @brief Set the sensor type for a channel.
 static int set_sensor_type(lcec_slave_t *slave, char *sensortype, lcec_class_ain_channel_t *chan, int idx, int sidx) {
-  temp_sensor_t const *sensor;
+  int setting = lcec_lookupint_i(temp_sensors_setting, sensortype, -1);
 
-  sensor = sensor_type(sensortype);
-  if (sensor != NULL) {
-    *(chan->scale) = sensor->scale;
-    chan->is_unsigned = sensor->is_unsigned;
-    if (lcec_write_sdo16(slave, idx, sidx, sensor->value) != 0) {
+  if (setting != -1) {
+    // See if this sensor type needs a non-default scale, otherwise default to 0.1.
+    *(chan->scale) = lcec_lookupdouble_i(temp_sensors_scale, sensortype, 0.1);
+
+    // See if this sensor type is unsigned.  Otherwise signed.
+    chan->is_unsigned = lcec_lookupint_i(temp_sensors_unsigned, sensortype, 0);
+    if (lcec_write_sdo16(slave, idx, sidx, setting) != 0) {
       rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "failed to configure sensor for slave %s.%s\n", slave->master->name, slave->name);
       return -1;
     }
@@ -337,27 +319,14 @@ static int set_sensor_type(lcec_slave_t *slave, char *sensortype, lcec_class_ain
   return 0;
 }
 
-/// @brief Match the sensor resolutiuon in modparams and return the settings for that resolution.
-static const temp_resolution_t *sensor_resolution(char *sensorresolution) {
-  temp_resolution_t const *res;
-
-  for (res = temp_resolutions; res != NULL; res++) {
-    if (!strcasecmp(sensorresolution, res->name)) {
-      return res;
-    }
-  }
-
-  return NULL;
-}
-
 /// @brief Set the resolution for a channel.
 static int set_resolution(lcec_slave_t *slave, char *resolution_name, lcec_class_ain_channel_t *chan, int idx, int sidx) {
-  temp_resolution_t const *resolution;
+  int setting = lcec_lookupint_i(temp_resolutions_setting, resolution_name, -1);
 
-  resolution = sensor_resolution(resolution_name);
-  if (resolution != NULL) {
-    *(chan->scale) = *(chan->scale) * resolution->scale_multiplier;
-    if (lcec_write_sdo8(slave, idx, sidx, resolution->value) != 0) {
+  if (setting != -1) {
+    // See if this resolution type needs a non-default scale, otherwise leave it at 1.0.
+    *(chan->scale) = *(chan->scale) * lcec_lookupdouble_i(temp_resolutions_scale, resolution_name, 1.0);
+    if (lcec_write_sdo8(slave, idx, sidx, setting) != 0) {
       rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "failed to configure slave %s.%s sdo resolution!\n", slave->master->name, slave->name);
       return -1;
     }
@@ -368,26 +337,13 @@ static int set_resolution(lcec_slave_t *slave, char *resolution_name, lcec_class
   return 0;
 }
 
-/// @brief Match the sensor wire configuration in modparams and return the settings for that number of wires.
-static const temp_wires_t *sensor_wires(char *sensorwires) {
-  temp_wires_t const *wires;
-
-  for (wires = temp_wires; wires != NULL; wires++) {
-    if (!strcasecmp(sensorwires, wires->name)) {
-      return wires;
-    }
-  }
-
-  return NULL;
-}
-
 /// @brief Set the wire count for a channel.
 static int set_wires(lcec_slave_t *slave, char *wires_name, lcec_class_ain_channel_t *chan, int idx, int sidx) {
-  temp_wires_t const *wires;
+  int wirevalue;
 
-  wires = sensor_wires(wires_name);
-  if (wires != NULL) {
-    if (lcec_write_sdo16(slave, idx, sidx, wires->value) != 0) {
+  wirevalue = lcec_lookupint_i(temp_wires, wires_name, -1);
+  if (wirevalue != -1) {
+    if (lcec_write_sdo16(slave, idx, sidx, wirevalue) != 0) {
       rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "failed to configure slave %s.%s sdo wires!\n", slave->master->name, slave->name);
       return -1;
     }
