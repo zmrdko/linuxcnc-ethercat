@@ -25,7 +25,7 @@
 static int lcec_el4xxx_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
 
 /// Flags for describing devices
-#define F_S11 1 ///< Uses subindex 11 instead of sub-index 1 for ports.
+#define F_S11 1<<8 ///< Uses subindex 11 instead of sub-index 1 for ports.
 #define F_CHANNELS(x) (x)  ///< Number of output channels
 
 #define OUTPORTS(flag) ((flag)&0xf)      // Number of output channels
