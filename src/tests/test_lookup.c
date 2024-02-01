@@ -31,7 +31,7 @@ static const lcec_lookuptable_double_t table3[] = {
     {NULL},
 };
 
-TESTFUNC(lookupint) {
+TESTFUNC(test_lookupint) {
   TESTSETUP;
 
   // Looking up "Pt100" should return 0.
@@ -46,7 +46,7 @@ TESTFUNC(lookupint) {
   TESTRESULTS;
 }
 
-TESTFUNC(lookupint_i) {
+TESTFUNC(test_lookupint_i) {
   TESTSETUP;
 
   // Same as test_lookupint, except...
@@ -60,7 +60,7 @@ TESTFUNC(lookupint_i) {
   TESTRESULTS;
 }
 
-TESTFUNC(sparsedefault) {
+TESTFUNC(test_sparsedefault) {
   TESTSETUP;
 
   // Verify that throwing random things at a table with a 0 (or
@@ -73,7 +73,7 @@ TESTFUNC(sparsedefault) {
   TESTRESULTS;
 }
 
-TESTFUNC(lookupdouble) {
+TESTFUNC(test_lookupdouble) {
   TESTSETUP;
 
   // I should really create a TESTDOUBLE() macro, but this works well enough for now.
@@ -88,7 +88,7 @@ TESTFUNC(lookupdouble) {
   TESTRESULTS;
 }
 
-TESTFUNC(lookupdouble_i) {
+TESTFUNC(test_lookupdouble_i) {
   TESTSETUP;
 
   // Same as test_lookupdouble, except...

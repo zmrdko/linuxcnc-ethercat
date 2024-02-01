@@ -51,8 +51,8 @@
 
 #define TESTGLOBALSETUP int failedresults = 0
 #define TESTFUNC(name)                                \
-  int test_##name(void) __attribute__((constructor)); \
-  int test_##name(void)
+  int name(void) __attribute__((constructor)); \
+  int name(void)
 
 #define TESTMAINRESULTS                     \
   do {                                      \
