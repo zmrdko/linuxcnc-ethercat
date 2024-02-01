@@ -3,6 +3,8 @@
 #include "../../src/lcec.h"
 #include "tests.h"
 
+TESTGLOBALSETUP;
+
 static const lcec_lookuptable_int_t table1[] = {
     {"Pt100", 0},          // Pt100 sensor,
     {"Ni100", 1},          // Ni100 sensor, -60 to 250C
@@ -29,7 +31,7 @@ static const lcec_lookuptable_double_t table3[] = {
     {NULL},
 };
 
-int test_lookupint(void) {
+TESTFUNC(lookupint) {
   TESTSETUP;
 
   // Looking up "Pt100" should return 0.
@@ -44,7 +46,7 @@ int test_lookupint(void) {
   TESTRESULTS;
 }
 
-int test_lookupint_i(void) {
+TESTFUNC(lookupint_i) {
   TESTSETUP;
 
   // Same as test_lookupint, except...
@@ -58,7 +60,7 @@ int test_lookupint_i(void) {
   TESTRESULTS;
 }
 
-int test_sparsedefault(void) {
+TESTFUNC(sparsedefault) {
   TESTSETUP;
 
   // Verify that throwing random things at a table with a 0 (or
@@ -71,7 +73,7 @@ int test_sparsedefault(void) {
   TESTRESULTS;
 }
 
-int test_lookupdouble(void) {
+TESTFUNC(lookupdouble) {
   TESTSETUP;
 
   // I should really create a TESTDOUBLE() macro, but this works well enough for now.
@@ -86,7 +88,7 @@ int test_lookupdouble(void) {
   TESTRESULTS;
 }
 
-int test_lookupdouble_i(void) {
+TESTFUNC(lookupdouble_i) {
   TESTSETUP;
 
   // Same as test_lookupdouble, except...
@@ -100,14 +102,4 @@ int test_lookupdouble_i(void) {
   TESTRESULTS;
 }
 
-int main(int argc, char **argv) {
-  TESTMAINSETUP;
-
-  TESTMAIN(test_lookupint);
-  TESTMAIN(test_lookupint_i);
-  TESTMAIN(test_sparsedefault);
-  TESTMAIN(test_lookupdouble);
-  TESTMAIN(test_lookupdouble_i);
-
-  TESTMAINRESULTS;
-}
+TESTMAIN

@@ -15,15 +15,15 @@
 
 #define TESTSETUP int pass = 0, fail = 0
 
-#define TESTINT(call, want)                                             \
-  do {                                                                  \
-    int got;                                                            \
-    if (got = call, got != want) {                                      \
-      fprintf(stderr, "fail: %s, got %d, want %d\n", #call, got, want); \
-      fail++;                                                           \
-    } else {                                                            \
-      pass++;                                                           \
-    }                                                                   \
+#define TESTINT(call, want)                                                                          \
+  do {                                                                                               \
+    int got;                                                                                         \
+    if (got = call, got != want) {                                                                   \
+      fprintf(stderr, "fail at %s:%d: %s, got %d, want %d\n", __FILE__, __LINE__, #call, got, want); \
+      fail++;                                                                                        \
+    } else {                                                                                         \
+      pass++;                                                                                        \
+    }                                                                                                \
   } while (0)
 
 #define TEST_MESSAGE(t, call, want, ...)       \
@@ -44,20 +44,25 @@
       return 0;                                                                        \
     } else {                                                                           \
       fprintf(stderr, "%s: FAIL: %d tests passed, %d failed\n", __func__, pass, fail); \
+      failedresults++;                                                                 \
       return -1;                                                                       \
     }                                                                                  \
   } while (0)
 
-#define TESTMAINSETUP int result = 0
-#define TESTMAIN(func) \
-  if (func() != 0) result = 1
+#define TESTGLOBALSETUP int failedresults = 0
+#define TESTFUNC(name)                                \
+  int test_##name(void) __attribute__((constructor)); \
+  int test_##name(void)
+
 #define TESTMAINRESULTS                     \
   do {                                      \
-    if (result != 0) {                      \
+    if (failedresults != 0) {               \
       fprintf(stderr, "Tests failed!\n");   \
-      return result;                        \
+      return 1;                             \
     } else {                                \
       fprintf(stderr, "All tests pass.\n"); \
       return 0;                             \
     }                                       \
   } while (0)
+#define TESTMAIN \
+  int main(int argc, char **argv) { TESTMAINRESULTS; }
