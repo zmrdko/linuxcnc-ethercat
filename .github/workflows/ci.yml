@@ -83,7 +83,7 @@ jobs:
               id: cache-ethercatmaster
               uses: actions/cache@v3
               env:
-                  cache-name: cache-ethercatmaster
+                  cache-name: cache-ethercatmaster2
               with:
                   key: ${{ runner.os }}-build-${{ env.cache-name }}
                   path: ethercat/
@@ -100,7 +100,7 @@ jobs:
                   set -x
                   cd ethercat
                   ./bootstrap
-                  ./configure --disable-kernel
+                  ./configure --disable-kernel --libdir=/usr/lib
                   make -j$((1+$(nproc))) all
                   #sudo make install
 
@@ -135,7 +135,7 @@ jobs:
             - name: Restore Ethercat Master cache
               uses: actions/cache/restore@v3
               env:
-                  cache-name: cache-ethercatmaster
+                  cache-name: cache-ethercatmaster2
               with:
                   key: ${{ runner.os }}-build-${{ env.cache-name }}
                   path: ethercat/
@@ -157,28 +157,7 @@ jobs:
               run: |
                   make COMP=$GITHUB_WORKSPACE/linuxcnc/bin/halcompile -j$((1+$(nproc)))
 
-    # Build LinuxCNC-Ethercat debian package
-    prep-debian-package:
-        env:
-            CHANGELOG_AUTHOR_NAME: "Scott Laird"
-            CHANGELOG_AUTHOR_EMAIL: "scott@sigkill.org"
-        needs:
-            - build
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
-              with:
-                  fetch-depth: 0
-
-            - name: Patch changelog (snapshot)
-              uses: pi-top/git-debian-changelog-bump-action@master
-              with:
-                  release: false
-                  author_name: ${{ env.CHANGELOG_AUTHOR_NAME }}
-                  author_email: ${{ env.CHANGELOG_AUTHOR_EMAIL }}
-
-            - name: Determine current version
+            - name: make test
               run: |
-                  sudo apt install -y dpkg-dev
-                  echo "CURRENT_VERSION=$(dpkg-parsechangelog -Sversion)" >> $GITHUB_ENV
+                  make COMP=$GITHUB_WORKSPACE/linuccnc/bin/halcompile test
+

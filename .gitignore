@@ -23,6 +23,9 @@ src/lcec_conf
 src/lcec_devices
 src/Module.symvers
 
+# Test files
+src/tests/*.bin
+
 # debian pkgbuild files
 debian/.debhelper/
 debian/files

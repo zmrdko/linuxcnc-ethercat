@@ -1,5 +1,5 @@
 all: all-deps realtime user
-.PHONY: all all-deps install install-user install-realtime user realtime
+.PHONY: all all-deps install install-user install-realtime user realtime all-tests test
 
 -include ../config.mk
 -include $(MODINC)
@@ -18,8 +18,10 @@ lcec-conf-srcs := $(wildcard lcec_conf*.c)
 lcec-conf-objs = $(subst .c,.o,$(lcec-conf-srcs))
 device-srcs := $(wildcard devices/*.c)
 device-objs := $(subst .c,.o,$(device-srcs))
-all-srcs := $(wildcard *.c devices/*.c)
+all-srcs := $(wildcard *.c devices/*.c tests/*.c)
 all-deps := $(all-srcs:.c=.d)
+all-tests-srcs := $(wildcard tests/test_*.c)
+all-tests := $(all-tests-srcs:.c=.bin)
 
 ## target-specific variables
 
@@ -79,6 +81,10 @@ install: install-user install-realtime
 realtime: lcec.so
 user: lcec_conf lcec_devices
 
+# Run all tests (auto-generated above from tests/test_*.c).
+test: $(all-tests)
+	$(foreach var, $(all-tests), $(var);)
+
 install-user: user
 	mkdir -p $(DESTDIR)$(EMC2_HOME)/bin
 	cp lcec_conf $(DESTDIR)$(EMC2_HOME)/bin/
@@ -101,3 +107,8 @@ lcec_conf: $(lcec-conf-objs) $(lcec-common-objs) liblcecdevices.a
 
 lcec_devices: lcec_devices.o $(lcec-common-objs) liblcecdevices.a
 	$(CC) -o $@ lcec_devices.o $(lcec-common-objs) -Wl,-rpath,$(LIBDIR) -L$(LIBDIR) -llinuxcnchal -lexpat -Wl,--whole-archive liblcecdevices.a -Wl,--no-whole-archive -lethercat -lm
+
+# Rule for compiling tests/*.bin files.  We're naming test excutables *.bin so we can use wildcards in .gitignore and `make clean` to match them.
+tests/%.bin: tests/%.o $(lcec-common-objs) liblcecdevices.a
+	$(CC) -o $@ $(subst .bin,.o,$@) $(lcec-common-objs) -Wl,-rpath,$(LIBDIR) -L$(LIBDIR) -llinuxcnchal -lexpat -Wl,--whole-archive liblcecdevices.a -Wl,--no-whole-archive -lethercat -lm
+

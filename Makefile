@@ -1,4 +1,4 @@
-.PHONY: all configure install clean
+.PHONY: all configure install clean test
 
 all: configure
 	@$(MAKE) -C src all
@@ -6,6 +6,9 @@ all: configure
 clean:
 	@$(MAKE) -C src -f Makefile.clean clean
 	rm -f config.mk config.mk.tmp
+
+test:
+	@$(MAKE) -C src test
 
 install: configure
 	@$(MAKE) -C src install
