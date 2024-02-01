@@ -35,5 +35,7 @@ typedef struct {
 lcec_class_dout_channels_t *lcec_dout_allocate_channels(int count);
 lcec_class_dout_channel_t *lcec_dout_register_channel(
     ec_pdo_entry_reg_t **pdo_entry_regs, struct lcec_slave *slave, int id, uint16_t idx, uint16_t sidx);
+lcec_class_dout_channel_t *lcec_dout_register_channel_named(
+    ec_pdo_entry_reg_t **pdo_entry_regs, struct lcec_slave *slave, uint16_t idx, uint16_t sidx, char *name);
 void lcec_dout_write(struct lcec_slave *slave, lcec_class_dout_channel_t *data);
 void lcec_dout_write_all(struct lcec_slave *slave, lcec_class_dout_channels_t *pins);
