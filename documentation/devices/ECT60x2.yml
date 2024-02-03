@@ -1,0 +1,10 @@
+---
+Device: ECT60x2
+VendorID: "0x00000a88"
+PID: "0x0a880006"
+Description: ECT60x2 2-axis open-loop stepper drive
+DocumentationURL: "https://www.rtelligentglobal.com/fieldbus-open-loop-stepper-drive-ect60x2-product/"
+DeviceType: "Stepper Drive"
+Notes: "Currently only supports the first axis, but adding the second should be fairly easy."
+SrcFile: devices/lcec_rtec.c
+TestingStatus: "Untested, but similar to the ECT60 which is tested."

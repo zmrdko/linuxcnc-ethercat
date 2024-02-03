@@ -1,0 +1,11 @@
+---
+Device: ECR60
+VendorID: "0x00000a88"
+PID: "0x0a880001"
+VendorName: "RTelligent"
+Description: ECR60 open-loop stepper drive
+DocumentationURL: "http://www.rtelligent.net/ECR60.html"
+DeviceType: "Stepper Drive"
+Notes: ""
+SrcFile: devices/lcec_rtec.c
+TestingStatus: "Untested, but similar to the ECT60 which is tested."

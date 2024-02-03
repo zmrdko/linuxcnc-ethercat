@@ -17,6 +17,12 @@ Description | Driver | EtherCAT VID:PID | Device Type | Testing Status | Notes
 [Delta ASDA-A2-E](https://www.deltaww.com/en-us/products/Servo-Systems-AC-Servo-Motors-and-Drives/23) | [deasda](../src/devices/lcec_deasda.c) | 0x1dd:0x10305070 | Servo Drive |  | 
 [Delta ASDA-A3](https://www.deltaww.com/en-US/products/Servo-Systems-AC-Servo-Motors-and-Drives/4102) | [deasda](../src/devices/lcec_deasda.c) | 0x1dd:0x00006010 | Servo Drive |  | 
 [Delta ASDA-B3](https://www.deltaww.com/en-US/products/Servo-Systems-AC-Servo-Motors-and-Drives/5158) | [deasda](../src/devices/lcec_deasda.c) | 0x1dd:0x00006080 | Servo Drive |  | 
+[ECR60 open-loop stepper drive](http://www.rtelligent.net/ECR60.html) | [rtec](../devices/lcec_rtec.c) | 0xa88:0x0a880001 | Stepper Drive | Untested, but similar to the ECT60 which is tested. | 
+[ECR60x2 2-axis open-loop stepper drive](https://www.rtelligentglobal.com/fieldbus-open-loop-stepper-drive-ecr60x2a-product/) | [rtec](../devices/lcec_rtec.c) | 0xa88:0x0a880005 | Stepper Drive | Untested, but similar to the ECT60 which is tested. | Currently only supports the first axis, but adding the second should be fairly easy.
+[ECR86 open-loop stepper drive](http://www.rtelligent.net/ECR86.html) | [rtec](../devices/lcec_rtec.c) | 0xa88:0x0a880003 | Stepper Drive | Untested, but similar to the ECT60 which is tested. | 
+[ECT60 closed-loop stepper drive](http://www.rtelligent.net/ECT60.html) | [rtec](../devices/lcec_rtec.c) | 0xa88:0x0a880002 | Stepper Drive | Actively tested | 
+[ECT60x2 2-axis open-loop stepper drive](https://www.rtelligentglobal.com/fieldbus-open-loop-stepper-drive-ect60x2-product/) | [rtec](../devices/lcec_rtec.c) | 0xa88:0x0a880006 | Stepper Drive | Untested, but similar to the ECT60 which is tested. | Currently only supports the first axis, but adding the second should be fairly easy.
+[ECR86 open-loop stepper drive](http://www.rtelligent.net/ECR86.html) | [rtec](../devices/lcec_rtec.c) | 0xa88:0x0a880004 | Stepper Drive | Untested, but similar to the ECT60 which is tested. | 
 [Beckhoff EJ1859 8Ch. Dig. Input 24V, 3ms, 8Ch. Dig. Output 24V, 0.5A](http://www.beckhoff.com/EJ1859) | [digitalcombo](../src/devices/lcec_digitalcombo.c) | 0x2:0x07432852 | Digital Input/Output |  | 
 [Beckhoff EJ3004 4Ch. Ana. Input +/-10V](http://www.beckhoff.com/EJ3004) | [el3xxx](../src/devices/lcec_el3xxx.c) | 0x2:0x0bbc2852 | Analog Input |  | 
 [Beckhoff EJ3202 2Ch. Ana. Input PT100 (RTD)](http://www.beckhoff.com/EJ3202) | [el3xxx](../src/devices/lcec_el3xxx.c) | 0x2:0x0c822852 | Analog Input | New, untested | 
@@ -242,6 +248,7 @@ Description | Driver | EtherCAT VID:PID | Device Type | Testing Status | Notes
 [Omron R88D-KN75H-ECT G5 Series ServoDrive/Motor](http://www.ia.omron.com/) | [omrg5](../src/devices/lcec_omrg5.c) | 0x83:0x00000059 | Servo Drive |  | 
 [Omron R88D-KNA5L-ECT G5 Series ServoDrive/Motor](http://www.ia.omron.com/) | [omrg5](../src/devices/lcec_omrg5.c) | 0x83:0x00000001 | Servo Drive |  | 
 [Stoeber Posidrive MDS 5000](https://www.ethercat.org/en/products/CE4C65D2ED8B4F39A8166D6CEDB2C872.htm) | [stmds5k](../src/devices/lcec_stmds5k.c) | 0xb9:0x00001388 | Servo Drive |  | 
+Driver for generic CiA 402 hardware without a dedicated driver | [basic_cia402](../devices/lcec_basic_cia402.c) | 0xffffffff:0xffffffff | Motion Controller |  | 
 
 There are an additional 4 device(s) supported that do not have enough
 documentation to display here.  Please look at the `documentation/devices/` files

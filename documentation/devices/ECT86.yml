@@ -1,0 +1,11 @@
+---
+Device: ECT86
+VendorID: "0x00000a88"
+PID: "0x0a880004"
+VendorName: "RTelligent"
+Description: ECR86 open-loop stepper drive
+DocumentationURL: "http://www.rtelligent.net/ECR86.html"
+DeviceType: "Stepper Drive"
+Notes: ""
+SrcFile: devices/lcec_rtec.c
+TestingStatus: "Untested, but similar to the ECT60 which is tested."
