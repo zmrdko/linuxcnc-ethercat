@@ -22,9 +22,12 @@
 #include "../lcec.h"
 
 typedef struct {
-  hal_bit_t *out;
-  hal_bit_t invert;
-  unsigned int pdo_os, pdo_bp;
+  char *name;                  ///< Used for debugging only
+  hal_bit_t *out;              ///< -dout-X pin in LinuxCNC
+  hal_bit_t invert;            ///< Is the value inverted?
+  unsigned int pdo_os;         ///< Byte offset in PDO data struct
+  unsigned int pdo_bp;         ///< Bit offset in PDO data byte
+  unsigned int pdo_bp_packed;  ///< Controls is this is a packed-bit port, where more than one channel is found in a single PDO entry.
 } lcec_class_dout_channel_t;
 
 typedef struct {
@@ -37,5 +40,7 @@ lcec_class_dout_channel_t *lcec_dout_register_channel(
     ec_pdo_entry_reg_t **pdo_entry_regs, struct lcec_slave *slave, int id, uint16_t idx, uint16_t sidx);
 lcec_class_dout_channel_t *lcec_dout_register_channel_named(
     ec_pdo_entry_reg_t **pdo_entry_regs, struct lcec_slave *slave, uint16_t idx, uint16_t sidx, char *name);
+lcec_class_dout_channel_t *lcec_dout_register_channel_packed(
+    ec_pdo_entry_reg_t **pdo_entry_regs, struct lcec_slave *slave, uint16_t idx, uint16_t sidx, int bit, char *name);
 void lcec_dout_write(struct lcec_slave *slave, lcec_class_dout_channel_t *data);
 void lcec_dout_write_all(struct lcec_slave *slave, lcec_class_dout_channels_t *pins);

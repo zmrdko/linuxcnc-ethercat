@@ -10,7 +10,7 @@
 //    but WITHOUT ANY WARRANTY; without even the implied warranty of
 //    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //    GNU General Public License for more details.
-// 
+//
 //    You should have received a copy of the GNU General Public License
 //    along with this program; if not, write to the Free Software
 //    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
@@ -22,10 +22,12 @@
 #include "../lcec.h"
 
 typedef struct {
-  hal_bit_t *in;        ///< `hal_bit_t` pin for the `din-X` pin in LinuxCNC
-  hal_bit_t *in_not;    ///< `hal_bit_t` pin for the `din-X-not` pin in LinuxCNC
-  unsigned int pdo_os;  ///< This bit's offset in the master's PDO data structure.
-  unsigned int pdo_bp;  ///< This bit's bit position in the master's PDO data structure.
+  char *name;                  ///< The channel name/number, used for debugging messages.
+  hal_bit_t *in;               ///< `hal_bit_t` pin for the `din-X` pin in LinuxCNC.
+  hal_bit_t *in_not;           ///< `hal_bit_t` pin for the `din-X-not` pin in LinuxCNC.
+  unsigned int pdo_os;         ///< This bit's offset in the master's PDO data structure.
+  unsigned int pdo_bp;         ///< This bit's bit position in the master's PDO data structure.
+  unsigned int pdo_bp_packed;  ///< This bit's bit position in the master's PDO data structure, for packed din.
 } lcec_class_din_channel_t;
 
 typedef struct {
@@ -38,7 +40,8 @@ lcec_class_din_channel_t *lcec_din_register_channel(
     ec_pdo_entry_reg_t **pdo_entry_regs, struct lcec_slave *slave, int id, uint16_t idx, uint16_t sidx);
 lcec_class_din_channel_t *lcec_din_register_channel_named(
     ec_pdo_entry_reg_t **pdo_entry_regs, struct lcec_slave *slave, uint16_t idx, uint16_t sidx, char *name);
-lcec_class_din_channel_t *lcec_din_register_channel_packed(ec_pdo_entry_reg_t **pdo_entry_regs, struct lcec_slave *slave, unsigned int os, int bit, char *name);
+lcec_class_din_channel_t *lcec_din_register_channel_packed(
+    ec_pdo_entry_reg_t **pdo_entry_regs, struct lcec_slave *slave, uint16_t idx, uint16_t sidx, int bit, char *name);
 
 void lcec_din_read(struct lcec_slave *slave, lcec_class_din_channel_t *data);
 void lcec_din_read_all(struct lcec_slave *slave, lcec_class_din_channels_t *channels);

@@ -94,6 +94,8 @@ lcec_class_din_channel_t *lcec_din_register_channel_named(
     return NULL;
   }
   memset(data, 0, sizeof(lcec_class_din_channel_t));
+  data->name = name;
+  data->pdo_bp_packed = 0xffff;  // Flag value, this isn't a packed channel.
 
   LCEC_PDO_INIT((*pdo_entry_regs), slave->index, slave->vid, slave->pid, idx, sidx, &data->pdo_os, &data->pdo_bp);
   err = lcec_pin_newf_list(data, slave_pins, LCEC_MODULE_NAME, slave->master->name, slave->name, name);
@@ -121,7 +123,7 @@ lcec_class_din_channel_t *lcec_din_register_channel_named(
 /// @param bit  The bit offset for the digital in channel.
 /// @param name The base name to use for the channel, `din-<ID>` is common.
 lcec_class_din_channel_t *lcec_din_register_channel_packed(
-    ec_pdo_entry_reg_t **pdo_entry_regs, struct lcec_slave *slave, unsigned int os, int bit, char *name) {
+    ec_pdo_entry_reg_t **pdo_entry_regs, struct lcec_slave *slave, uint16_t idx, uint16_t sidx, int bit, char *name) {
   lcec_class_din_channel_t *data;
   int err;
 
@@ -131,14 +133,13 @@ lcec_class_din_channel_t *lcec_din_register_channel_packed(
     return NULL;
   }
   memset(data, 0, sizeof(lcec_class_din_channel_t));
+  data->name = name;
 
   // Register the whole PDO, hopefully this does the sane thing if we register the same PDO repeatedly.
-  // LCEC_PDO_INIT((*pdo_entry_regs), slave->index, slave->vid, slave->pid, idx, sidx, &data->pdo_os, &data->pdo_bp);
-  data->pdo_os = os;
-  data->pdo_bp = bit;
+  LCEC_PDO_INIT((*pdo_entry_regs), slave->index, slave->vid, slave->pid, idx, sidx, &data->pdo_os, &data->pdo_bp);
 
   // This is kind of a terrible hack, but it should mostly work, modulo possible issues with variable-sized PDOs and endianness problems.
-  data->pdo_bp = bit;
+  data->pdo_bp_packed = bit;
 
   err = lcec_pin_newf_list(data, slave_pins, LCEC_MODULE_NAME, slave->master->name, slave->name, name);
   if (err != 0) {
@@ -150,7 +151,7 @@ lcec_class_din_channel_t *lcec_din_register_channel_packed(
   return data;
 }
 
-/// \brief reads data from a single digital in port.
+/// @brief reads data from a single digital in port.
 ///
 /// @param slave the slave, passed from the per-device `_read`.
 /// @param data  a lcec_class_din_channel_t *, as returned by lcec_din_register_pin.
@@ -161,13 +162,25 @@ void lcec_din_read(struct lcec_slave *slave, lcec_class_din_channel_t *data) {
   lcec_master_t *master = slave->master;
   uint8_t *pd = master->process_data;
   hal_bit_t s;
+  int os = data->pdo_os;
+  int bp = data->pdo_bp;
 
-  s = EC_READ_BIT(&pd[data->pdo_os], data->pdo_bp);
+  // If this is a packed input, then we need to use the packed bit
+  // offset, not the one that came back from LCEC_PDO_INIT().  We also
+  // need to adjust the offset to pick the correct byte.
+  if (data->pdo_bp_packed != 0xffff) {
+    bp = data->pdo_bp_packed & 7;
+    os += data->pdo_bp_packed >> 3;  // the data in pd[] is always little-endian.
+
+    //    rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "reading slave %s channel %s from %d:%d\n", slave->name, data->name, os, bp);
+  }
+
+  s = EC_READ_BIT(&pd[os], bp);
   *(data->in) = s;
   *(data->in_not) = !s;
 }
 
-/// \brief reads data from all digital in ports.
+/// @brief reads data from all digital in ports.
 ///
 /// @param slave The slave, passed from the per-device `_read`.
 /// @param channels An `lcec_class_din_channels_t *`, as returned by `lcec_din_allocate_channels()`.
