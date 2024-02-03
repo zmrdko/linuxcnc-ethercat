@@ -41,7 +41,7 @@ static lcec_typelist_t types[] = {
     {"EasyIO", LCEC_ABET_VID, 0x0debacca, 16 + 16 + 4 + 2, 0, NULL, lcec_easyio_init},
     {NULL},
 };
-ADD_TYPES(types);
+ADD_TYPES(types)
 
 static void lcec_easyio_write(struct lcec_slave *slave, long period);
 static void lcec_easyio_read(struct lcec_slave *slave, long period);
@@ -65,7 +65,7 @@ static int lcec_easyio_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   hal_data->digital_in = lcec_din_allocate_channels(16);
   hal_data->digital_out = lcec_dout_allocate_channels(16);
   hal_data->analog_in = lcec_ain_allocate_channels(4);
-  // hal_data->analog_out = lcec_aout_allocate_channels(2);
+  hal_data->analog_out = lcec_aout_allocate_channels(2);
 
   // initialize digital channels 0-7
   for (i = 0; i < 8; i++) {
