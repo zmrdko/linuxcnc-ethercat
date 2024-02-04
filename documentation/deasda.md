@@ -25,7 +25,7 @@ like this to your `ethercat.xml` file:
 To ensure that a change in operational mode does not occure during the linuxcnc runtime, mode setting is done using modParam in the configuration file. This setting is optional as it defaults to mode CSV.
 
 ```xml
-    <slave idx="1" type="DeASDA" name="x-axis"/>
+    <slave idx="1" type="DeASDA" name="x-axis">
       <modParam name="opmode" value="CSV"/>
     </slave>
 ```
