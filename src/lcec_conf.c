@@ -1245,6 +1245,9 @@ static void parseModParamAttrs(LCEC_CONF_XML_INST_T *inst, int next, const char 
   // set id
   p->id = modparams->id;
 
+  // set name (for error messages)
+  strncpy(p->name, pname, LCEC_CONF_STR_MAXLEN - 1);
+
   // try to parse value
   char *s = NULL;
   switch (modparams->type) {
