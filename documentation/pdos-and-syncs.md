@@ -3,7 +3,7 @@
 *Disclaimer: I'm still somewhat new to EtherCAT, so I may be
 mis-understanding something here.  There may be a performance impact
 of some of these changes that I'm not aware of, but from a correctness
-standpoint I'm fairly confident that this is all correct.*
+standpoint I'm fairly confident that this is accurate.*
 
 If you look through the drivers in the LinuxCNC-Ethercat codebase and
 how they handle PDOs, then you'll notice that different drivers have 3
@@ -25,7 +25,7 @@ In this case, the code just calls `LCEC_PDO_INIT()` to register our
 interest in the PDO, and we're done.  It looks something like this:
 
 ```c
-int foo_init(int id, struct lcec_slave *slave, ec_pdo_entry_reg_t *p) {
+int foo_init(int id, struct lcec_slave *s, ec_pdo_entry_reg_t *p) {
   ...
   LCEC_PDO_INIT(p, s->index, s->vid, s->pid, 0x6000, 0x01, &hal_data->channel1_os, NULL);
   LCEC_PDO_INIT(p, s->index, s->vid, s->pid, 0x6010, 0x01, &hal_data->channel2_os, NULL);
@@ -70,7 +70,7 @@ static ec_sync_info_t foo_syncs[] = {
     {0xff},
 };
 
-int foo_init(int id, struct lcec_slave *slave, ec_pdo_entry_reg_t *p) {
+int foo_init(int id, struct lcec_slave *s, ec_pdo_entry_reg_t *p) {
   ...
   LCEC_PDO_INIT(p, s->index, s->vid, s->pid, 0x6000, 0x01, &hal_data->channel1_os, NULL);
   LCEC_PDO_INIT(p, s->index, s->vid, s->pid, 0x6010, 0x01, &hal_data->channel2_os, NULL);
@@ -112,7 +112,7 @@ style, but don't just cargo-cult it blindly.
 The third style is similar to the second, but uses a wrapper library to actually populate the sync structures:
 
 ```c
-int foo_init(int id, struct lcec_slave *slave, ec_pdo_entry_reg_t *p) {
+int foo_init(int id, struct lcec_slave *s, ec_pdo_entry_reg_t *p) {
   ...
   LCEC_PDO_INIT(p, s->index, s->vid, s->pid, 0x6000, 0x01, &hal_data->channel1_os, NULL);
   LCEC_PDO_INIT(p, s->index, s->vid, s->pid, 0x6010, 0x01, &hal_data->channel2_os, NULL);
@@ -127,7 +127,7 @@ int foo_init(int id, struct lcec_slave *slave, ec_pdo_entry_reg_t *p) {
   lcec_syncs_add_pdo_entry(&hal_data->syncs, 0x6000, 0x01, 8); // Channel 1
   lcec_syncs_add_pdo_entry(&hal_data->syncs, 0x6010, 0x01, 8); // Channel 2
 
-s->sync_info = &hal_data->syncs.syncs[0];
+  s->sync_info = &hal_data->syncs.syncs[0];
   ...
 }
 ```
