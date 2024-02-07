@@ -92,8 +92,8 @@ contains all of the objects that we care about.  For any given device,
 you can check its default PDO mappings via `ethercat pdos`, but you
 may need to power-cycle the device to see what the defaults were
 before we overwrote them.  Or you can look at
-http://linuxcnc-ethercat.github.io/esi-data/devices/, which has the
-default maps for nearly all devices that we support.
+[http://linuxcnc-ethercat.github.io/esi-data/devices/](http://linuxcnc-ethercat.github.io/esi-data/devices/),
+which has the default maps for nearly all devices that we support.
 
 If one of the existing PDOs covers everything that you need without
 too much extra data, then you probably don't want to bother with
