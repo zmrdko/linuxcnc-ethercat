@@ -155,3 +155,27 @@ because it'll fail at the first attempt to map an object that doesn't
 exist on this specific device.  So we need to manually handle
 mappings, *and* there are a lot of conditionals to control which
 objects get mapped.
+
+## Performance
+
+The one possible issue here is performance--I suspect (but haven't
+verified) that our EtherCAT library will look for existing PDO sync
+mappings and pick the smallest one that covers the PDO objects that we
+care about, *and then sync everything listed in that PDO*.  So, if we
+have a device that lists 50 objects in a PDO config and we only want
+1, then we're going to end up copying way more data than we care
+about, slightly increasing the average cycle time and adding overhead.
+
+Does it matter?  It depends on the use case, the actual device, and
+its default configuration.  Most of the basic Beckhoff devices have
+fairly simple mappings, and frequently provide both a "compact" PDO
+(with only the data itself) and a larger PDO with status information.
+
+Adding one extra byte to an existing frame travelling over 100 Mbps
+Ethernet takes an extra (8 bits / 100 Mbits/second) = 80ns.  Modern
+CPUs will probably only take a cycle or two extra, if even that,
+depending on alignment and what else is being copied at the same time.
+So a few extra bytes probably don't matter at all.  Even a hundred
+extra bytes would probably not make a difference in the vast majority
+of cases in systems with a 1ms cycle time.  But, there's no reason to
+be *overtly* wasteful here.
