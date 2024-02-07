@@ -9,6 +9,8 @@
 - [Contributing](https://github.com/linuxcnc-ethercat/linuxcnc-ethercat/blob/master/CONTRIBUTING.md)
   -- how to contribute to this project.
 - [Adding new drivers](adding-drivers.md) -- how to write new drivers.
+* [PDOs and Syncs](pdos-and-syncs.md) -- A discussion of the various
+  ways to set up PDO entries in LinuxCNC-Ethercat drivers.
 
 ## References
 
