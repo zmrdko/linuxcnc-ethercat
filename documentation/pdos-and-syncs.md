@@ -49,7 +49,7 @@ static ec_pdo_entry_info_t foo_out1[] = {
   // not part of this example
 };
 
-static ec_pdo_entry_info_t foo_channel1_enc_in1[] = {
+static ec_pdo_entry_info_t foo_in1[] = {
     {0x6000, 0x01, 8},  // Channel 1
     {0x6010, 0x01, 8},  // Channel 2
 };
