@@ -120,8 +120,12 @@ int foo_init(int id, struct lcec_slave *s, ec_pdo_entry_reg_t *p) {
   lcec_syncs_init(&hal_data->syncs);
   lcec_syncs_add_sync(&hal_data->syncs, EC_DIR_OUTPUT, EC_WD_DEFAULT);
   lcec_syncs_add_sync(&hal_data->syncs, EC_DIR_INPUT, EC_WD_DEFAULT);
+  
+  // Output, to match the example above.
   lcec_syncs_add_sync(&hal_data->syncs, EC_DIR_OUTPUT, EC_WD_DEFAULT);
   lcec_syncs_add_pdo_info(&hal_data->syncs, 0x1600);
+
+  // Input
   lcec_syncs_add_sync(&hal_data->syncs, EC_DIR_INPUT, EC_WD_DEFAULT);
   lcec_syncs_add_pdo_info(&hal_data->syncs, 0x1a00);
   lcec_syncs_add_pdo_entry(&hal_data->syncs, 0x6000, 0x01, 8); // Channel 1
