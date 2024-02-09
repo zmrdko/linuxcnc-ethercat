@@ -26,6 +26,17 @@
     }                                                                                                \
   } while (0)
 
+#define TESTNOTNULL(call)                                                                   \
+  do {                                                                                      \
+    void *got;                                                                              \
+    if (got = call, got == NULL) {                                                          \
+      fprintf(stderr, "fail at %s:%d: %s, got %p==NULL\n", __FILE__, __LINE__, #call, got); \
+      fail++;                                                                               \
+    } else {                                                                                \
+      pass++;                                                                               \
+    }                                                                                       \
+  } while (0)
+
 #define TEST_MESSAGE(t, call, want, ...)       \
   do {                                         \
     t got;                                     \
@@ -50,7 +61,7 @@
   } while (0)
 
 #define TESTGLOBALSETUP int failedresults = 0
-#define TESTFUNC(name)                                \
+#define TESTFUNC(name)                         \
   int name(void) __attribute__((constructor)); \
   int name(void)
 
