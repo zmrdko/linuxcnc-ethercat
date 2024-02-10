@@ -10,6 +10,7 @@ RTEXTRA_LDFLAGS += -Wl,--whole-archive liblcecdevices.a -Wl,--no-whole-archive -
 
 #EXTRA_CFLAGS += --std=c2x
 EXTRA_CFLAGS += -Wall  # Increase debugging level
+#EXTRA_CFLAGS += -fanalyzer # Use GCC's static analyzer tool, doubles compile time
 
 ## targets
 lcec-common-objs := lcec_devicelist.o lcec_ethercat.o lcec_pins.o lcec_lookup.o lcec_modparam.o

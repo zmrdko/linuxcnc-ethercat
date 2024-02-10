@@ -420,7 +420,6 @@ static int handle_modparams(struct lcec_slave *slave) {
         break;
 
       case MODPARAM_MAX_SPEED:
-        value = 0;
         switch (p->value.u32) {
           case 1000:
             value = 0;
@@ -459,7 +458,6 @@ static int handle_modparams(struct lcec_slave *slave) {
         }
         break;
       case MODPARAM_MICROSTEPS:
-        value = 0;
         switch (p->value.u32) {
           case 1:
             value = 0;
