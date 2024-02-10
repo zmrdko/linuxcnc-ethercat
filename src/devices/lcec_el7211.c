@@ -28,13 +28,13 @@
 
 #define FAULT_RESET_PERIOD_NS  100000000
 
-/*static*/ int lcec_el7211_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
-static int lcec_el7201_9014_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
+/*static*/ int lcec_el7211_init(int comp_id, struct lcec_slave *slave);
+static int lcec_el7201_9014_init(int comp_id, struct lcec_slave *slave);
 
 static lcec_typelist_t types[]={
-  { "EL7201_9014", LCEC_BECKHOFF_VID, 0x1C213052, LCEC_EL7201_9014_PDOS, 0, NULL, lcec_el7201_9014_init},
-  { "EL7211", LCEC_BECKHOFF_VID, 0x1C2B3052, LCEC_EL7211_PDOS, 0, NULL, lcec_el7211_init},
-  { "EL7221", LCEC_BECKHOFF_VID, 0x1C353052, LCEC_EL7211_PDOS, 0, NULL, lcec_el7211_init},
+  { "EL7201_9014", LCEC_BECKHOFF_VID, 0x1C213052, 0, NULL, lcec_el7201_9014_init},
+  { "EL7211", LCEC_BECKHOFF_VID, 0x1C2B3052, 0, NULL, lcec_el7211_init},
+  { "EL7221", LCEC_BECKHOFF_VID, 0x1C353052, 0, NULL, lcec_el7211_init},
   { NULL },
 };
 ADD_TYPES(types);
@@ -276,7 +276,7 @@ static int lcec_el7211_export_pins(lcec_master_t *master, struct lcec_slave *sla
 }
 
 // TODO: lcec_el7411_init calls this.  Fix?
-/*static*/ int lcec_el7211_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
+/*static*/ int lcec_el7211_init(int comp_id, struct lcec_slave *slave) {
   lcec_master_t *master = slave->master;
   lcec_el7211_data_t *hal_data;
   int err;
@@ -294,11 +294,11 @@ static int lcec_el7211_export_pins(lcec_master_t *master, struct lcec_slave *sla
   slave->sync_info = lcec_el7211_syncs;
 
   // initialize POD entries
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000, 0x11, &hal_data->pos_fb_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6010, 0x01, &hal_data->status_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6010, 0x07, &hal_data->vel_fb_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7010, 0x01, &hal_data->ctrl_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7010, 0x06, &hal_data->vel_cmd_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x6000, 0x11, &hal_data->pos_fb_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x6010, 0x01, &hal_data->status_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x6010, 0x07, &hal_data->vel_fb_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x7010, 0x01, &hal_data->ctrl_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x7010, 0x06, &hal_data->vel_cmd_pdo_os, NULL);
 
   // export pins
   if ((err = lcec_el7211_export_pins(master, slave, hal_data)) != 0) {
@@ -308,7 +308,7 @@ static int lcec_el7211_export_pins(lcec_master_t *master, struct lcec_slave *sla
   return 0;
 }
 
-static int lcec_el7201_9014_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
+static int lcec_el7201_9014_init(int comp_id, struct lcec_slave *slave) {
   lcec_master_t *master = slave->master;
   lcec_el7211_data_t *hal_data;
   int err;
@@ -332,12 +332,12 @@ static int lcec_el7201_9014_init(int comp_id, struct lcec_slave *slave, ec_pdo_e
   slave->sync_info = lcec_el7201_9014_syncs;
 
   // initialize POD entries
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000, 0x11, &hal_data->pos_fb_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6010, 0x01, &hal_data->status_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6010, 0x07, &hal_data->vel_fb_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7010, 0x01, &hal_data->ctrl_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7010, 0x06, &hal_data->vel_cmd_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6010, 0x12, &hal_data->info1_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x6000, 0x11, &hal_data->pos_fb_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x6010, 0x01, &hal_data->status_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x6010, 0x07, &hal_data->vel_fb_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x7010, 0x01, &hal_data->ctrl_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x7010, 0x06, &hal_data->vel_cmd_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x6010, 0x12, &hal_data->info1_pdo_os, NULL);
 
   // export pins
   if ((err = lcec_el7211_export_pins(master, slave, hal_data)) != 0) {

@@ -22,7 +22,7 @@
 #include "../lcec.h"
 #include "lcec_el5002.h"
 
-static int lcec_el5002_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
+static int lcec_el5002_init(int comp_id, struct lcec_slave *slave);
 
 static lcec_modparam_desc_t lcec_el5002_modparams[] = {
   { "ch0DisFrameErr", LCEC_EL5002_PARAM_CH_0 || LCEC_EL5002_PARAM_DIS_FRAME_ERR, MODPARAM_TYPE_BIT } ,
@@ -51,8 +51,8 @@ static lcec_modparam_desc_t lcec_el5002_modparams[] = {
 };
 
 static lcec_typelist_t types[]={
-  { "EL5002", LCEC_BECKHOFF_VID, 0x138a3052, LCEC_EL5002_PDOS, 0, NULL, lcec_el5002_init, lcec_el5002_modparams},
-  { "EJ5002", LCEC_BECKHOFF_VID, 0x138a2852, LCEC_EL5002_PDOS, 0, NULL, lcec_el5002_init, lcec_el5002_modparams},
+  { "EL5002", LCEC_BECKHOFF_VID, 0x138a3052, 0, NULL, lcec_el5002_init, lcec_el5002_modparams},
+  { "EJ5002", LCEC_BECKHOFF_VID, 0x138a2852, 0, NULL, lcec_el5002_init, lcec_el5002_modparams},
   { NULL },
 };
 ADD_TYPES(types);
@@ -151,7 +151,7 @@ static ec_sync_info_t lcec_el5002_syncs[] = {
 
 static void lcec_el5002_read(struct lcec_slave *slave, long period);
 
-static int lcec_el5002_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
+static int lcec_el5002_init(int comp_id, struct lcec_slave *slave) {
   lcec_master_t *master = slave->master;
   lcec_slave_modparam_t *p;
   lcec_el5002_data_t *hal_data;
@@ -255,13 +255,13 @@ static int lcec_el5002_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
     chan = &hal_data->chans[i];
 
     // initialize POD entries
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i << 4), 0x01, &chan->err_data_os, &chan->err_data_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i << 4), 0x02, &chan->err_frame_os, &chan->err_frame_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i << 4), 0x03, &chan->err_power_os, &chan->err_power_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i << 4), 0x0e, &chan->err_sync_os, &chan->err_sync_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i << 4), 0x0f, &chan->tx_state_os, &chan->tx_state_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i << 4), 0x10, &chan->tx_toggle_os, &chan->tx_toggle_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i << 4), 0x11, &chan->count_pdo_os, NULL);
+    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x01, &chan->err_data_os, &chan->err_data_bp);
+    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x02, &chan->err_frame_os, &chan->err_frame_bp);
+    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x03, &chan->err_power_os, &chan->err_power_bp);
+    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x0e, &chan->err_sync_os, &chan->err_sync_bp);
+    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x0f, &chan->tx_state_os, &chan->tx_state_bp);
+    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x10, &chan->tx_toggle_os, &chan->tx_toggle_bp);
+    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x11, &chan->count_pdo_os, NULL);
 
     // export pins
     if ((err = lcec_pin_newf_list(chan, slave_pins, LCEC_MODULE_NAME, master->name, slave->name, i)) != 0) {

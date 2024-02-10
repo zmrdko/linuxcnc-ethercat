@@ -35,10 +35,10 @@ typedef struct {
   lcec_class_aout_channels_t *analog_out;
 } lcec_easyio_data_t;
 
-static int lcec_easyio_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
+static int lcec_easyio_init(int comp_id, struct lcec_slave *slave);
 
 static lcec_typelist_t types[] = {
-    {"EasyIO", LCEC_ABET_VID, 0x0debacca, 16 + 16 + 4 + 2, 0, NULL, lcec_easyio_init},
+    {"EasyIO", LCEC_ABET_VID, 0x0debacca, 0, NULL, lcec_easyio_init},
     {NULL},
 };
 ADD_TYPES(types)
@@ -46,7 +46,7 @@ ADD_TYPES(types)
 static void lcec_easyio_write(struct lcec_slave *slave, long period);
 static void lcec_easyio_read(struct lcec_slave *slave, long period);
 
-static int lcec_easyio_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
+static int lcec_easyio_init(int comp_id, struct lcec_slave *slave) {
   lcec_easyio_data_t *hal_data;
   int i;
 
@@ -69,14 +69,14 @@ static int lcec_easyio_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
 
   // initialize digital channels 0-7
   for (i = 0; i < 8; i++) {
-    hal_data->digital_in->channels[i] = lcec_din_register_channel(&pdo_entry_regs, slave, i, 0x6001, i + 1);
-    hal_data->digital_out->channels[i] = lcec_dout_register_channel(&pdo_entry_regs, slave, i, 0x7001, i + 1);
+    hal_data->digital_in->channels[i] = lcec_din_register_channel(slave, i, 0x6001, i + 1);
+    hal_data->digital_out->channels[i] = lcec_dout_register_channel(slave, i, 0x7001, i + 1);
   }
 
   // initialize digital channels 8-15.  They're on a different PDO.
   for (i = 8; i < 16; i++) {
-    hal_data->digital_in->channels[i] = lcec_din_register_channel(&pdo_entry_regs, slave, i, 0x6002, i - 7);
-    hal_data->digital_out->channels[i] = lcec_dout_register_channel(&pdo_entry_regs, slave, i, 0x7002, i - 7);
+    hal_data->digital_in->channels[i] = lcec_din_register_channel(slave, i, 0x6002, i - 7);
+    hal_data->digital_out->channels[i] = lcec_dout_register_channel(slave, i, 0x7002, i - 7);
   }
 
   // Initialize analog in 0-3.
@@ -86,7 +86,7 @@ static int lcec_easyio_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
     ain_opt->valueonly = 1;
     ain_opt->value_sidx = i + 1;
 
-    hal_data->analog_in->channels[i] = lcec_ain_register_channel(&pdo_entry_regs, slave, i, 0x6000, ain_opt);
+    hal_data->analog_in->channels[i] = lcec_ain_register_channel(slave, i, 0x6000, ain_opt);
   }
 
   // Initialize analog out 0-1.
@@ -94,7 +94,7 @@ static int lcec_easyio_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
     lcec_class_aout_options_t *aout_opt = lcec_aout_options();
 
     aout_opt->value_sidx = i + 1;
-    hal_data->analog_out->channels[i] = lcec_aout_register_channel(&pdo_entry_regs, slave, i, 0x7000, aout_opt);
+    hal_data->analog_out->channels[i] = lcec_aout_register_channel(slave, i, 0x7000, aout_opt);
   }
 
   return 0;

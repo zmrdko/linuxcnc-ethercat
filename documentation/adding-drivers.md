@@ -17,9 +17,9 @@ devices supported by this driver:
 
 ```C
 static lcec_typelist_t types[] = {
-    {"EL7041", LCEC_BECKHOFF_VID, 0x1B813052, LCEC_EL7041_PDOS, 0, NULL, lcec_el7041_init},
-    {"EL7041-1000", LCEC_BECKHOFF_VID, 0x1B813052, LCEC_EL7041_1000_PDOS, 0, NULL, lcec_el7041_init},
-    {"EP7041", LCEC_BECKHOFF_VID, 0x1B813052, LCEC_EP7041_PDOS, 0, NULL, lcec_el7041_init},
+    {"EL7041", LCEC_BECKHOFF_VID, 0x1B813052, 0, NULL, lcec_el7041_init},
+    {"EL7041-1000", LCEC_BECKHOFF_VID, 0x1B813052, 0, NULL, lcec_el7041_init},
+    {"EP7041", LCEC_BECKHOFF_VID, 0x1B813052, 0, NULL, lcec_el7041_init},
     {NULL},
 };
 ADD_TYPES(types);
@@ -42,21 +42,8 @@ of devices within your code, then consider using the `flags` field in
 `types[]` (again, see `lcec_el3xxx.c`).  This field is purely for
 driver use, so use it however works best for you.
 
-There are two basic styles of drivers in the tree right now; some
-explicitly set up EtherCAT PDOs and Sync Managers via
-`ec_sync_info_t`, `ec_pdo_info_t`, `ec_pdo_entry_info_t`, and similar
-structures.  Others skip all of this and just call `LCEC_PDO_INIT()`
-let LinuxCNC-Ethercat handle things behind the scenes.  It seems like
-the syncmanager style should perform better, but the non-syncmanager
-style is easier to read and work with, and there really isn't much
-difference under the hood.
-
-Compare [`lcec_el2xxx.c`](../src/devices/lcec_el2xxx.c) with
-[`lcec_el2202.c`](../src/devices/lcec_el2202.c) to see the two styles
-side-by-side with similar devices.
-
-Generally, I'd rather see the non-syncmanager version, without the
-blocks of `ec_pdo_entry_into_t` structures.
+See the [PDOs and syncs doc](pdos-and-syncs.md) for a discussion of
+the various ways of mapping PDO entries in LinuxCNC-Ethercat.
 
 ### Style points
 

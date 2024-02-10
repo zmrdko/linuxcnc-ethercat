@@ -20,37 +20,36 @@
 /// @brief Driver for Omron G5-series servos
 
 #include "../lcec.h"
-#include "lcec_omrg5.h"
 
 #define OMRG5_PULSES_PER_REV_DEFLT (1 << 20)
 #define OMRG5_FAULT_AUTORESET_DELAY_NS 100000000LL
 
-static int lcec_omrg5_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
+static int lcec_omrg5_init(int comp_id, struct lcec_slave *slave);
 
 static lcec_typelist_t types[]={
-  { "OmrG5_KNA5L",  LCEC_OMRON_VID, 0x00000001,  LCEC_OMRG5_PDOS, 0, NULL, lcec_omrg5_init},
-  { "OmrG5_KN01L",  LCEC_OMRON_VID, 0x00000002,  LCEC_OMRG5_PDOS, 0, NULL, lcec_omrg5_init},
-  { "OmrG5_KN02L",  LCEC_OMRON_VID, 0x00000003,  LCEC_OMRG5_PDOS, 0, NULL, lcec_omrg5_init},
-  { "OmrG5_KN04L",  LCEC_OMRON_VID, 0x00000004,  LCEC_OMRG5_PDOS, 0, NULL, lcec_omrg5_init},
-  { "OmrG5_KN01H",  LCEC_OMRON_VID, 0x00000005,  LCEC_OMRG5_PDOS, 0, NULL, lcec_omrg5_init},
-  { "OmrG5_KN02H",  LCEC_OMRON_VID, 0x00000006,  LCEC_OMRG5_PDOS, 0, NULL, lcec_omrg5_init},
-  { "OmrG5_KN04H",  LCEC_OMRON_VID, 0x00000007,  LCEC_OMRG5_PDOS, 0, NULL, lcec_omrg5_init},
-  { "OmrG5_KN08H",  LCEC_OMRON_VID, 0x00000008,  LCEC_OMRG5_PDOS, 0, NULL, lcec_omrg5_init},
-  { "OmrG5_KN10H",  LCEC_OMRON_VID, 0x00000009,  LCEC_OMRG5_PDOS, 0, NULL, lcec_omrg5_init},
-  { "OmrG5_KN15H",  LCEC_OMRON_VID, 0x0000000A,  LCEC_OMRG5_PDOS, 0, NULL, lcec_omrg5_init},
-  { "OmrG5_KN20H",  LCEC_OMRON_VID, 0x00000056,  LCEC_OMRG5_PDOS, 0, NULL, lcec_omrg5_init},
-  { "OmrG5_KN30H",  LCEC_OMRON_VID, 0x00000057,  LCEC_OMRG5_PDOS, 0, NULL, lcec_omrg5_init},
-  { "OmrG5_KN50H",  LCEC_OMRON_VID, 0x00000058,  LCEC_OMRG5_PDOS, 0, NULL, lcec_omrg5_init},
-  { "OmrG5_KN75H",  LCEC_OMRON_VID, 0x00000059,  LCEC_OMRG5_PDOS, 0, NULL, lcec_omrg5_init},
-  { "OmrG5_KN150H", LCEC_OMRON_VID, 0x0000005A, LCEC_OMRG5_PDOS, 0, NULL, lcec_omrg5_init},
-  { "OmrG5_KN06F",  LCEC_OMRON_VID, 0x0000000B,  LCEC_OMRG5_PDOS, 0, NULL, lcec_omrg5_init},
-  { "OmrG5_KN10F",  LCEC_OMRON_VID, 0x0000000C,  LCEC_OMRG5_PDOS, 0, NULL, lcec_omrg5_init},
-  { "OmrG5_KN15F",  LCEC_OMRON_VID, 0x0000000D,  LCEC_OMRG5_PDOS, 0, NULL, lcec_omrg5_init},
-  { "OmrG5_KN20F",  LCEC_OMRON_VID, 0x0000005B,  LCEC_OMRG5_PDOS, 0, NULL, lcec_omrg5_init},
-  { "OmrG5_KN30F",  LCEC_OMRON_VID, 0x0000005C,  LCEC_OMRG5_PDOS, 0, NULL, lcec_omrg5_init},
-  { "OmrG5_KN50F",  LCEC_OMRON_VID, 0x0000005D,  LCEC_OMRG5_PDOS, 0, NULL, lcec_omrg5_init},
-  { "OmrG5_KN75F",  LCEC_OMRON_VID, 0x0000005E,  LCEC_OMRG5_PDOS, 0, NULL, lcec_omrg5_init},
-  { "OmrG5_KN150F", LCEC_OMRON_VID, 0x0000005F, LCEC_OMRG5_PDOS, 0, NULL, lcec_omrg5_init},
+  { "OmrG5_KNA5L",  LCEC_OMRON_VID, 0x00000001,   0, NULL, lcec_omrg5_init},
+  { "OmrG5_KN01L",  LCEC_OMRON_VID, 0x00000002,   0, NULL, lcec_omrg5_init},
+  { "OmrG5_KN02L",  LCEC_OMRON_VID, 0x00000003,   0, NULL, lcec_omrg5_init},
+  { "OmrG5_KN04L",  LCEC_OMRON_VID, 0x00000004,   0, NULL, lcec_omrg5_init},
+  { "OmrG5_KN01H",  LCEC_OMRON_VID, 0x00000005,   0, NULL, lcec_omrg5_init},
+  { "OmrG5_KN02H",  LCEC_OMRON_VID, 0x00000006,   0, NULL, lcec_omrg5_init},
+  { "OmrG5_KN04H",  LCEC_OMRON_VID, 0x00000007,   0, NULL, lcec_omrg5_init},
+  { "OmrG5_KN08H",  LCEC_OMRON_VID, 0x00000008,   0, NULL, lcec_omrg5_init},
+  { "OmrG5_KN10H",  LCEC_OMRON_VID, 0x00000009,   0, NULL, lcec_omrg5_init},
+  { "OmrG5_KN15H",  LCEC_OMRON_VID, 0x0000000A,   0, NULL, lcec_omrg5_init},
+  { "OmrG5_KN20H",  LCEC_OMRON_VID, 0x00000056,   0, NULL, lcec_omrg5_init},
+  { "OmrG5_KN30H",  LCEC_OMRON_VID, 0x00000057,   0, NULL, lcec_omrg5_init},
+  { "OmrG5_KN50H",  LCEC_OMRON_VID, 0x00000058,   0, NULL, lcec_omrg5_init},
+  { "OmrG5_KN75H",  LCEC_OMRON_VID, 0x00000059,   0, NULL, lcec_omrg5_init},
+  { "OmrG5_KN150H", LCEC_OMRON_VID, 0x0000005A,  0, NULL, lcec_omrg5_init},
+  { "OmrG5_KN06F",  LCEC_OMRON_VID, 0x0000000B,   0, NULL, lcec_omrg5_init},
+  { "OmrG5_KN10F",  LCEC_OMRON_VID, 0x0000000C,   0, NULL, lcec_omrg5_init},
+  { "OmrG5_KN15F",  LCEC_OMRON_VID, 0x0000000D,   0, NULL, lcec_omrg5_init},
+  { "OmrG5_KN20F",  LCEC_OMRON_VID, 0x0000005B,   0, NULL, lcec_omrg5_init},
+  { "OmrG5_KN30F",  LCEC_OMRON_VID, 0x0000005C,   0, NULL, lcec_omrg5_init},
+  { "OmrG5_KN50F",  LCEC_OMRON_VID, 0x0000005D,   0, NULL, lcec_omrg5_init},
+  { "OmrG5_KN75F",  LCEC_OMRON_VID, 0x0000005E,   0, NULL, lcec_omrg5_init},
+  { "OmrG5_KN150F", LCEC_OMRON_VID, 0x0000005F,  0, NULL, lcec_omrg5_init},
   { NULL },
 };
 
@@ -208,7 +207,7 @@ static void lcec_omrg5_check_scales(lcec_omrg5_data_t *hal_data);
 static void lcec_omrg5_read(struct lcec_slave *slave, long period);
 static void lcec_omrg5_write(struct lcec_slave *slave, long period);
 
-static int lcec_omrg5_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
+static int lcec_omrg5_init(int comp_id, struct lcec_slave *slave) {
   lcec_master_t *master = slave->master;
   lcec_omrg5_data_t *hal_data;
   int err;
@@ -234,19 +233,19 @@ static int lcec_omrg5_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_r
   slave->sync_info = lcec_omrg5_syncs;
 
   // initialize POD entries
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x603F, 0x00, &hal_data->error_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6041, 0x00, &hal_data->status_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6064, 0x00, &hal_data->curr_pos_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6077, 0x00, &hal_data->curr_torque_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x60F4, 0x00, &hal_data->curr_ferr_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x60B9, 0x00, &hal_data->latch_stat_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x60BA, 0x00, &hal_data->latch_pos1_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x60BC, 0x00, &hal_data->latch_pos2_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x60FD, 0x00, &hal_data->din_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6040, 0x00, &hal_data->control_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x607A, 0x00, &hal_data->target_pos_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x60B8, 0x00, &hal_data->latch_fnk_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x60FE, 0x01, &hal_data->dout_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x603F, 0x00, &hal_data->error_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x6041, 0x00, &hal_data->status_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x6064, 0x00, &hal_data->curr_pos_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x6077, 0x00, &hal_data->curr_torque_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x60F4, 0x00, &hal_data->curr_ferr_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x60B9, 0x00, &hal_data->latch_stat_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x60BA, 0x00, &hal_data->latch_pos1_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x60BC, 0x00, &hal_data->latch_pos2_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x60FD, 0x00, &hal_data->din_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x6040, 0x00, &hal_data->control_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x607A, 0x00, &hal_data->target_pos_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x60B8, 0x00, &hal_data->latch_fnk_os, NULL);
+  lcec_pdo_init(slave,  0x60FE, 0x01, &hal_data->dout_pdo_os, NULL);
 
   // export pins
   if ((err = lcec_pin_newf_list(hal_data, slave_pins, LCEC_MODULE_NAME, master->name, slave->name)) != 0) {

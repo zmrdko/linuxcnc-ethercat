@@ -43,7 +43,7 @@
 #define DEASDA_OPMODE_CSP 8
 #define DEASDA_OPMODE_CSV 9
 
-static int lcec_deasda_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
+static int lcec_deasda_init(int comp_id, struct lcec_slave *slave);
 
 static const lcec_modparam_desc_t lcec_deasda_modparams[] = {
     {"opmode", LCEC_DESDA_MODPARAM_OPERATIONMODE, MODPARAM_TYPE_STRING},
@@ -64,9 +64,9 @@ static const drive_operationmodes_t drive_operationmodes[] = {
 // Note that DeASDA refers to A2-E series of drives and is deliberatly not refering to A2 in its name to ensure compatability with legace
 // configurations.
 static lcec_typelist_t types[] = {
-    {"DeASDA", LCEC_DELTA_VID, 0x10305070, LCEC_DEASDA_PDOS, 0, NULL, lcec_deasda_init, lcec_deasda_modparams, FLAG_LOWRES_ENC},
-    {"DeASDA3", LCEC_DELTA_VID, 0x00006010, LCEC_DEASDA_PDOS, 0, NULL, lcec_deasda_init, lcec_deasda_modparams, FLAG_HIGHRES_ENC},
-    {"DeASDB3", LCEC_DELTA_VID, 0x00006080, LCEC_DEASDA_PDOS, 0, NULL, lcec_deasda_init, lcec_deasda_modparams, FLAG_HIGHRES_ENC},    
+    {"DeASDA", LCEC_DELTA_VID, 0x10305070, 0, NULL, lcec_deasda_init, lcec_deasda_modparams, FLAG_LOWRES_ENC},
+    {"DeASDA3", LCEC_DELTA_VID, 0x00006010, 0, NULL, lcec_deasda_init, lcec_deasda_modparams, FLAG_HIGHRES_ENC},
+    {"DeASDB3", LCEC_DELTA_VID, 0x00006080, 0, NULL, lcec_deasda_init, lcec_deasda_modparams, FLAG_HIGHRES_ENC},    
     {NULL},
 };
 
@@ -241,7 +241,7 @@ static void lcec_deasda_write_csp(struct lcec_slave *slave, long period);
 
 static const drive_operationmodes_t *drive_opmode(char *drivemode);
 
-static int lcec_deasda_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
+static int lcec_deasda_init(int comp_id, struct lcec_slave *slave) {
   lcec_master_t *master = slave->master;
   lcec_deasda_data_t *hal_data;
   int err;
@@ -315,14 +315,14 @@ static int lcec_deasda_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
     // initialize sync info
     slave->sync_info = lcec_deasda_syncs_csv;
     // initialize POD entries
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6041, 0x00, &hal_data->status_pdo_os, NULL);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x606C, 0x00, &hal_data->currvel_pdo_os, NULL);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6064, 0x00, &hal_data->currpos_pdo_os, NULL);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x2511, 0x00, &hal_data->extenc_pdo_os, NULL);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6040, 0x00, &hal_data->control_pdo_os, NULL);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x60FF, 0x00, &hal_data->cmdvalue_pdo_os, NULL);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6077, 0x00, &hal_data->torque_pdo_os, NULL);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x60FD, 0x00, &hal_data->divalue_pdo_os, NULL);
+    lcec_pdo_init(slave,  0x6041, 0x00, &hal_data->status_pdo_os, NULL);
+    lcec_pdo_init(slave,  0x606C, 0x00, &hal_data->currvel_pdo_os, NULL);
+    lcec_pdo_init(slave,  0x6064, 0x00, &hal_data->currpos_pdo_os, NULL);
+    lcec_pdo_init(slave,  0x2511, 0x00, &hal_data->extenc_pdo_os, NULL);
+    lcec_pdo_init(slave,  0x6040, 0x00, &hal_data->control_pdo_os, NULL);
+    lcec_pdo_init(slave,  0x60FF, 0x00, &hal_data->cmdvalue_pdo_os, NULL);
+    lcec_pdo_init(slave,  0x6077, 0x00, &hal_data->torque_pdo_os, NULL);
+    lcec_pdo_init(slave,  0x60FD, 0x00, &hal_data->divalue_pdo_os, NULL);
 
     // export pins common
     if ((err = lcec_pin_newf_list(hal_data, slave_pins, LCEC_MODULE_NAME, master->name, slave->name)) != 0) return err;
@@ -334,14 +334,14 @@ static int lcec_deasda_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
     // initialize sync info
     slave->sync_info = lcec_deasda_syncs_csp;
     // initialize POD entries
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6041, 0x00, &hal_data->status_pdo_os, NULL);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x606C, 0x00, &hal_data->currvel_pdo_os, NULL);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6064, 0x00, &hal_data->currpos_pdo_os, NULL);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x2511, 0x00, &hal_data->extenc_pdo_os, NULL);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6040, 0x00, &hal_data->control_pdo_os, NULL);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x607A, 0x00, &hal_data->cmdvalue_pdo_os, NULL);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6077, 0x00, &hal_data->torque_pdo_os, NULL);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x60FD, 0x00, &hal_data->divalue_pdo_os, NULL);
+    lcec_pdo_init(slave,  0x6041, 0x00, &hal_data->status_pdo_os, NULL);
+    lcec_pdo_init(slave,  0x606C, 0x00, &hal_data->currvel_pdo_os, NULL);
+    lcec_pdo_init(slave,  0x6064, 0x00, &hal_data->currpos_pdo_os, NULL);
+    lcec_pdo_init(slave,  0x2511, 0x00, &hal_data->extenc_pdo_os, NULL);
+    lcec_pdo_init(slave,  0x6040, 0x00, &hal_data->control_pdo_os, NULL);
+    lcec_pdo_init(slave,  0x607A, 0x00, &hal_data->cmdvalue_pdo_os, NULL);
+    lcec_pdo_init(slave,  0x6077, 0x00, &hal_data->torque_pdo_os, NULL);
+    lcec_pdo_init(slave,  0x60FD, 0x00, &hal_data->divalue_pdo_os, NULL);
 
     // export pins common
     if ((err = lcec_pin_newf_list(hal_data, slave_pins, LCEC_MODULE_NAME, master->name, slave->name)) != 0) return err;

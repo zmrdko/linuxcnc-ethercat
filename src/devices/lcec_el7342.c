@@ -38,10 +38,10 @@
 
 static void lcec_el7342_read(struct lcec_slave *slave, long period);
 static void lcec_el7342_write(struct lcec_slave *slave, long period);
-static int lcec_el7342_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
+static int lcec_el7342_init(int comp_id, struct lcec_slave *slave);
 
 static lcec_typelist_t types[]={
-  { "EL7342", LCEC_BECKHOFF_VID, 0x1cae3052, LCEC_EL7342_PDOS, 0, NULL, lcec_el7342_init},
+  { "EL7342", LCEC_BECKHOFF_VID, 0x1cae3052, 0, NULL, lcec_el7342_init},
   { NULL },
 };
 ADD_TYPES(types);
@@ -381,7 +381,7 @@ static ec_sync_info_t lcec_el7342_syncs[] = {
 
 static void lcec_el7342_set_info(lcec_el7342_chan_t *chan, hal_s32_t *raw_info, hal_u32_t *sel_info);
 
-static int lcec_el7342_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
+static int lcec_el7342_init(int comp_id, struct lcec_slave *slave) {
   lcec_master_t *master = slave->master;
   lcec_el7342_data_t *hal_data;
   int i;
@@ -422,40 +422,40 @@ static int lcec_el7342_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
     }
 
     // initialize POD entries
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i << 4), 0x02, &chan->latch_ext_valid_pdo_os, &chan->latch_ext_valid_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i << 4), 0x03, &chan->set_count_done_pdo_os, &chan->set_count_done_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i << 4), 0x04, &chan->count_underflow_pdo_os, &chan->count_underflow_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i << 4), 0x05, &chan->count_overflow_pdo_os, &chan->count_overflow_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i << 4), 0x08, &chan->expol_stall_pdo_os, &chan->expol_stall_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i << 4), 0x09, &chan->ina_pdo_os, &chan->ina_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i << 4), 0x0a, &chan->inb_pdo_os, &chan->inb_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i << 4), 0x0d, &chan->inext_pdo_os, &chan->inext_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x1c32           , 0x20, &chan->sync_err_pdo_os, &chan->sync_err_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x1800 + (i *  3), 0x09, &chan->tx_toggle_pdo_os, &chan->tx_toggle_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i << 4), 0x11, &chan->count_pdo_os, NULL);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i << 4), 0x12, &chan->latch_pdo_os, NULL);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7000 + (i << 4), 0x02, &chan->ena_latch_ext_pos_pdo_os, &chan->ena_latch_ext_pos_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7000 + (i << 4), 0x03, &chan->set_count_pdo_os, &chan->set_count_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7000 + (i << 4), 0x04, &chan->ena_latch_ext_neg_pdo_os, &chan->ena_latch_ext_neg_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7000 + (i << 4), 0x11, &chan->set_count_val_pdo_os, NULL);
+    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x02, &chan->latch_ext_valid_pdo_os, &chan->latch_ext_valid_pdo_bp);
+    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x03, &chan->set_count_done_pdo_os, &chan->set_count_done_pdo_bp);
+    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x04, &chan->count_underflow_pdo_os, &chan->count_underflow_pdo_bp);
+    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x05, &chan->count_overflow_pdo_os, &chan->count_overflow_pdo_bp);
+    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x08, &chan->expol_stall_pdo_os, &chan->expol_stall_pdo_bp);
+    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x09, &chan->ina_pdo_os, &chan->ina_pdo_bp);
+    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x0a, &chan->inb_pdo_os, &chan->inb_pdo_bp);
+    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x0d, &chan->inext_pdo_os, &chan->inext_pdo_bp);
+    lcec_pdo_init(slave,  0x1c32           , 0x20, &chan->sync_err_pdo_os, &chan->sync_err_pdo_bp);
+    lcec_pdo_init(slave,  0x1800 + (i *  3), 0x09, &chan->tx_toggle_pdo_os, &chan->tx_toggle_pdo_bp);
+    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x11, &chan->count_pdo_os, NULL);
+    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x12, &chan->latch_pdo_os, NULL);
+    lcec_pdo_init(slave,  0x7000 + (i << 4), 0x02, &chan->ena_latch_ext_pos_pdo_os, &chan->ena_latch_ext_pos_pdo_bp);
+    lcec_pdo_init(slave,  0x7000 + (i << 4), 0x03, &chan->set_count_pdo_os, &chan->set_count_pdo_bp);
+    lcec_pdo_init(slave,  0x7000 + (i << 4), 0x04, &chan->ena_latch_ext_neg_pdo_os, &chan->ena_latch_ext_neg_pdo_bp);
+    lcec_pdo_init(slave,  0x7000 + (i << 4), 0x11, &chan->set_count_val_pdo_os, NULL);
 
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6020 + (i << 4), 0x01, &chan->dcm_ready_to_enable_pdo_os, &chan->dcm_ready_to_enable_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6020 + (i << 4), 0x02, &chan->dcm_ready_pdo_os, &chan->dcm_ready_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6020 + (i << 4), 0x03, &chan->dcm_warning_pdo_os, &chan->dcm_warning_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6020 + (i << 4), 0x04, &chan->dcm_error_pdo_os, &chan->dcm_error_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6020 + (i << 4), 0x05, &chan->dcm_move_pos_pdo_os, &chan->dcm_move_pos_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6020 + (i << 4), 0x06, &chan->dcm_move_neg_pdo_os, &chan->dcm_move_neg_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6020 + (i << 4), 0x07, &chan->dcm_torque_reduced_pdo_os, &chan->dcm_torque_reduced_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6020 + (i << 4), 0x0c, &chan->dcm_din1_pdo_os, &chan->dcm_din1_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6020 + (i << 4), 0x0d, &chan->dcm_din2_pdo_os, &chan->dcm_din2_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x1c32           , 0x20, &chan->dcm_sync_err_pdo_os, &chan->dcm_sync_err_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x1806 + (i << 1), 0x09, &chan->dcm_tx_toggle_pdo_os, &chan->dcm_tx_toggle_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6020 + (i << 4), 0x11, &chan->dcm_info1_pdo_os, NULL);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6020 + (i << 4), 0x12, &chan->dcm_info2_pdo_os, NULL);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7020 + (i << 4), 0x01, &chan->dcm_ena_pdo_os, &chan->dcm_ena_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7020 + (i << 4), 0x02, &chan->dcm_reset_pdo_os, &chan->dcm_reset_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7020 + (i << 4), 0x03, &chan->dcm_reduce_torque_pdo_os, &chan->dcm_reduce_torque_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7020 + (i << 4), 0x21, &chan->dcm_velo_pdo_os, NULL);
+    lcec_pdo_init(slave,  0x6020 + (i << 4), 0x01, &chan->dcm_ready_to_enable_pdo_os, &chan->dcm_ready_to_enable_pdo_bp);
+    lcec_pdo_init(slave,  0x6020 + (i << 4), 0x02, &chan->dcm_ready_pdo_os, &chan->dcm_ready_pdo_bp);
+    lcec_pdo_init(slave,  0x6020 + (i << 4), 0x03, &chan->dcm_warning_pdo_os, &chan->dcm_warning_pdo_bp);
+    lcec_pdo_init(slave,  0x6020 + (i << 4), 0x04, &chan->dcm_error_pdo_os, &chan->dcm_error_pdo_bp);
+    lcec_pdo_init(slave,  0x6020 + (i << 4), 0x05, &chan->dcm_move_pos_pdo_os, &chan->dcm_move_pos_pdo_bp);
+    lcec_pdo_init(slave,  0x6020 + (i << 4), 0x06, &chan->dcm_move_neg_pdo_os, &chan->dcm_move_neg_pdo_bp);
+    lcec_pdo_init(slave,  0x6020 + (i << 4), 0x07, &chan->dcm_torque_reduced_pdo_os, &chan->dcm_torque_reduced_pdo_bp);
+    lcec_pdo_init(slave,  0x6020 + (i << 4), 0x0c, &chan->dcm_din1_pdo_os, &chan->dcm_din1_pdo_bp);
+    lcec_pdo_init(slave,  0x6020 + (i << 4), 0x0d, &chan->dcm_din2_pdo_os, &chan->dcm_din2_pdo_bp);
+    lcec_pdo_init(slave,  0x1c32           , 0x20, &chan->dcm_sync_err_pdo_os, &chan->dcm_sync_err_pdo_bp);
+    lcec_pdo_init(slave,  0x1806 + (i << 1), 0x09, &chan->dcm_tx_toggle_pdo_os, &chan->dcm_tx_toggle_pdo_bp);
+    lcec_pdo_init(slave,  0x6020 + (i << 4), 0x11, &chan->dcm_info1_pdo_os, NULL);
+    lcec_pdo_init(slave,  0x6020 + (i << 4), 0x12, &chan->dcm_info2_pdo_os, NULL);
+    lcec_pdo_init(slave,  0x7020 + (i << 4), 0x01, &chan->dcm_ena_pdo_os, &chan->dcm_ena_pdo_bp);
+    lcec_pdo_init(slave,  0x7020 + (i << 4), 0x02, &chan->dcm_reset_pdo_os, &chan->dcm_reset_pdo_bp);
+    lcec_pdo_init(slave,  0x7020 + (i << 4), 0x03, &chan->dcm_reduce_torque_pdo_os, &chan->dcm_reduce_torque_pdo_bp);
+    lcec_pdo_init(slave,  0x7020 + (i << 4), 0x21, &chan->dcm_velo_pdo_os, NULL);
 
     // export pins
     if ((err = lcec_pin_newf_list(chan, slave_pins, LCEC_MODULE_NAME, master->name, slave->name, i)) != 0) {

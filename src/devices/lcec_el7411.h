@@ -25,8 +25,6 @@
 #include "../lcec.h"
 #include "lcec_el7211.h"
 
-#define LCEC_EL7411_PDOS LCEC_EL7211_PDOS
-
 #define LCEC_EL7411_PARAM_DCLINK_NOM 1
 #define LCEC_EL7411_PARAM_DCLINK_MIN 2
 #define LCEC_EL7411_PARAM_DCLINK_MAX 3

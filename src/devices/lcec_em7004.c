@@ -24,10 +24,10 @@
 
 static void lcec_em7004_read(struct lcec_slave *slave, long period);
 static void lcec_em7004_write(struct lcec_slave *slave, long period);
-static int lcec_em7004_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
+static int lcec_em7004_init(int comp_id, struct lcec_slave *slave);
 
 static lcec_typelist_t types[]={
-  { "EM7004", LCEC_BECKHOFF_VID, 0x1B5C3452, LCEC_EM7004_PDOS, 0, NULL, lcec_em7004_init},
+  { "EM7004", LCEC_BECKHOFF_VID, 0x1B5C3452, 0, NULL, lcec_em7004_init},
   { NULL },
 };
 ADD_TYPES(types);
@@ -166,7 +166,7 @@ static const lcec_pindesc_t slave_enc_pins[] = {
   { HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL }
 };
 
-static int lcec_em7004_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
+static int lcec_em7004_init(int comp_id, struct lcec_slave *slave) {
   lcec_master_t *master = slave->master;
   lcec_em7004_data_t *hal_data;
   lcec_em7004_din_t *din;
@@ -194,7 +194,7 @@ static int lcec_em7004_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   // initialize digital input pins
   for (i=0, din=hal_data->dins; i<LCEC_EM7004_DIN_COUNT; i++, din++) {
     // initialize POD entry
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000, i + 1, &din->pdo_os, &din->pdo_bp);
+    lcec_pdo_init(slave,  0x6000, i + 1, &din->pdo_os, &din->pdo_bp);
 
     // export pins
     if ((err = lcec_pin_newf_list(din, slave_din_pins, LCEC_MODULE_NAME, master->name, slave->name, i)) != 0) {
@@ -205,7 +205,7 @@ static int lcec_em7004_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   // initialize digital output pins
   for (i=0, dout=hal_data->douts; i<LCEC_EM7004_DOUT_COUNT; i++, dout++) {
     // initialize POD entry
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7010, i + 1, &dout->pdo_os, &dout->pdo_bp);
+    lcec_pdo_init(slave,  0x7010, i + 1, &dout->pdo_os, &dout->pdo_bp);
 
     // export pins
     if ((err = lcec_pin_newf_list(dout, slave_dout_pins, LCEC_MODULE_NAME, master->name, slave->name, i)) != 0) {
@@ -219,7 +219,7 @@ static int lcec_em7004_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   // initialize analog output pins
   for (i=0, aout=hal_data->aouts; i<LCEC_EM7004_AOUT_COUNT; i++, aout++) {
     // initialize POD entries
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7020 + (i << 4), 0x11, &aout->val_pdo_os, NULL);
+    lcec_pdo_init(slave,  0x7020 + (i << 4), 0x11, &aout->val_pdo_os, NULL);
 
     // export pins
     if ((err = lcec_pin_newf_list(aout, slave_aout_pins, LCEC_MODULE_NAME, master->name, slave->name, i)) != 0) {
@@ -239,18 +239,18 @@ static int lcec_em7004_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   // initialize encoder pins
   for (i=0, enc=hal_data->encs; i<LCEC_EM7004_ENC_COUNT; i++, enc++) {
     // initialize POD entries
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6060 + (i << 4), 0x02, &enc->latch_ext_valid_pdo_os, &enc->latch_ext_valid_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6060 + (i << 4), 0x03, &enc->set_count_done_pdo_os, &enc->set_count_done_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6060 + (i << 4), 0x09, &enc->ina_pdo_os, &enc->ina_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6060 + (i << 4), 0x0a, &enc->inb_pdo_os, &enc->inb_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6060 + (i << 4), 0x0c, &enc->ingate_pdo_os, &enc->ingate_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6060 + (i << 4), 0x0d, &enc->inext_pdo_os, &enc->inext_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6060 + (i << 4), 0x11, &enc->count_pdo_os, NULL);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6060 + (i << 4), 0x12, &enc->latch_pdo_os, NULL);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7060 + (i << 4), 0x02, &enc->ena_latch_ext_pos_pdo_os, &enc->ena_latch_ext_pos_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7060 + (i << 4), 0x03, &enc->set_count_pdo_os, &enc->set_count_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7060 + (i << 4), 0x04, &enc->ena_latch_ext_neg_pdo_os, &enc->ena_latch_ext_neg_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7060 + (i << 4), 0x11, &enc->set_count_val_pdo_os, NULL);
+    lcec_pdo_init(slave,  0x6060 + (i << 4), 0x02, &enc->latch_ext_valid_pdo_os, &enc->latch_ext_valid_pdo_bp);
+    lcec_pdo_init(slave,  0x6060 + (i << 4), 0x03, &enc->set_count_done_pdo_os, &enc->set_count_done_pdo_bp);
+    lcec_pdo_init(slave,  0x6060 + (i << 4), 0x09, &enc->ina_pdo_os, &enc->ina_pdo_bp);
+    lcec_pdo_init(slave,  0x6060 + (i << 4), 0x0a, &enc->inb_pdo_os, &enc->inb_pdo_bp);
+    lcec_pdo_init(slave,  0x6060 + (i << 4), 0x0c, &enc->ingate_pdo_os, &enc->ingate_pdo_bp);
+    lcec_pdo_init(slave,  0x6060 + (i << 4), 0x0d, &enc->inext_pdo_os, &enc->inext_pdo_bp);
+    lcec_pdo_init(slave,  0x6060 + (i << 4), 0x11, &enc->count_pdo_os, NULL);
+    lcec_pdo_init(slave,  0x6060 + (i << 4), 0x12, &enc->latch_pdo_os, NULL);
+    lcec_pdo_init(slave,  0x7060 + (i << 4), 0x02, &enc->ena_latch_ext_pos_pdo_os, &enc->ena_latch_ext_pos_pdo_bp);
+    lcec_pdo_init(slave,  0x7060 + (i << 4), 0x03, &enc->set_count_pdo_os, &enc->set_count_pdo_bp);
+    lcec_pdo_init(slave,  0x7060 + (i << 4), 0x04, &enc->ena_latch_ext_neg_pdo_os, &enc->ena_latch_ext_neg_pdo_bp);
+    lcec_pdo_init(slave,  0x7060 + (i << 4), 0x11, &enc->set_count_val_pdo_os, NULL);
 
     // export pins
     if ((err = lcec_pin_newf_list(enc, slave_enc_pins, LCEC_MODULE_NAME, master->name, slave->name, i)) != 0) {

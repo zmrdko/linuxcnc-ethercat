@@ -21,13 +21,14 @@
 /// @brief Driver for Beckhoff EL3403 3-phase power measurement modules
 
 #include "../lcec.h"
-#include "lcec_el3403.h"
 
-static int lcec_el3403_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
+#define LCEC_EL3403_CHANS 3
+
+static int lcec_el3403_init(int comp_id, struct lcec_slave *slave);
 
 static lcec_typelist_t types[]={
   // analog in, 3ch, 16 bits
-  { "EL3403", LCEC_BECKHOFF_VID, 0x0d4b3052, LCEC_EL3403_PDOS, 0, NULL, lcec_el3403_init},
+  { "EL3403", LCEC_BECKHOFF_VID, 0x0d4b3052, 0, NULL, lcec_el3403_init},
   { NULL },
 };
 ADD_TYPES(types);
@@ -196,7 +197,7 @@ ec_sync_info_t lcec_el3403_syncs[] = {
 
 static void lcec_el3403_read(struct lcec_slave *slave, long period);
 
-static int lcec_el3403_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
+static int lcec_el3403_init(int comp_id, struct lcec_slave *slave) {
   lcec_master_t *master = slave->master;
   lcec_el3403_data_t *hal_data;
   lcec_el3403_chan_t *chan;
@@ -217,8 +218,8 @@ static int lcec_el3403_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   slave->sync_info = lcec_el3403_syncs;
 
   // initialize POD entries
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0xf100, 0x09, &hal_data->phase_sequence_error_pdo_os, &hal_data->phase_sequence_error_pdo_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0xf100, 0x0e, &hal_data->sync_error_status_pdo_os, &hal_data->sync_error_status_pdo_bp);
+  lcec_pdo_init(slave,  0xf100, 0x09, &hal_data->phase_sequence_error_pdo_os, &hal_data->phase_sequence_error_pdo_bp);
+  lcec_pdo_init(slave,  0xf100, 0x0e, &hal_data->sync_error_status_pdo_os, &hal_data->sync_error_status_pdo_bp);
 
   // export pins
   if ((err=lcec_pin_newf_list(hal_data, single_outputs_pins, LCEC_MODULE_NAME, master->name, slave->name)) !=0) {
@@ -237,15 +238,15 @@ static int lcec_el3403_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
 	  chan = &hal_data->chans[i];
 	  
       // initialize POD entries
-      LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i*0x10), 0x0e, &chan->sync_error_pdo_os, &chan->sync_error_pdo_bp);
-	  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x1800 + (i*0x01), 0x09, &chan->txpdo_toggle_pdo_os, &chan->txpdo_toggle_pdo_bp);
-      LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i*0x10) , 0x11, &chan->current_pdo_os, NULL);
-      LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i*0x10), 0x12, &chan->voltage_pdo_os, NULL);
-      LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i*0x10), 0x13, &chan->active_power_pdo_os, NULL);
-      LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i*0x10), 0x14, &chan->ovc_pdo_os, NULL);
-      LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i*0x10), 0x1d, &chan->variable_pdo_os, NULL);
-      LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7000 + (i*0x10), 0x01, &chan->index_pdo_os, NULL);
-      LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0xf100, 0x04 + (i*0x01), &chan->missing_zero_crossing_pdo_os, &chan->missing_zero_crossing_pdo_bp);
+      lcec_pdo_init(slave,  0x6000 + (i*0x10), 0x0e, &chan->sync_error_pdo_os, &chan->sync_error_pdo_bp);
+	  lcec_pdo_init(slave,  0x1800 + (i*0x01), 0x09, &chan->txpdo_toggle_pdo_os, &chan->txpdo_toggle_pdo_bp);
+      lcec_pdo_init(slave,  0x6000 + (i*0x10) , 0x11, &chan->current_pdo_os, NULL);
+      lcec_pdo_init(slave,  0x6000 + (i*0x10), 0x12, &chan->voltage_pdo_os, NULL);
+      lcec_pdo_init(slave,  0x6000 + (i*0x10), 0x13, &chan->active_power_pdo_os, NULL);
+      lcec_pdo_init(slave,  0x6000 + (i*0x10), 0x14, &chan->ovc_pdo_os, NULL);
+      lcec_pdo_init(slave,  0x6000 + (i*0x10), 0x1d, &chan->variable_pdo_os, NULL);
+      lcec_pdo_init(slave,  0x7000 + (i*0x10), 0x01, &chan->index_pdo_os, NULL);
+      lcec_pdo_init(slave,  0xf100, 0x04 + (i*0x01), &chan->missing_zero_crossing_pdo_os, &chan->missing_zero_crossing_pdo_bp);
 
 	  // export pins
       if ((err = lcec_pin_newf_list(chan, outputs_pins, LCEC_MODULE_NAME, master->name, slave->name, i)) != 0) {

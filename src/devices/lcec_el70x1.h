@@ -25,8 +25,6 @@
 
 #include "../lcec.h"
 
-#define LCEC_EL70x1_PDOS 15
-
 #define LCEC_EL70x1_PARAM_MAX_CURR 1
 #define LCEC_EL70x1_PARAM_RED_CURR 2
 #define LCEC_EL70x1_PARAM_NOM_VOLT 3

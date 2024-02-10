@@ -25,10 +25,10 @@
 
 static void lcec_el6090_read(struct lcec_slave *slave, long period);
 static void lcec_el6090_write(struct lcec_slave *slave, long period);
-static int lcec_el6090_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
+static int lcec_el6090_init(int comp_id, struct lcec_slave *slave);
 
 static lcec_typelist_t types[]={
-  { "EL6090", LCEC_BECKHOFF_VID, 0x17ca3052, LCEC_EL6090_PDOS, 0, NULL, lcec_el6090_init},
+  { "EL6090", LCEC_BECKHOFF_VID, 0x17ca3052, 0, NULL, lcec_el6090_init},
   { NULL },
 };
 ADD_TYPES(types);
@@ -251,7 +251,7 @@ static ec_sync_info_t lcec_el6090_syncs[] = {
     {0xff}
 };
 
-static int lcec_el6090_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
+static int lcec_el6090_init(int comp_id, struct lcec_slave *slave) {
   lcec_master_t *master = slave->master;
   lcec_el6090_data_t *hal_data;
   lcec_el6090_chan_t *chan;
@@ -274,17 +274,17 @@ static int lcec_el6090_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   slave->sync_info = lcec_el6090_syncs;
 
   // initialize POD entries
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000, 0x03, &hal_data->button_up_pdo_os, &hal_data->button_up_pdo_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000, 0x04, &hal_data->button_down_pdo_os, &hal_data->button_down_pdo_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000, 0x05, &hal_data->button_left_pdo_os, &hal_data->button_left_pdo_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000, 0x06, &hal_data->button_right_pdo_os, &hal_data->button_right_pdo_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000, 0x07, &hal_data->button_enter_pdo_os, &hal_data->button_enter_pdo_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000, 0x10, &hal_data->button_toggle_pdo_os, &hal_data->button_toggle_pdo_bp);
+  lcec_pdo_init(slave,  0x6000, 0x03, &hal_data->button_up_pdo_os, &hal_data->button_up_pdo_bp);
+  lcec_pdo_init(slave,  0x6000, 0x04, &hal_data->button_down_pdo_os, &hal_data->button_down_pdo_bp);
+  lcec_pdo_init(slave,  0x6000, 0x05, &hal_data->button_left_pdo_os, &hal_data->button_left_pdo_bp);
+  lcec_pdo_init(slave,  0x6000, 0x06, &hal_data->button_right_pdo_os, &hal_data->button_right_pdo_bp);
+  lcec_pdo_init(slave,  0x6000, 0x07, &hal_data->button_enter_pdo_os, &hal_data->button_enter_pdo_bp);
+  lcec_pdo_init(slave,  0x6000, 0x10, &hal_data->button_toggle_pdo_os, &hal_data->button_toggle_pdo_bp);
 
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0xf600, 0x11, &hal_data->operating_time_pdo_os, NULL);
+  lcec_pdo_init(slave,  0xf600, 0x11, &hal_data->operating_time_pdo_os, NULL);
 
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7000, 0x11, &hal_data->value_row1_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7000, 0x12, &hal_data->value_row2_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x7000, 0x11, &hal_data->value_row1_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x7000, 0x12, &hal_data->value_row2_pdo_os, NULL);
 
   // export pins
   if ((err = lcec_pin_newf_list(hal_data, button_pins, LCEC_MODULE_NAME, master->name, slave->name)) != 0) {
@@ -318,13 +318,13 @@ static int lcec_el6090_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
 	chan = &hal_data->chans[i];
 
 	//initalize POD entries
-	  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6010 + (i*0x10), 0x11, &chan->timer_channel_pdo_os, NULL);
-	  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6010 + (i*0x10), 0x12, &chan->counter_channel_pdo_os, NULL); 
+	  lcec_pdo_init(slave,  0x6010 + (i*0x10), 0x11, &chan->timer_channel_pdo_os, NULL);
+	  lcec_pdo_init(slave,  0x6010 + (i*0x10), 0x12, &chan->counter_channel_pdo_os, NULL); 
 
- 	  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7010 + (i*0x10), 0x01, &chan->timer_start_channel_pdo_os, &chan->timer_start_channel_pdo_bp);    
-	  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7010 + (i*0x10), 0x02, &chan->timer_reset_channel_pdo_os, &chan->timer_reset_channel_pdo_bp);    
-	  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7010 + (i*0x10), 0x08, &chan->counter_clock_channel_pdo_os, &chan->counter_clock_channel_pdo_bp);    
-	  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7010 + (i*0x10), 0x09, &chan->counter_reset_channel_pdo_os, &chan->counter_reset_channel_pdo_bp);
+ 	  lcec_pdo_init(slave,  0x7010 + (i*0x10), 0x01, &chan->timer_start_channel_pdo_os, &chan->timer_start_channel_pdo_bp);    
+	  lcec_pdo_init(slave,  0x7010 + (i*0x10), 0x02, &chan->timer_reset_channel_pdo_os, &chan->timer_reset_channel_pdo_bp);    
+	  lcec_pdo_init(slave,  0x7010 + (i*0x10), 0x08, &chan->counter_clock_channel_pdo_os, &chan->counter_clock_channel_pdo_bp);    
+	  lcec_pdo_init(slave,  0x7010 + (i*0x10), 0x09, &chan->counter_reset_channel_pdo_os, &chan->counter_reset_channel_pdo_bp);
 
 	   // export pins
           if ((err = lcec_pin_newf_list(chan, inputs_pins, LCEC_MODULE_NAME, master->name, slave->name, i)) != 0) {

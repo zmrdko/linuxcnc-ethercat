@@ -22,9 +22,9 @@
 #include "../lcec.h"
 #include "lcec_el70x1.h"
 
-static int lcec_el70x1_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
-static int lcec_el7031_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
-static int lcec_el7041_0052_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
+static int lcec_el70x1_init(int comp_id, struct lcec_slave *slave);
+static int lcec_el7031_init(int comp_id, struct lcec_slave *slave);
+static int lcec_el7041_0052_init(int comp_id, struct lcec_slave *slave);
 static void lcec_el70x1_read(struct lcec_slave *slave, long period);
 static void lcec_el70x1_write(struct lcec_slave *slave, long period);
 
@@ -38,8 +38,8 @@ static lcec_modparam_desc_t lcec_el70x1_modparams[] = {
 };
 
 static lcec_typelist_t types[]={
-  { "EL7031", LCEC_BECKHOFF_VID, 0x1B773052, LCEC_EL70x1_PDOS, 0, NULL, lcec_el7031_init, lcec_el70x1_modparams},
-  { "EL7041-0052", LCEC_BECKHOFF_VID, 0x1B813052, LCEC_EL70x1_PDOS, 0, NULL, lcec_el7041_0052_init, lcec_el70x1_modparams},
+  { "EL7031", LCEC_BECKHOFF_VID, 0x1B773052, 0, NULL, lcec_el7031_init, lcec_el70x1_modparams},
+  { "EL7041-0052", LCEC_BECKHOFF_VID, 0x1B813052, 0, NULL, lcec_el7041_0052_init, lcec_el70x1_modparams},
   { NULL },
 };
 ADD_TYPES(types);
@@ -253,21 +253,21 @@ static const lcec_pindesc_t slave_params[] = {
   { HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL }
 };
 
-static int lcec_el7031_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
+static int lcec_el7031_init(int comp_id, struct lcec_slave *slave) {
   // initialize sync info
   slave->sync_info = lcec_el70x1_syncs;
 
-  return lcec_el70x1_init(comp_id, slave, pdo_entry_regs);
+  return lcec_el70x1_init(comp_id, slave);
 }
 
-static int lcec_el7041_0052_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
+static int lcec_el7041_0052_init(int comp_id, struct lcec_slave *slave) {
   // initialize sync info
   slave->sync_info = lcec_el7041_0052_syncs;
 
-  return lcec_el70x1_init(comp_id, slave, pdo_entry_regs);
+  return lcec_el70x1_init(comp_id, slave);
 }
 
-static int lcec_el70x1_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
+static int lcec_el70x1_init(int comp_id, struct lcec_slave *slave) {
   lcec_master_t *master = slave->master;
   lcec_slave_modparam_t *p;
   lcec_el70x1_data_t *hal_data;
@@ -328,23 +328,23 @@ static int lcec_el70x1_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   slave->hal_data = hal_data;
 
   // initialize POD entries
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6010, 0x01, &hal_data->stm_ready_to_enable_pdo_os, &hal_data->stm_ready_to_enable_pdo_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6010, 0x02, &hal_data->stm_ready_pdo_os,           &hal_data->stm_ready_pdo_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6010, 0x03, &hal_data->stm_warning_pdo_os,         &hal_data->stm_warning_pdo_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6010, 0x04, &hal_data->stm_error_pdo_os,           &hal_data->stm_error_pdo_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6010, 0x05, &hal_data->stm_move_pos_pdo_os,        &hal_data->stm_move_pos_pdo_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6010, 0x06, &hal_data->stm_move_neg_pdo_os,        &hal_data->stm_move_neg_pdo_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6010, 0x07, &hal_data->stm_torque_reduced_pdo_os,  &hal_data->stm_torque_reduced_pdo_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6010, 0x0c, &hal_data->stm_din1_pdo_os,            &hal_data->stm_din1_pdo_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6010, 0x0d, &hal_data->stm_din2_pdo_os,            &hal_data->stm_din2_pdo_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6010, 0x0e, &hal_data->stm_sync_err_pdo_os,        &hal_data->stm_sync_err_pdo_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6010, 0x10, &hal_data->stm_tx_toggle_pdo_os,       &hal_data->stm_tx_toggle_pdo_bp);
+  lcec_pdo_init(slave,  0x6010, 0x01, &hal_data->stm_ready_to_enable_pdo_os, &hal_data->stm_ready_to_enable_pdo_bp);
+  lcec_pdo_init(slave,  0x6010, 0x02, &hal_data->stm_ready_pdo_os,           &hal_data->stm_ready_pdo_bp);
+  lcec_pdo_init(slave,  0x6010, 0x03, &hal_data->stm_warning_pdo_os,         &hal_data->stm_warning_pdo_bp);
+  lcec_pdo_init(slave,  0x6010, 0x04, &hal_data->stm_error_pdo_os,           &hal_data->stm_error_pdo_bp);
+  lcec_pdo_init(slave,  0x6010, 0x05, &hal_data->stm_move_pos_pdo_os,        &hal_data->stm_move_pos_pdo_bp);
+  lcec_pdo_init(slave,  0x6010, 0x06, &hal_data->stm_move_neg_pdo_os,        &hal_data->stm_move_neg_pdo_bp);
+  lcec_pdo_init(slave,  0x6010, 0x07, &hal_data->stm_torque_reduced_pdo_os,  &hal_data->stm_torque_reduced_pdo_bp);
+  lcec_pdo_init(slave,  0x6010, 0x0c, &hal_data->stm_din1_pdo_os,            &hal_data->stm_din1_pdo_bp);
+  lcec_pdo_init(slave,  0x6010, 0x0d, &hal_data->stm_din2_pdo_os,            &hal_data->stm_din2_pdo_bp);
+  lcec_pdo_init(slave,  0x6010, 0x0e, &hal_data->stm_sync_err_pdo_os,        &hal_data->stm_sync_err_pdo_bp);
+  lcec_pdo_init(slave,  0x6010, 0x10, &hal_data->stm_tx_toggle_pdo_os,       &hal_data->stm_tx_toggle_pdo_bp);
 
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7010, 0x01, &hal_data->stm_ena_pdo_os,             &hal_data->stm_ena_pdo_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7010, 0x02, &hal_data->stm_reset_pdo_os,           &hal_data->stm_reset_pdo_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7010, 0x03, &hal_data->stm_reduce_torque_pdo_os,   &hal_data->stm_reduce_torque_pdo_bp);
+  lcec_pdo_init(slave,  0x7010, 0x01, &hal_data->stm_ena_pdo_os,             &hal_data->stm_ena_pdo_bp);
+  lcec_pdo_init(slave,  0x7010, 0x02, &hal_data->stm_reset_pdo_os,           &hal_data->stm_reset_pdo_bp);
+  lcec_pdo_init(slave,  0x7010, 0x03, &hal_data->stm_reduce_torque_pdo_os,   &hal_data->stm_reduce_torque_pdo_bp);
 
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7010, 0x11, &hal_data->stm_pos_raw_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x7010, 0x11, &hal_data->stm_pos_raw_pdo_os, NULL);
 
   // export pins
   if ((err = lcec_pin_newf_list(hal_data, slave_pins, LCEC_MODULE_NAME, master->name, slave->name)) != 0) {

@@ -19,16 +19,16 @@ To make these examples a bit more concrete, let's assume that we have
 a device where we want to read an 8-bit value from objects `0x6000:01`
 and `0x6010:01` at runtime.
 
-## Style 1: just use `LCEC_PDO_INIT()`
+## Style 1: just use `lcec_pdo_init()`
 
-In this case, the code just calls `LCEC_PDO_INIT()` to register our
+In this case, the code just calls `lcec_pdo_init()` to register our
 interest in the PDO, and we're done.  It looks something like this:
 
 ```c
-int foo_init(int id, struct lcec_slave *s, ec_pdo_entry_reg_t *p) {
+int foo_init(int id, struct lcec_slave *s) {
   ...
-  LCEC_PDO_INIT(p, s->index, s->vid, s->pid, 0x6000, 0x01, &hal_data->channel1_os, NULL);
-  LCEC_PDO_INIT(p, s->index, s->vid, s->pid, 0x6010, 0x01, &hal_data->channel2_os, NULL);
+  lcec_pdo_init(slave, 0x6000, 0x01, &hal_data->channel1_os, NULL);
+  lcec_pdo_init(slave, 0x6010, 0x01, &hal_data->channel2_os, NULL);
   ...
 }
 ```
@@ -70,10 +70,10 @@ static ec_sync_info_t foo_syncs[] = {
     {0xff},
 };
 
-int foo_init(int id, struct lcec_slave *s, ec_pdo_entry_reg_t *p) {
+int foo_init(int id, struct lcec_slave *s) {
   ...
-  LCEC_PDO_INIT(p, s->index, s->vid, s->pid, 0x6000, 0x01, &hal_data->channel1_os, NULL);
-  LCEC_PDO_INIT(p, s->index, s->vid, s->pid, 0x6010, 0x01, &hal_data->channel2_os, NULL);
+  lcec_pdo_init(slave, 0x6000, 0x01, &hal_data->channel1_os, NULL);
+  lcec_pdo_init(slave, 0x6010, 0x01, &hal_data->channel2_os, NULL);
   
   s->sync_info = foo_syncs;
   ...
@@ -112,10 +112,10 @@ style, but don't just cargo-cult it blindly.
 The third style is similar to the second, but uses a wrapper library to actually populate the sync structures:
 
 ```c
-int foo_init(int id, struct lcec_slave *s, ec_pdo_entry_reg_t *p) {
+int foo_init(int id, struct lcec_slave *s) {
   ...
-  LCEC_PDO_INIT(p, s->index, s->vid, s->pid, 0x6000, 0x01, &hal_data->channel1_os, NULL);
-  LCEC_PDO_INIT(p, s->index, s->vid, s->pid, 0x6010, 0x01, &hal_data->channel2_os, NULL);
+  lcec_pdo_init(slave, 0x6000, 0x01, &hal_data->channel1_os, NULL);
+  lcec_pdo_init(slave, 0x6010, 0x01, &hal_data->channel2_os, NULL);
   
   lcec_syncs_init(&hal_data->syncs);
   lcec_syncs_add_sync(&hal_data->syncs, EC_DIR_OUTPUT, EC_WD_DEFAULT);

@@ -26,7 +26,6 @@
 #include "../lcec.h"
 
 #define LCEC_EL5152_CHANS 2
-#define LCEC_EL5152_PDOS (9 * LCEC_EL5152_CHANS)
 
 #define LCEC_EL5152_PERIOD_SCALE 1e-7
 #endif

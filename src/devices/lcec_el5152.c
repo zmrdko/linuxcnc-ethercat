@@ -22,10 +22,10 @@
 #include "../lcec.h"
 #include "lcec_el5152.h"
 
-static int lcec_el5152_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
+static int lcec_el5152_init(int comp_id, struct lcec_slave *slave);
 
 static lcec_typelist_t types[]={
-  { "EL5152", LCEC_BECKHOFF_VID, 0x14203052, LCEC_EL5152_PDOS, 0, NULL, lcec_el5152_init},
+  { "EL5152", LCEC_BECKHOFF_VID, 0x14203052, 0, NULL, lcec_el5152_init},
   { NULL },
 };
 ADD_TYPES(types);
@@ -174,7 +174,7 @@ static ec_sync_info_t lcec_el5152_syncs[] = {
 static void lcec_el5152_read(struct lcec_slave *slave, long period);
 static void lcec_el5152_write(struct lcec_slave *slave, long period);
 
-static int lcec_el5152_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
+static int lcec_el5152_init(int comp_id, struct lcec_slave *slave) {
   lcec_master_t *master = slave->master;
   lcec_el5152_data_t *hal_data;
   int i;
@@ -204,15 +204,15 @@ static int lcec_el5152_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
     chan = &hal_data->chans[i];
 
     // initialize POD entries
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i << 4), 0x03, &chan->set_count_done_pdo_os, &chan->set_count_done_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i << 4), 0x08, &chan->expol_stall_pdo_os, &chan->expol_stall_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i << 4), 0x09, &chan->ina_pdo_os, &chan->ina_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i << 4), 0x0a, &chan->inb_pdo_os, &chan->inb_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x1800 + (i << 2), 0x09, &chan->tx_toggle_pdo_os, &chan->tx_toggle_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i << 4), 0x11, &chan->count_pdo_os, NULL);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i << 4), 0x14, &chan->period_pdo_os, NULL);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7000 + (i << 4), 0x03, &chan->set_count_pdo_os, &chan->set_count_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7000 + (i << 4), 0x11, &chan->set_count_val_pdo_os, NULL);
+    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x03, &chan->set_count_done_pdo_os, &chan->set_count_done_pdo_bp);
+    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x08, &chan->expol_stall_pdo_os, &chan->expol_stall_pdo_bp);
+    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x09, &chan->ina_pdo_os, &chan->ina_pdo_bp);
+    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x0a, &chan->inb_pdo_os, &chan->inb_pdo_bp);
+    lcec_pdo_init(slave,  0x1800 + (i << 2), 0x09, &chan->tx_toggle_pdo_os, &chan->tx_toggle_pdo_bp);
+    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x11, &chan->count_pdo_os, NULL);
+    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x14, &chan->period_pdo_os, NULL);
+    lcec_pdo_init(slave,  0x7000 + (i << 4), 0x03, &chan->set_count_pdo_os, &chan->set_count_pdo_bp);
+    lcec_pdo_init(slave,  0x7000 + (i << 4), 0x11, &chan->set_count_val_pdo_os, NULL);
 
     // export pins
     if ((err = lcec_pin_newf_list(chan, slave_pins, LCEC_MODULE_NAME, master->name, slave->name, i)) != 0) {

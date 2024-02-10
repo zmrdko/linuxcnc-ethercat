@@ -27,5 +27,4 @@
 
 #define LCEC_EL6090_CHANS 4
 
-#define LCEC_EL6090_PDOS 33
 #endif

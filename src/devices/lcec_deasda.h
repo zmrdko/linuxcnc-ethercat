@@ -140,7 +140,4 @@ Parameters:
 
 #include "../lcec.h"
 
-#define LCEC_DEASDA_VID LCEC_DELTA_VID
-
-#define LCEC_DEASDA_PDOS 8
 #endif

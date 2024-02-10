@@ -25,7 +25,6 @@
 #include "../lcec.h"
 
 #define LCEC_EL5002_CHANS 2
-#define LCEC_EL5002_PDOS (7 * LCEC_EL5002_CHANS)
 
 #define LCEC_EL5002_PARAM_CH_MASK 0x000f
 #define LCEC_EL5002_PARAM_FNK_MASK 0xfff0

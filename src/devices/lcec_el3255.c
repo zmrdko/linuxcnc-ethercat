@@ -20,12 +20,13 @@
 /// @brief Driver for Beckhoff EL3255 potentiometer modules
 
 #include "../lcec.h"
-#include "lcec_el3255.h"
 
-static int lcec_el3255_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
+#define LCEC_EL3255_CHANS 5
+
+static int lcec_el3255_init(int comp_id, struct lcec_slave *slave);
 
 static lcec_typelist_t types[]={
-  { "EL3255", LCEC_BECKHOFF_VID, 0x0CB73052, LCEC_EL3255_PDOS, 0, NULL, lcec_el3255_init},
+  { "EL3255", LCEC_BECKHOFF_VID, 0x0CB73052, 0, NULL, lcec_el3255_init},
   { NULL },
 };
 ADD_TYPES(types);
@@ -155,7 +156,7 @@ static ec_sync_info_t lcec_el3255_syncs[] = {
 
 static void lcec_el3255_read(struct lcec_slave *slave, long period);
 
-static int lcec_el3255_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
+static int lcec_el3255_init(int comp_id, struct lcec_slave *slave) {
   lcec_master_t *master = slave->master;
   lcec_el3255_data_t *hal_data;
   lcec_el3255_chan_t *chan;
@@ -181,11 +182,11 @@ static int lcec_el3255_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
     chan = &hal_data->chans[i];
 
     // initialize POD entries
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i << 4), 0x01, &chan->ovr_pdo_os, &chan->ovr_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i << 4), 0x02, &chan->udr_pdo_os, &chan->udr_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i << 4), 0x07, &chan->error_pdo_os, &chan->error_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i << 4), 0x0e, &chan->sync_err_pdo_os, &chan->sync_err_pdo_bp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (i << 4), 0x11, &chan->val_pdo_os, NULL);
+    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x01, &chan->ovr_pdo_os, &chan->ovr_pdo_bp);
+    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x02, &chan->udr_pdo_os, &chan->udr_pdo_bp);
+    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x07, &chan->error_pdo_os, &chan->error_pdo_bp);
+    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x0e, &chan->sync_err_pdo_os, &chan->sync_err_pdo_bp);
+    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x11, &chan->val_pdo_os, NULL);
 
     // export pins
     if ((err = lcec_pin_newf_list(chan, slave_pins, LCEC_MODULE_NAME, master->name, slave->name, i)) != 0) {

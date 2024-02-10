@@ -24,7 +24,5 @@
 
 #include "../lcec.h"
 
-#define LCEC_EL5151_PDOS 18
-
 #define LCEC_EL5151_PERIOD_SCALE 1e-7
 #endif

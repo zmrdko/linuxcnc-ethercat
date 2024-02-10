@@ -60,25 +60,22 @@ lcec_class_dout_channels_t *lcec_dout_allocate_channels(int count) {
 
 /// @brief Register a single digital-output channel and publishes it as a LinuxCNC HAL pin.
 ///
-/// @param pdo_entry_regs A pointer to the pdo_entry_regs passed into the device `_init` function.
 /// @param slave The slave, from `_init`.
 /// @param id The pin ID.  Used for naming.  Should generally start at 0 and increment once per digital out pin.
 /// @param idx The PDO index for the digital output.
 /// @param sindx The PDO sub-index for the digital output.
 ///
 /// See lcec_el2xxx.c for an example of use.
-lcec_class_dout_channel_t *lcec_dout_register_channel(
-    ec_pdo_entry_reg_t **pdo_entry_regs, struct lcec_slave *slave, int id, uint16_t idx, uint16_t sidx) {
+lcec_class_dout_channel_t *lcec_dout_register_channel(struct lcec_slave *slave, int id, uint16_t idx, uint16_t sidx) {
   char name[32];
 
   snprintf(name, 32, "dout-%d", id);
 
-  return lcec_dout_register_channel_named(pdo_entry_regs, slave, idx, sidx, name);
+  return lcec_dout_register_channel_named(slave, idx, sidx, name);
 }
 
 /// @brief Register a single digital-output channel and publishes it as a LinuxCNC HAL pin.
 ///
-/// @param pdo_entry_regs A pointer to the pdo_entry_regs passed into the device `_init` function.
 /// @param slave The slave, from `_init`.
 /// @param id The pin ID.  Used for naming.  Should generally start at 0 and increment once per digital out pin.
 /// @param idx The PDO index for the digital output.
@@ -86,8 +83,7 @@ lcec_class_dout_channel_t *lcec_dout_register_channel(
 /// @param name The base pin name to use, usually `dout-<ID>`.
 ///
 /// See lcec_el2xxx.c for an example of use.
-lcec_class_dout_channel_t *lcec_dout_register_channel_named(
-    ec_pdo_entry_reg_t **pdo_entry_regs, struct lcec_slave *slave, uint16_t idx, uint16_t sidx, char *name) {
+lcec_class_dout_channel_t *lcec_dout_register_channel_named(struct lcec_slave *slave, uint16_t idx, uint16_t sidx, char *name) {
   lcec_class_dout_channel_t *data;
   int err;
 
@@ -100,7 +96,7 @@ lcec_class_dout_channel_t *lcec_dout_register_channel_named(
   data->name = name;
   data->pdo_bp_packed = 0xffff;
 
-  LCEC_PDO_INIT((*pdo_entry_regs), slave->index, slave->vid, slave->pid, idx, sidx, &data->pdo_os, &data->pdo_bp);
+  lcec_pdo_init(slave, idx, sidx, &data->pdo_os, &data->pdo_bp);
   err = lcec_pin_newf_list(data, slave_pins, LCEC_MODULE_NAME, slave->master->name, slave->name, name);
   if (err != 0) {
     rtapi_print_msg(
@@ -125,13 +121,11 @@ lcec_class_dout_channel_t *lcec_dout_register_channel_named(
 /// the ECT60, this function is intended to be called twice, with the
 /// same `idx` and `sdx` values, but varying `bit` and `name` values.
 ///
-/// @param pdo_entry_regs a pointer to the pdo_entry_regs passed into the device `_init` function.
 /// @param slave the slave, from `_init`.
 /// @param os  The offset from `LCEC_PDO_INIT()`.
 /// @param bit  The bit offset for the digital out channel.
 /// @param name The base name to use for the channel, `dout-<ID>` is common.
-lcec_class_dout_channel_t *lcec_dout_register_channel_packed(
-    ec_pdo_entry_reg_t **pdo_entry_regs, struct lcec_slave *slave, uint16_t idx, uint16_t sidx, int bit, char *name) {
+lcec_class_dout_channel_t *lcec_dout_register_channel_packed(struct lcec_slave *slave, uint16_t idx, uint16_t sidx, int bit, char *name) {
   lcec_class_dout_channel_t *data;
   int err;
 
@@ -143,7 +137,7 @@ lcec_class_dout_channel_t *lcec_dout_register_channel_packed(
   memset(data, 0, sizeof(lcec_class_dout_channel_t));
 
   // Register the whole PDO, hopefully this does the sane thing if we register the same PDO repeatedly.
-  LCEC_PDO_INIT((*pdo_entry_regs), slave->index, slave->vid, slave->pid, idx, sidx, &data->pdo_os, &data->pdo_bp);
+  lcec_pdo_init(slave, idx, sidx, &data->pdo_os, &data->pdo_bp);
 
   // This is kind of a terrible hack, but it should mostly work, modulo possible issues with variable-sized PDOs and endianness problems.
   data->pdo_bp_packed = bit;

@@ -19,38 +19,36 @@
 /// @file
 /// @brief Driver for Beckhoff EL1xxx digital input modules
 
-#include "lcec_el1xxx.h"
+#include "../lcec.h"
 #include "lcec_class_din.h"
 
-#include "../lcec.h"
-
-static int lcec_el1xxx_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
+static int lcec_el1xxx_init(int comp_id, struct lcec_slave *slave);
 
 static lcec_typelist_t types[] = {
-    {"EL1002", LCEC_BECKHOFF_VID, 0x03EA3052, LCEC_EL1002_PDOS, 0, NULL, lcec_el1xxx_init},
-    {"EL1004", LCEC_BECKHOFF_VID, 0x03EC3052, LCEC_EL1004_PDOS, 0, NULL, lcec_el1xxx_init},
-    {"EL1008", LCEC_BECKHOFF_VID, 0x03F03052, LCEC_EL1008_PDOS, 0, NULL, lcec_el1xxx_init},
-    {"EL1012", LCEC_BECKHOFF_VID, 0x03F43052, LCEC_EL1012_PDOS, 0, NULL, lcec_el1xxx_init},
-    {"EL1014", LCEC_BECKHOFF_VID, 0x03F63052, LCEC_EL1014_PDOS, 0, NULL, lcec_el1xxx_init},
-    {"EL1018", LCEC_BECKHOFF_VID, 0x03FA3052, LCEC_EL1018_PDOS, 0, NULL, lcec_el1xxx_init},
-    {"EL1024", LCEC_BECKHOFF_VID, 0x04003052, LCEC_EL1024_PDOS, 0, NULL, lcec_el1xxx_init},
-    {"EL1034", LCEC_BECKHOFF_VID, 0x040A3052, LCEC_EL1034_PDOS, 0, NULL, lcec_el1xxx_init},
-    {"EL1084", LCEC_BECKHOFF_VID, 0x043C3052, LCEC_EL1084_PDOS, 0, NULL, lcec_el1xxx_init},
-    {"EL1088", LCEC_BECKHOFF_VID, 0x04403052, LCEC_EL1088_PDOS, 0, NULL, lcec_el1xxx_init},
-    {"EL1094", LCEC_BECKHOFF_VID, 0x04463052, LCEC_EL1094_PDOS, 0, NULL, lcec_el1xxx_init},
-    {"EL1098", LCEC_BECKHOFF_VID, 0x044A3052, LCEC_EL1098_PDOS, 0, NULL, lcec_el1xxx_init},
-    {"EL1104", LCEC_BECKHOFF_VID, 0x04503052, LCEC_EL1104_PDOS, 0, NULL, lcec_el1xxx_init},
-    {"EL1114", LCEC_BECKHOFF_VID, 0x045A3052, LCEC_EL1114_PDOS, 0, NULL, lcec_el1xxx_init},
-    {"EL1124", LCEC_BECKHOFF_VID, 0x04643052, LCEC_EL1124_PDOS, 0, NULL, lcec_el1xxx_init},
-    {"EL1134", LCEC_BECKHOFF_VID, 0x046E3052, LCEC_EL1134_PDOS, 0, NULL, lcec_el1xxx_init},
-    {"EL1144", LCEC_BECKHOFF_VID, 0x04783052, LCEC_EL1144_PDOS, 0, NULL, lcec_el1xxx_init},
-    {"EL1804", LCEC_BECKHOFF_VID, 0x070C3052, LCEC_EL1804_PDOS, 0, NULL, lcec_el1xxx_init},
-    {"EL1808", LCEC_BECKHOFF_VID, 0x07103052, LCEC_EL1808_PDOS, 0, NULL, lcec_el1xxx_init},
-    {"EL1809", LCEC_BECKHOFF_VID, 0x07113052, LCEC_EL1809_PDOS, 0, NULL, lcec_el1xxx_init},
-    {"EL1819", LCEC_BECKHOFF_VID, 0x071B3052, LCEC_EL1819_PDOS, 0, NULL, lcec_el1xxx_init},
-    {"EP1008", LCEC_BECKHOFF_VID, 0x03f04052, LCEC_EP1008_PDOS, 0, NULL, lcec_el1xxx_init},
-    {"EP1018", LCEC_BECKHOFF_VID, 0x03fa4052, LCEC_EL1018_PDOS, 0, NULL, lcec_el1xxx_init},
-    {"EP1819", LCEC_BECKHOFF_VID, 0x071b4052, LCEC_EP1819_PDOS, 0, NULL, lcec_el1xxx_init},
+    {"EL1002", LCEC_BECKHOFF_VID, 0x03EA3052, 0, NULL, lcec_el1xxx_init, NULL, 2},
+    {"EL1004", LCEC_BECKHOFF_VID, 0x03EC3052, 0, NULL, lcec_el1xxx_init, NULL, 4},
+    {"EL1008", LCEC_BECKHOFF_VID, 0x03F03052, 0, NULL, lcec_el1xxx_init, NULL, 8},
+    {"EL1012", LCEC_BECKHOFF_VID, 0x03F43052, 0, NULL, lcec_el1xxx_init, NULL, 2},
+    {"EL1014", LCEC_BECKHOFF_VID, 0x03F63052, 0, NULL, lcec_el1xxx_init, NULL, 4},
+    {"EL1018", LCEC_BECKHOFF_VID, 0x03FA3052, 0, NULL, lcec_el1xxx_init, NULL, 8},
+    {"EL1024", LCEC_BECKHOFF_VID, 0x04003052, 0, NULL, lcec_el1xxx_init, NULL, 4},
+    {"EL1034", LCEC_BECKHOFF_VID, 0x040A3052, 0, NULL, lcec_el1xxx_init, NULL, 4},
+    {"EL1084", LCEC_BECKHOFF_VID, 0x043C3052, 0, NULL, lcec_el1xxx_init, NULL, 4},
+    {"EL1088", LCEC_BECKHOFF_VID, 0x04403052, 0, NULL, lcec_el1xxx_init, NULL, 8},
+    {"EL1094", LCEC_BECKHOFF_VID, 0x04463052, 0, NULL, lcec_el1xxx_init, NULL, 4},
+    {"EL1098", LCEC_BECKHOFF_VID, 0x044A3052, 0, NULL, lcec_el1xxx_init, NULL, 8},
+    {"EL1104", LCEC_BECKHOFF_VID, 0x04503052, 0, NULL, lcec_el1xxx_init, NULL, 4},
+    {"EL1114", LCEC_BECKHOFF_VID, 0x045A3052, 0, NULL, lcec_el1xxx_init, NULL, 4},
+    {"EL1124", LCEC_BECKHOFF_VID, 0x04643052, 0, NULL, lcec_el1xxx_init, NULL, 4},
+    {"EL1134", LCEC_BECKHOFF_VID, 0x046E3052, 0, NULL, lcec_el1xxx_init, NULL, 4},
+    {"EL1144", LCEC_BECKHOFF_VID, 0x04783052, 0, NULL, lcec_el1xxx_init, NULL, 4},
+    {"EL1804", LCEC_BECKHOFF_VID, 0x070C3052, 0, NULL, lcec_el1xxx_init, NULL, 4},
+    {"EL1808", LCEC_BECKHOFF_VID, 0x07103052, 0, NULL, lcec_el1xxx_init, NULL, 8},
+    {"EL1809", LCEC_BECKHOFF_VID, 0x07113052, 0, NULL, lcec_el1xxx_init, NULL, 16},
+    {"EL1819", LCEC_BECKHOFF_VID, 0x071B3052, 0, NULL, lcec_el1xxx_init, NULL, 16},
+    {"EP1008", LCEC_BECKHOFF_VID, 0x03f04052, 0, NULL, lcec_el1xxx_init, NULL, 8},
+    {"EP1018", LCEC_BECKHOFF_VID, 0x03fa4052, 0, NULL, lcec_el1xxx_init, NULL, 8},
+    {"EP1819", LCEC_BECKHOFF_VID, 0x071b4052, 0, NULL, lcec_el1xxx_init, NULL, 16},
     {NULL},
 };
 
@@ -58,22 +56,26 @@ ADD_TYPES(types)
 
 static void lcec_el1xxx_read(struct lcec_slave *slave, long period);
 
-static int lcec_el1xxx_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
+static int lcec_el1xxx_init(int comp_id, struct lcec_slave *slave) {
   lcec_class_din_channels_t *hal_data;
   int i;
 
   // initialize callbacks
   slave->proc_read = lcec_el1xxx_read;
 
-  hal_data = lcec_din_allocate_channels(slave->pdo_entry_count);
-  if (hal_data == NULL) { return -EIO; }
+  hal_data = lcec_din_allocate_channels(slave->flags);
+  if (hal_data == NULL) {
+    return -EIO;
+  }
   slave->hal_data = hal_data;
 
   // initialize channels
-  for (i = 0; i < slave->pdo_entry_count; i++) {
-    hal_data->channels[i]=lcec_din_register_channel(&pdo_entry_regs, slave, i, 0x6000 + (i<<4), 0x01);
+  for (i = 0; i < slave->flags; i++) {
+    hal_data->channels[i] = lcec_din_register_channel(slave, i, 0x6000 + (i << 4), 0x01);
 
-    if (hal_data->channels[i]==NULL) { return -EIO; }
+    if (hal_data->channels[i] == NULL) {
+      return -EIO;
+    }
   }
 
   return 0;

@@ -20,12 +20,14 @@
 /// @brief Stoeber MDS5000 driver
 
 #include "../lcec.h"
-#include "lcec_stmds5k.h"
 
 #include "lcec_class_enc.h"
 
+#define LCEC_STMDS5K_PARAM_MULTITURN 1
+#define LCEC_STMDS5K_PARAM_EXTENC 2
+
 static int lcec_stmds5k_preinit(struct lcec_slave *slave);
-static int lcec_stmds5k_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
+static int lcec_stmds5k_init(int comp_id, struct lcec_slave *slave);
 
 static lcec_modparam_desc_t lcec_stmds5k_modparams[]={
   { "isMultiturn", LCEC_STMDS5K_PARAM_MULTITURN, MODPARAM_TYPE_BIT } ,
@@ -34,7 +36,7 @@ static lcec_modparam_desc_t lcec_stmds5k_modparams[]={
 };
 
 static lcec_typelist_t types[]={
-  { "StMDS5k", LCEC_STOEBER_VID, 0x00001388, 0, 0, lcec_stmds5k_preinit, lcec_stmds5k_init, lcec_stmds5k_modparams},
+  { "StMDS5k", LCEC_STOEBER_VID, 0x00001388,  0, lcec_stmds5k_preinit, lcec_stmds5k_init, lcec_stmds5k_modparams},
   { NULL },
 };
 
@@ -236,8 +238,6 @@ static int lcec_stmds5k_preinit(struct lcec_slave *slave) {
   lcec_master_t *master = slave->master;
   LCEC_CONF_MODPARAM_VAL_T *pval;
 
-  slave->pdo_entry_count = LCEC_STMDS5K_PDOS;
-
   // check for extenc config
   pval = lcec_modparam_get(slave, LCEC_STMDS5K_PARAM_EXTENC);
   if (pval != NULL) {
@@ -245,13 +245,12 @@ static int lcec_stmds5k_preinit(struct lcec_slave *slave) {
       rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "invalied extenc type %u for slave %s.%s\n", pval->u32, master->name, slave->name);
       return -EINVAL;
     }
-    slave->pdo_entry_count += LCEC_STMDS5K_EXTINC_PDOS;
   }
 
   return 0;
 }
 
-static int lcec_stmds5k_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
+static int lcec_stmds5k_init(int comp_id, struct lcec_slave *slave) {
   lcec_master_t *master = slave->master;
   lcec_stmds5k_data_t *hal_data;
   int err;
@@ -327,24 +326,24 @@ static int lcec_stmds5k_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry
 
   // initialize POD entries
   // E200 : device state byte
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x28c8, 0x00, &hal_data->dev_state_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x28c8, 0x00, &hal_data->dev_state_pdo_os, NULL);
   // E100 : speed motor (x 0.1% relative to C01)
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x2864, 0x00, &hal_data->speed_mot_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x2864, 0x00, &hal_data->speed_mot_pdo_os, NULL);
   // E02 : torque motor filterd (x 0,1 Nm)
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x2802, 0x00, &hal_data->torque_mot_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x2802, 0x00, &hal_data->torque_mot_pdo_os, NULL);
   // D200 : speed state word
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x26c8, 0x00, &hal_data->speed_state_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x26c8, 0x00, &hal_data->speed_state_pdo_os, NULL);
   // E09 : rotor position
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x2809, 0x00, &hal_data->pos_mot_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x2809, 0x00, &hal_data->pos_mot_pdo_os, NULL);
   // A180 : Device Control Byte
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x20b4, 0x00, &hal_data->dev_ctrl_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x20b4, 0x00, &hal_data->dev_ctrl_pdo_os, NULL);
   // D230 : speed setpoint (x 0.1 % relative to D02, -200.0% .. 200.0%)
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x26e6, 0x00, &hal_data->speed_sp_rel_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x26e6, 0x00, &hal_data->speed_sp_rel_pdo_os, NULL);
   // C230 : maximum torque (x 1%, 0% .. 200%)
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x24e6, 0x00, &hal_data->torque_max_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x24e6, 0x00, &hal_data->torque_max_pdo_os, NULL);
   // external encoder
   if (extenc_conf != NULL) {
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, extenc_conf->pdo_index, 0x00, &hal_data->extinc_pdo_os, NULL);
+    lcec_pdo_init(slave,  extenc_conf->pdo_index, 0x00, &hal_data->extinc_pdo_os, NULL);
   }
 
   // export pins

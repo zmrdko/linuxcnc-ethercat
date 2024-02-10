@@ -20,19 +20,18 @@
 /// @brief Driver for Beckhoff EL95xx power supply terminals
 
 #include "../lcec.h"
-#include "lcec_el95xx.h"
 
 static void lcec_el95xx_read(struct lcec_slave *slave, long period);
-static int lcec_el95xx_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
+static int lcec_el95xx_init(int comp_id, struct lcec_slave *slave);
 
 static lcec_typelist_t types[]={
   // power supply
-  { "EL9505", LCEC_BECKHOFF_VID, 0x25213052, LCEC_EL95xx_PDOS, 0, NULL, lcec_el95xx_init},
-  { "EL9508", LCEC_BECKHOFF_VID, 0x25243052, LCEC_EL95xx_PDOS, 0, NULL, lcec_el95xx_init},
-  { "EL9510", LCEC_BECKHOFF_VID, 0x25263052, LCEC_EL95xx_PDOS, 0, NULL, lcec_el95xx_init},
-  { "EL9512", LCEC_BECKHOFF_VID, 0x25283052, LCEC_EL95xx_PDOS, 0, NULL, lcec_el95xx_init},
-  { "EL9515", LCEC_BECKHOFF_VID, 0x252b3052, LCEC_EL95xx_PDOS, 0, NULL, lcec_el95xx_init},
-  { "EL9576", LCEC_BECKHOFF_VID, 0x25683052, LCEC_EL95xx_PDOS, 0, NULL, lcec_el95xx_init},
+  { "EL9505", LCEC_BECKHOFF_VID, 0x25213052, 0, NULL, lcec_el95xx_init},
+  { "EL9508", LCEC_BECKHOFF_VID, 0x25243052,  0, NULL, lcec_el95xx_init},
+  { "EL9510", LCEC_BECKHOFF_VID, 0x25263052,  0, NULL, lcec_el95xx_init},
+  { "EL9512", LCEC_BECKHOFF_VID, 0x25283052,  0, NULL, lcec_el95xx_init},
+  { "EL9515", LCEC_BECKHOFF_VID, 0x252b3052,  0, NULL, lcec_el95xx_init},
+  { "EL9576", LCEC_BECKHOFF_VID, 0x25683052,  0, NULL, lcec_el95xx_init},
   { NULL },
 };
 ADD_TYPES(types);
@@ -52,7 +51,7 @@ static const lcec_pindesc_t slave_pins[] = {
   { HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL }
 };
 
-static int lcec_el95xx_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
+static int lcec_el95xx_init(int comp_id, struct lcec_slave *slave) {
   lcec_master_t *master = slave->master;
   lcec_el95xx_data_t *hal_data;
   int err;
@@ -69,8 +68,8 @@ static int lcec_el95xx_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   slave->hal_data = hal_data;
 
   // initialize POD entries
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000, 0x01, &hal_data->power_ok_pdo_os, &hal_data->power_ok_pdo_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000, 0x02, &hal_data->overload_pdo_os, &hal_data->overload_pdo_bp);
+  lcec_pdo_init(slave,  0x6000, 0x01, &hal_data->power_ok_pdo_os, &hal_data->power_ok_pdo_bp);
+  lcec_pdo_init(slave,  0x6000, 0x02, &hal_data->overload_pdo_os, &hal_data->overload_pdo_bp);
 
   // export pins
   if ((err = lcec_pin_newf_list(hal_data, slave_pins, LCEC_MODULE_NAME, master->name, slave->name)) != 0) {

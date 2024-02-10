@@ -19,14 +19,15 @@
 /// @file
 
 #include "../lcec.h"
-#include "lcec_ph3lm2rm.h"
-
 #include "lcec_class_enc.h"
 
-static int lcec_ph3lm2rm_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
+#define LCEC_PH3LM2RM_RM_COUNT 2
+#define LCEC_PH3LM2RM_LM_COUNT 3
+
+static int lcec_ph3lm2rm_init(int comp_id, struct lcec_slave *slave);
 
 static lcec_typelist_t types[]={
-  { "Ph3LM2RM", LCEC_MODUSOFT_VID, 0x10000001, LCEC_PH3LM2RM_PDOS, 0, NULL, lcec_ph3lm2rm_init},
+  { "Ph3LM2RM", LCEC_MODUSOFT_VID, 0x10000001, 0, NULL, lcec_ph3lm2rm_init},
   { NULL },
 };
 
@@ -135,8 +136,8 @@ static const lcec_pindesc_t slave_pins[] = {
 };
 
 static int lcec_ph3lm2rm_enc_init(struct lcec_slave *slave, lcec_ph3lm2rm_enc_data_t *hal_data, const char *pfx, double scale);
-static int lcec_ph3lm2rm_lm_init(struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs, int idx, lcec_ph3lm2rm_lm_data_t *hal_data, const char *pfx);
-static int lcec_ph3lm2rm_rm_init(struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs, int idx, lcec_ph3lm2rm_rm_data_t *hal_data, const char *pfx);
+static int lcec_ph3lm2rm_lm_init(struct lcec_slave *slave, int idx, lcec_ph3lm2rm_lm_data_t *hal_data, const char *pfx);
+static int lcec_ph3lm2rm_rm_init(struct lcec_slave *slave, int idx, lcec_ph3lm2rm_rm_data_t *hal_data, const char *pfx);
 
 static void lcec_ph3lm2rm_read(struct lcec_slave *slave, long period);
 static void lcec_ph3lm2rm_write(struct lcec_slave *slave, long period);
@@ -144,7 +145,7 @@ static void lcec_ph3lm2rm_write(struct lcec_slave *slave, long period);
 static void lcec_ph3lm2rm_enc_read(uint8_t *pd, lcec_ph3lm2rm_enc_data_t *ch);
 static void lcec_ph3lm2rm_enc_write(uint8_t *pd, lcec_ph3lm2rm_enc_data_t *ch);
 
-static int lcec_ph3lm2rm_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
+static int lcec_ph3lm2rm_init(int comp_id, struct lcec_slave *slave) {
   lcec_master_t *master = slave->master;
   lcec_ph3lm2rm_data_t *hal_data;
   char pfx[HAL_NAME_LEN];
@@ -166,8 +167,8 @@ static int lcec_ph3lm2rm_init(int comp_id, struct lcec_slave *slave, ec_pdo_entr
   slave->hal_data = hal_data;
 
   // initialize POD entries
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7000, 0x01, &hal_data->err_reset_os, &hal_data->err_reset_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000, 0x01, &hal_data->sync_locked_os, &hal_data->sync_locked_bp);
+  lcec_pdo_init(slave,  0x7000, 0x01, &hal_data->err_reset_os, &hal_data->err_reset_bp);
+  lcec_pdo_init(slave,  0x6000, 0x01, &hal_data->sync_locked_os, &hal_data->sync_locked_bp);
 
   // export pins
   if ((err = lcec_pin_newf_list(hal_data, slave_pins, LCEC_MODULE_NAME, master->name, slave->name)) != 0) {
@@ -175,15 +176,15 @@ static int lcec_ph3lm2rm_init(int comp_id, struct lcec_slave *slave, ec_pdo_entr
   }
 
   // init subclasses
-  for (i=0, lm = hal_data->lms; i<LCEC_PH3LM2RM_LM_COUNT; i++, lm++, pdo_entry_regs += LCEC_PH3LM2RM_LM_PDOS) {
+  for (i=0, lm = hal_data->lms; i<LCEC_PH3LM2RM_LM_COUNT; i++, lm++) {
     rtapi_snprintf(pfx, HAL_NAME_LEN, "lm%d", i);
-    if ((err = lcec_ph3lm2rm_lm_init(slave, pdo_entry_regs, 0x10 + i, lm, pfx)) != 0) {
+    if ((err = lcec_ph3lm2rm_lm_init(slave, 0x10 + i, lm, pfx)) != 0) {
       return err;
     }
   }
-  for (i=0, rm = hal_data->rms; i<LCEC_PH3LM2RM_RM_COUNT; i++, rm++, pdo_entry_regs += LCEC_PH3LM2RM_RM_PDOS) {
+  for (i=0, rm = hal_data->rms; i<LCEC_PH3LM2RM_RM_COUNT; i++, rm++) {
     rtapi_snprintf(pfx, HAL_NAME_LEN, "rm%d", i);
-    if ((err = lcec_ph3lm2rm_rm_init(slave, pdo_entry_regs, 0x20 + i, rm, pfx)) != 0) {
+    if ((err = lcec_ph3lm2rm_rm_init(slave, 0x20 + i, rm, pfx)) != 0) {
       return err;
     }
   }
@@ -216,19 +217,19 @@ static int lcec_ph3lm2rm_enc_init(struct lcec_slave *slave, lcec_ph3lm2rm_enc_da
   return 0;
 }
 
-int lcec_ph3lm2rm_lm_init(struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs, int ios, lcec_ph3lm2rm_lm_data_t *hal_data, const char *pfx) {
+int lcec_ph3lm2rm_lm_init(struct lcec_slave *slave, int ios, lcec_ph3lm2rm_lm_data_t *hal_data, const char *pfx) {
   lcec_master_t *master = slave->master;
   int err;
 
   // initialize POD entries
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7000 + ios, 0x01, &hal_data->ch.latch_ena_pos_os, &hal_data->ch.latch_ena_pos_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7000 + ios, 0x02, &hal_data->ch.latch_ena_neg_os, &hal_data->ch.latch_ena_neg_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + ios, 0x01, &hal_data->ch.error_os, &hal_data->ch.error_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + ios, 0x02, &hal_data->ch.latch_valid_os, &hal_data->ch.latch_valid_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + ios, 0x03, &hal_data->ch.latch_state_os, &hal_data->ch.latch_state_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + ios, 0x04, &hal_data->signal_level_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + ios, 0x05, &hal_data->ch.counter_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + ios, 0x06, &hal_data->ch.latch_os, NULL);
+  lcec_pdo_init(slave,  0x7000 + ios, 0x01, &hal_data->ch.latch_ena_pos_os, &hal_data->ch.latch_ena_pos_bp);
+  lcec_pdo_init(slave,  0x7000 + ios, 0x02, &hal_data->ch.latch_ena_neg_os, &hal_data->ch.latch_ena_neg_bp);
+  lcec_pdo_init(slave,  0x6000 + ios, 0x01, &hal_data->ch.error_os, &hal_data->ch.error_bp);
+  lcec_pdo_init(slave,  0x6000 + ios, 0x02, &hal_data->ch.latch_valid_os, &hal_data->ch.latch_valid_bp);
+  lcec_pdo_init(slave,  0x6000 + ios, 0x03, &hal_data->ch.latch_state_os, &hal_data->ch.latch_state_bp);
+  lcec_pdo_init(slave,  0x6000 + ios, 0x04, &hal_data->signal_level_os, NULL);
+  lcec_pdo_init(slave,  0x6000 + ios, 0x05, &hal_data->ch.counter_os, NULL);
+  lcec_pdo_init(slave,  0x6000 + ios, 0x06, &hal_data->ch.latch_os, NULL);
 
   // init channel
   if ((err = lcec_ph3lm2rm_enc_init(slave, &hal_data->ch, pfx, 0.0005)) != 0) {
@@ -248,19 +249,19 @@ int lcec_ph3lm2rm_lm_init(struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entr
   return 0;
 }
 
-static int lcec_ph3lm2rm_rm_init(struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs, int ios, lcec_ph3lm2rm_rm_data_t *hal_data, const char *pfx) {
+static int lcec_ph3lm2rm_rm_init(struct lcec_slave *slave, int ios, lcec_ph3lm2rm_rm_data_t *hal_data, const char *pfx) {
   lcec_master_t *master = slave->master;
   int err;
 
   // initialize POD entries
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7000 + ios, 0x01, &hal_data->latch_sel_idx_os, &hal_data->latch_sel_idx_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7000 + ios, 0x02, &hal_data->ch.latch_ena_pos_os, &hal_data->ch.latch_ena_pos_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7000 + ios, 0x03, &hal_data->ch.latch_ena_neg_os, &hal_data->ch.latch_ena_neg_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + ios, 0x01, &hal_data->ch.error_os, &hal_data->ch.error_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + ios, 0x02, &hal_data->ch.latch_valid_os, &hal_data->ch.latch_valid_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + ios, 0x03, &hal_data->ch.latch_state_os, &hal_data->ch.latch_state_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + ios, 0x04, &hal_data->ch.counter_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + ios, 0x05, &hal_data->ch.latch_os, NULL);
+  lcec_pdo_init(slave,  0x7000 + ios, 0x01, &hal_data->latch_sel_idx_os, &hal_data->latch_sel_idx_bp);
+  lcec_pdo_init(slave,  0x7000 + ios, 0x02, &hal_data->ch.latch_ena_pos_os, &hal_data->ch.latch_ena_pos_bp);
+  lcec_pdo_init(slave,  0x7000 + ios, 0x03, &hal_data->ch.latch_ena_neg_os, &hal_data->ch.latch_ena_neg_bp);
+  lcec_pdo_init(slave,  0x6000 + ios, 0x01, &hal_data->ch.error_os, &hal_data->ch.error_bp);
+  lcec_pdo_init(slave,  0x6000 + ios, 0x02, &hal_data->ch.latch_valid_os, &hal_data->ch.latch_valid_bp);
+  lcec_pdo_init(slave,  0x6000 + ios, 0x03, &hal_data->ch.latch_state_os, &hal_data->ch.latch_state_bp);
+  lcec_pdo_init(slave,  0x6000 + ios, 0x04, &hal_data->ch.counter_os, NULL);
+  lcec_pdo_init(slave,  0x6000 + ios, 0x05, &hal_data->ch.latch_os, NULL);
 
   // init channel
   if ((err = lcec_ph3lm2rm_enc_init(slave, &hal_data->ch, pfx, 1.0)) != 0) {

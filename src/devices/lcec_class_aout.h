@@ -25,7 +25,7 @@ typedef struct {
   char *name_prefix;               ///< Prefix for device naming, defaults to "aio".
   int max_value;                   ///< The maximum value returned for "normal" output channels.
   double default_scale;            ///< Default scale for the device.
-  double default_offset;            ///< Default value offset for the device.
+  double default_offset;           ///< Default value offset for the device.
   uint16_t value_idx, value_sidx;  ///< PDO index and subindex for reading the value.
 } lcec_class_aout_options_t;
 
@@ -43,20 +43,19 @@ typedef struct {
   hal_float_t *min_dc;
   hal_float_t *max_dc;
   hal_float_t *curr_dc;
-  hal_s32_t *raw_val;     ///< The raw value read from the device.
+  hal_s32_t *raw_val;  ///< The raw value read from the device.
   unsigned int val_pdo_os;
   lcec_class_aout_options_t *options;  ///< The options used to create this device.
 } lcec_class_aout_channel_t;
 
 /// @brief Data for an analog input device.
 typedef struct {
-  int count;                            ///< The number of channels in use with this device.
+  int count;                             ///< The number of channels in use with this device.
   lcec_class_aout_channel_t **channels;  ///< Dynamic array holding pin data for each channel.
 } lcec_class_aout_channels_t;
 
 lcec_class_aout_channels_t *lcec_aout_allocate_channels(int count);
-lcec_class_aout_channel_t *lcec_aout_register_channel(
-    ec_pdo_entry_reg_t **pdo_entry_regs, struct lcec_slave *slave, int id, uint16_t idx, lcec_class_aout_options_t *opt);
+lcec_class_aout_channel_t *lcec_aout_register_channel(struct lcec_slave *slave, int id, uint16_t idx, lcec_class_aout_options_t *opt);
 void lcec_aout_write(struct lcec_slave *slave, lcec_class_aout_channel_t *data);
 void lcec_aout_write_all(struct lcec_slave *slave, lcec_class_aout_channels_t *channels);
 lcec_class_aout_options_t *lcec_aout_options(void);

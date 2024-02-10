@@ -25,7 +25,7 @@
 static void lcec_el6900_read(struct lcec_slave *slave, long period);
 static void lcec_el6900_write(struct lcec_slave *slave, long period);
 static int lcec_el6900_preinit(struct lcec_slave *slave);
-static int lcec_el6900_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
+static int lcec_el6900_init(int comp_id, struct lcec_slave *slave);
 
 static lcec_modparam_desc_t lcec_el6900_modparams[] = {
   { "fsoeSlaveIdx", LCEC_EL6900_PARAM_SLAVEID, MODPARAM_TYPE_U32 } ,
@@ -35,7 +35,7 @@ static lcec_modparam_desc_t lcec_el6900_modparams[] = {
 };
 
 static lcec_typelist_t types[]={
-  { "EL6900", LCEC_BECKHOFF_VID, 0x1AF43052, 0, 1, lcec_el6900_preinit, lcec_el6900_init, lcec_el6900_modparams},
+  { "EL6900", LCEC_BECKHOFF_VID, 0x1AF43052, 1, lcec_el6900_preinit, lcec_el6900_init, lcec_el6900_modparams},
   { NULL },
 };
 ADD_TYPES(types);
@@ -124,7 +124,7 @@ static const lcec_pindesc_t fsoe_crc_pins[] = {
   { HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL }
 };
 
-static int init_std_pdos(struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs, int pid, lcec_el6900_fsoe_io_t *io, int index, hal_pin_dir_t dir) {
+static int init_std_pdos(struct lcec_slave *slave, int pid, lcec_el6900_fsoe_io_t *io, int index, hal_pin_dir_t dir) {
   lcec_master_t *master = slave->master;
   lcec_slave_modparam_t *p;
   int count, err;
@@ -136,7 +136,7 @@ static int init_std_pdos(struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry
     }
 
     // initialize POD entry
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, index, 0x01 + count, &io->os, &io->bp);
+    lcec_pdo_init(slave,  index, 0x01 + count, &io->os, &io->bp);
 
     // export pin
     if ((err = lcec_pin_newf(HAL_BIT, dir, (void *) &io->pin, "%s.%s.%s.%s", LCEC_MODULE_NAME, master->name, slave->name, p->value.str)) != 0) {
@@ -158,8 +158,6 @@ static int lcec_el6900_preinit(struct lcec_slave *slave) {
   struct lcec_slave *fsoe_slave;
   const LCEC_CONF_FSOE_T *fsoeConf;
 
-  slave->pdo_entry_count = LCEC_EL6900_PDOS;
-
   stdin_count = 0;
   stdout_count = 0;
   for (p = slave->modparams; p != NULL && p->id >= 0; p++) {
@@ -179,7 +177,6 @@ static int lcec_el6900_preinit(struct lcec_slave *slave) {
           return -EINVAL;
         }
 
-        slave->pdo_entry_count += LCEC_EL6900_PARAM_SLAVE_PDOS + LCEC_EL6900_PARAM_SLAVE_CH_PDOS * fsoeConf->data_channels;
         break;
 
       case LCEC_EL6900_PARAM_STDIN_NAME:
@@ -189,7 +186,6 @@ static int lcec_el6900_preinit(struct lcec_slave *slave) {
           return -EINVAL;
         }
 
-        (slave->pdo_entry_count)++;
         break;
 
       case LCEC_EL6900_PARAM_STDOUT_NAME:
@@ -199,7 +195,6 @@ static int lcec_el6900_preinit(struct lcec_slave *slave) {
           return -EINVAL;
         }
 
-        (slave->pdo_entry_count)++;
         break;
     }
   }
@@ -207,7 +202,7 @@ static int lcec_el6900_preinit(struct lcec_slave *slave) {
   return 0;
 }
 
-static int lcec_el6900_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
+static int lcec_el6900_init(int comp_id, struct lcec_slave *slave) {
   lcec_master_t *master = slave->master;
   lcec_el6900_data_t *hal_data;
   lcec_el6900_fsoe_t *fsoe_data;
@@ -238,11 +233,11 @@ static int lcec_el6900_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   slave->hal_data = hal_data;
 
   // initialize POD entries
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0xf200, 0x01, &hal_data->control_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0xf100, 0x01, &hal_data->state_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0xf100, 0x08, &hal_data->login_active_os, &hal_data->login_active_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0xf100, 0x09, &hal_data->input_size_missmatch_os, &hal_data->input_size_missmatch_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0xf100, 0x0a, &hal_data->output_size_missmatch_os, &hal_data->output_size_missmatch_bp);
+  lcec_pdo_init(slave,  0xf200, 0x01, &hal_data->control_os, NULL);
+  lcec_pdo_init(slave,  0xf100, 0x01, &hal_data->state_os, NULL);
+  lcec_pdo_init(slave,  0xf100, 0x08, &hal_data->login_active_os, &hal_data->login_active_bp);
+  lcec_pdo_init(slave,  0xf100, 0x09, &hal_data->input_size_missmatch_os, &hal_data->input_size_missmatch_bp);
+  lcec_pdo_init(slave,  0xf100, 0x0a, &hal_data->output_size_missmatch_os, &hal_data->output_size_missmatch_bp);
 
   // export pins
   if ((err = lcec_pin_newf_list(hal_data, slave_pins, LCEC_MODULE_NAME, master->name, slave->name)) != 0) {
@@ -250,16 +245,14 @@ static int lcec_el6900_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   }
 
   // map and export stdios
-  hal_data->std_ins_count = init_std_pdos(slave, pdo_entry_regs, LCEC_EL6900_PARAM_STDIN_NAME, hal_data->std_ins, 0xf201, HAL_IN);
+  hal_data->std_ins_count = init_std_pdos(slave, LCEC_EL6900_PARAM_STDIN_NAME, hal_data->std_ins, 0xf201, HAL_IN);
   if (hal_data->std_ins_count < 0) {
     return hal_data->std_ins_count;
   }
-  pdo_entry_regs += hal_data->std_ins_count;
-  hal_data->std_outs_count = init_std_pdos(slave, pdo_entry_regs, LCEC_EL6900_PARAM_STDOUT_NAME, hal_data->std_outs, 0xf101, HAL_OUT);
+  hal_data->std_outs_count = init_std_pdos(slave, LCEC_EL6900_PARAM_STDOUT_NAME, hal_data->std_outs, 0xf101, HAL_OUT);
   if (hal_data->std_outs_count < 0) {
     return hal_data->std_outs_count;
   }
-  pdo_entry_regs += hal_data->std_outs_count;
 
   // map and export fsoe slave data
   for (fsoe_idx = 0, fsoe_data = hal_data->fsoe, p = slave->modparams; p != NULL && p->id >= 0; p++) {
@@ -280,10 +273,10 @@ static int lcec_el6900_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
       memset(fsoe_data->fsoe_crc, 0, sizeof(lcec_el6900_fsoe_crc_t));
 
       // initialize POD entries
-      LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7000 + (fsoe_idx << 4), 0x01, &fsoe_data->fsoe_slave_cmd_os, NULL);
-      LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7000 + (fsoe_idx << 4), 0x02, &fsoe_data->fsoe_slave_connid_os, NULL);
-      LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (fsoe_idx << 4), 0x01, &fsoe_data->fsoe_master_cmd_os, NULL);
-      LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (fsoe_idx << 4), 0x02, &fsoe_data->fsoe_master_connid_os, NULL);
+      lcec_pdo_init(slave,  0x7000 + (fsoe_idx << 4), 0x01, &fsoe_data->fsoe_slave_cmd_os, NULL);
+      lcec_pdo_init(slave,  0x7000 + (fsoe_idx << 4), 0x02, &fsoe_data->fsoe_slave_connid_os, NULL);
+      lcec_pdo_init(slave,  0x6000 + (fsoe_idx << 4), 0x01, &fsoe_data->fsoe_master_cmd_os, NULL);
+      lcec_pdo_init(slave,  0x6000 + (fsoe_idx << 4), 0x02, &fsoe_data->fsoe_master_connid_os, NULL);
 
       // export pins
       if ((err = lcec_pin_newf_list(fsoe_data, fsoe_pins, LCEC_MODULE_NAME, master->name, slave->name, fsoe_idx)) != 0) {
@@ -292,8 +285,8 @@ static int lcec_el6900_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
 
       // map CRC PDOS
       for (index = 0, crc = fsoe_data->fsoe_crc; index < fsoeConf->data_channels; index++, crc++) {
-        LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7000 + (fsoe_idx << 4), 0x03 + index, &crc->fsoe_slave_crc_os, NULL);
-        LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000 + (fsoe_idx << 4), 0x03 + index, &crc->fsoe_master_crc_os, NULL);
+        lcec_pdo_init(slave,  0x7000 + (fsoe_idx << 4), 0x03 + index, &crc->fsoe_slave_crc_os, NULL);
+        lcec_pdo_init(slave,  0x6000 + (fsoe_idx << 4), 0x03 + index, &crc->fsoe_master_crc_os, NULL);
         if ((err = lcec_pin_newf_list(crc, fsoe_crc_pins, LCEC_MODULE_NAME, master->name, slave->name, fsoe_idx, index)) != 0) {
           return err;
         }

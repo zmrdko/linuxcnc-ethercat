@@ -92,7 +92,4 @@ Parameters:
 
 #include "../lcec.h"
 
-#define LCEC_DEMS300_VID LCEC_DELTA_VID
-
-#define LCEC_DEMS300_PDOS 11
 #endif

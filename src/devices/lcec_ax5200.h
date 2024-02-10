@@ -26,7 +26,6 @@
 #include "lcec_class_ax5.h"
 
 #define LCEC_AX5200_CHANS 2
-#define LCEC_AX5200_PDOS (LCEC_AX5200_CHANS * LCEC_CLASS_AX5_PDOS)
 
 /*static*/ int lcec_ax5200_preinit(struct lcec_slave *slave);
 #endif

@@ -21,7 +21,7 @@
 #include "../lcec.h"
 #include "lcec_ax5100.h"
 
-static int lcec_ax5100_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
+static int lcec_ax5100_init(int comp_id, struct lcec_slave *slave);
 
 static lcec_modparam_desc_t lcec_ax5100_modparams[] = {
   { "enableFB2", LCEC_AX5_PARAM_ENABLE_FB2, MODPARAM_TYPE_BIT } ,
@@ -31,11 +31,11 @@ static lcec_modparam_desc_t lcec_ax5100_modparams[] = {
 
 static lcec_typelist_t types[]={
   // AX5000 servo drives
-  { "AX5101", LCEC_BECKHOFF_VID, 0x13ed6012, 0, 0, lcec_ax5100_preinit, lcec_ax5100_init, lcec_ax5100_modparams},
-  { "AX5103", LCEC_BECKHOFF_VID, 0x13ef6012, 0, 0, lcec_ax5100_preinit, lcec_ax5100_init, lcec_ax5100_modparams},
-  { "AX5106", LCEC_BECKHOFF_VID, 0x13f26012, 0, 0, lcec_ax5100_preinit, lcec_ax5100_init, lcec_ax5100_modparams},
-  { "AX5112", LCEC_BECKHOFF_VID, 0x13f86012, 0, 0, lcec_ax5100_preinit, lcec_ax5100_init, lcec_ax5100_modparams},
-  { "AX5118", LCEC_BECKHOFF_VID, 0x13fe6012, 0, 0, lcec_ax5100_preinit, lcec_ax5100_init, lcec_ax5100_modparams},
+  { "AX5101", LCEC_BECKHOFF_VID, 0x13ed6012, 0, lcec_ax5100_preinit, lcec_ax5100_init, lcec_ax5100_modparams},
+  { "AX5103", LCEC_BECKHOFF_VID, 0x13ef6012, 0, lcec_ax5100_preinit, lcec_ax5100_init, lcec_ax5100_modparams},
+  { "AX5106", LCEC_BECKHOFF_VID, 0x13f26012, 0, lcec_ax5100_preinit, lcec_ax5100_init, lcec_ax5100_modparams},
+  { "AX5112", LCEC_BECKHOFF_VID, 0x13f86012, 0, lcec_ax5100_preinit, lcec_ax5100_init, lcec_ax5100_modparams},
+  { "AX5118", LCEC_BECKHOFF_VID, 0x13fe6012, 0, lcec_ax5100_preinit, lcec_ax5100_init, lcec_ax5100_modparams},
   { NULL },
 };
 ADD_TYPES(types);
@@ -63,13 +63,10 @@ static void lcec_ax5100_write(struct lcec_slave *slave, long period);
   // set FSOE conf (this will be used by the corresponding AX5805
   slave->fsoeConf = &fsoe_conf;
 
-  // set pdo count
-  slave->pdo_entry_count = lcec_class_ax5_pdos(slave);
-
   return 0;
 }
 
-static int lcec_ax5100_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
+static int lcec_ax5100_init(int comp_id, struct lcec_slave *slave) {
   lcec_master_t *master = slave->master;
   lcec_ax5100_data_t *hal_data;
   int err;
@@ -87,7 +84,7 @@ static int lcec_ax5100_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   slave->hal_data = hal_data;
 
   // init subclasses
-  if ((err = lcec_class_ax5_init(slave, pdo_entry_regs, &hal_data->chan, 0, "")) != 0) {
+  if ((err = lcec_class_ax5_init(slave, &hal_data->chan, 0, "")) != 0) {
     return err;
   }
 

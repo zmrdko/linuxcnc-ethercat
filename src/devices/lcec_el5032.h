@@ -25,6 +25,5 @@
 #include "../lcec.h"
 
 #define LCEC_EL5032_CHANS 2
-#define LCEC_EL5032_PDOS (7 * LCEC_EL5032_CHANS)
 
 #endif

@@ -22,10 +22,10 @@
 #include "../lcec.h"
 #include "lcec_dems300.h"
 
-static int lcec_dems300_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
+static int lcec_dems300_init(int comp_id, struct lcec_slave *slave);
 
 static lcec_typelist_t types[]={
-  { "DeMS300", LCEC_DELTA_VID, 0x10400200, LCEC_DEMS300_PDOS, 0, NULL, lcec_dems300_init},
+  { "DeMS300", LCEC_DELTA_VID, 0x10400200, 0, NULL, lcec_dems300_init},
   { NULL },
 };
 
@@ -173,7 +173,7 @@ static void lcec_dems300_check_scales(lcec_dems300_data_t *hal_data);
 static void lcec_dems300_read(struct lcec_slave *slave, long period);
 static void lcec_dems300_write(struct lcec_slave *slave, long period);
 
-static int lcec_dems300_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
+static int lcec_dems300_init(int comp_id, struct lcec_slave *slave) {
   lcec_master_t *master = slave->master;
   lcec_dems300_data_t *hal_data;
   int err;
@@ -194,17 +194,17 @@ static int lcec_dems300_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry
   slave->sync_info = lcec_dems300_syncs;
 
   // initialize POD entries
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6041, 0x00, &hal_data->status_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6043, 0x00, &hal_data->currvel_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6061, 0x00, &hal_data->mode_op_display_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x3021, 0x05, &hal_data->current_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x3021, 0x01, &hal_data->warn_err_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x3022, 0x0f, &hal_data->temp_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6040, 0x00, &hal_data->control_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6042, 0x00, &hal_data->cmdvel_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6060, 0x00, &hal_data->mode_op_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6050, 0x00, &hal_data->ramp_down_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x604f, 0x00, &hal_data->ramp_up_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x6041, 0x00, &hal_data->status_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x6043, 0x00, &hal_data->currvel_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x6061, 0x00, &hal_data->mode_op_display_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x3021, 0x05, &hal_data->current_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x3021, 0x01, &hal_data->warn_err_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x3022, 0x0f, &hal_data->temp_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x6040, 0x00, &hal_data->control_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x6042, 0x00, &hal_data->cmdvel_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x6060, 0x00, &hal_data->mode_op_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x6050, 0x00, &hal_data->ramp_down_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x604f, 0x00, &hal_data->ramp_up_pdo_os, NULL);
 
   // export pins
   if ((err = lcec_pin_newf_list(hal_data, slave_pins, LCEC_MODULE_NAME, master->name, slave->name)) != 0) {

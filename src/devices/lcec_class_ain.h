@@ -68,8 +68,7 @@ typedef struct {
 } lcec_class_ain_channels_t;
 
 lcec_class_ain_channels_t *lcec_ain_allocate_channels(int count);
-lcec_class_ain_channel_t *lcec_ain_register_channel(
-    ec_pdo_entry_reg_t **pdo_entry_regs, struct lcec_slave *slave, int id, uint16_t idx, lcec_class_ain_options_t *opt);
+lcec_class_ain_channel_t *lcec_ain_register_channel(struct lcec_slave *slave, int id, uint16_t idx, lcec_class_ain_options_t *opt);
 void lcec_ain_read(struct lcec_slave *slave, lcec_class_ain_channel_t *data);
 void lcec_ain_read_all(struct lcec_slave *slave, lcec_class_ain_channels_t *channels);
 lcec_class_ain_options_t *lcec_ain_options(void);
