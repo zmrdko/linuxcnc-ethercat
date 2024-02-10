@@ -38,7 +38,7 @@
 
 #define LCEC_EL3XXX_MAXCHANS 8  // for sizing arrays
 
-static int lcec_el3xxx_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
+static int lcec_el3xxx_init(int comp_id, struct lcec_slave *slave);
 
 /// @brief Modparams settings available via XML.
 static const lcec_modparam_desc_t modparams_temperature[] = {
@@ -135,14 +135,13 @@ static const lcec_lookuptable_int_t temp_wires[] = {
 #define PDOS(flag)    (((flag)&F_SYNC) ? (5 * INPORTS(flag)) : (4 * INPORTS(flag)))
 
 /// Macro to avoid repeating all of the unchanging fields in
-/// `lcec_typelist_t`.  Calculates the `pdo_count` based on total port
-/// count and port types.
+/// `lcec_typelist_t`.
 #define BECKHOFF_AIN_DEVICE(name, pid, flags) \
-  { name, LCEC_BECKHOFF_VID, pid, PDOS(flags), 0, NULL, lcec_el3xxx_init, NULL, flags }
+  { name, LCEC_BECKHOFF_VID, pid, 0, NULL, lcec_el3xxx_init, NULL, flags }
 
 /// Macro for defining devices that take `<modParam>`s in the XML config.
 #define BECKHOFF_AIN_DEVICE_PARAMS(name, pid, flags, modparams) \
-  { name, LCEC_BECKHOFF_VID, pid, PDOS(flags), 0, NULL, lcec_el3xxx_init, modparams, flags }
+  { name, LCEC_BECKHOFF_VID, pid, 0, NULL, lcec_el3xxx_init, modparams, flags }
 
 /// @brief Devices supported by this driver.
 static lcec_typelist_t types[] = {
@@ -220,7 +219,7 @@ static int set_resolution(lcec_slave_t *slave, char *resolution_name, lcec_class
 static int set_wires(lcec_slave_t *slave, char *wires_name, lcec_class_ain_channel_t *chan, int idx, int sidx);
 
 /// @brief Initialize an EL3xxx device.
-static int lcec_el3xxx_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
+static int lcec_el3xxx_init(int comp_id, struct lcec_slave *slave) {
   lcec_master_t *master = slave->master;
   lcec_class_ain_channels_t *hal_data;
   uint64_t flags;
@@ -229,7 +228,6 @@ static int lcec_el3xxx_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
 
   rtapi_print_msg(RTAPI_MSG_DBG, LCEC_MSG_PFX "initing device as %s, flags %lx\n", slave->name, flags);
   rtapi_print_msg(RTAPI_MSG_DBG, LCEC_MSG_PFX "- slave is %p\n", slave);
-  rtapi_print_msg(RTAPI_MSG_DBG, LCEC_MSG_PFX "- pdo_entry_regs is %p\n", pdo_entry_regs);
 
   hal_data = lcec_ain_allocate_channels(INPORTS(slave->flags));
   if (hal_data == NULL) {
@@ -244,7 +242,7 @@ static int lcec_el3xxx_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
     options->is_temperature = flags & F_TEMPERATURE;
     options->is_pressure = flags & F_PRESSURE;
 
-    hal_data->channels[i] = lcec_ain_register_channel(&pdo_entry_regs, slave, i, 0x6000 + (i << 4), options);
+    hal_data->channels[i] = lcec_ain_register_channel(slave, i, 0x6000 + (i << 4), options);
     if (hal_data->channels[i] == NULL) return -EIO;
   }
 

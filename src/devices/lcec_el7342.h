@@ -25,5 +25,4 @@
 #include "../lcec.h"
 
 #define LCEC_EL7342_CHANS 2
-#define LCEC_EL7342_PDOS (33 * LCEC_EL7342_CHANS)
 #endif

@@ -29,8 +29,8 @@ echo "=== Starting halrun"
 halrun -f fulltest.hal > /tmp/testbench-init.out &
 
 # It seems to take around 200ms per device to init, with a 2s delay, we only make it through D12 or so.
-echo "... Sleeping for 3s to allow ethercat to finish initializing"
-sleep 5 # let ethercat states settle
+echo "... Sleeping for 8s to allow ethercat to finish initializing"
+sleep 8 # let ethercat states settle
 
 update
 
@@ -163,7 +163,7 @@ test-slave-oper D21
 
 echo "... Testing initial config of D22 (ECT60)"
 test-slave-oper D22
-test-pin-count D22 42
+test-pin-count D22 43
 
 echo "... Testing initial config of D23 (EP2308)"
 test-slave-oper D23

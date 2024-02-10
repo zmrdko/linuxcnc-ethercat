@@ -22,10 +22,10 @@
 #include "../lcec.h"
 #include "lcec_el5101.h"
 
-static int lcec_el5101_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
+static int lcec_el5101_init(int comp_id, struct lcec_slave *slave);
 
 static lcec_typelist_t types[]={
-  { "EL5101", LCEC_BECKHOFF_VID, 0x13ed3052, LCEC_EL5101_PDOS, 0, NULL, lcec_el5101_init},
+  { "EL5101", LCEC_BECKHOFF_VID, 0x13ed3052, 0, NULL, lcec_el5101_init},
   { NULL },
 };
 ADD_TYPES(types);
@@ -145,7 +145,7 @@ static ec_sync_info_t lcec_el5101_syncs[] = {
 static void lcec_el5101_read(struct lcec_slave *slave, long period);
 static void lcec_el5101_write(struct lcec_slave *slave, long period);
 
-static int lcec_el5101_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
+static int lcec_el5101_init(int comp_id, struct lcec_slave *slave) {
   lcec_master_t *master = slave->master;
   lcec_el5101_data_t *hal_data;
   int err;
@@ -169,14 +169,14 @@ static int lcec_el5101_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   hal_data->last_operational = 0;
 
   // initialize POD entries
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000, 0x01, &hal_data->status_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000, 0x02, &hal_data->value_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000, 0x03, &hal_data->latch_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000, 0x04, &hal_data->frequency_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000, 0x05, &hal_data->period_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000, 0x06, &hal_data->window_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7000, 0x01, &hal_data->control_pdo_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7000, 0x02, &hal_data->setval_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x6000, 0x01, &hal_data->status_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x6000, 0x02, &hal_data->value_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x6000, 0x03, &hal_data->latch_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x6000, 0x04, &hal_data->frequency_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x6000, 0x05, &hal_data->period_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x6000, 0x06, &hal_data->window_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x7000, 0x01, &hal_data->control_pdo_os, NULL);
+  lcec_pdo_init(slave,  0x7000, 0x02, &hal_data->setval_pdo_os, NULL);
 
   // export pins
   if ((err = lcec_pin_newf_list(hal_data, slave_pins, LCEC_MODULE_NAME, master->name, slave->name)) != 0) {

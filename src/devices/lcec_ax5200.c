@@ -22,7 +22,7 @@
 #include "../lcec.h"
 #include "lcec_ax5200.h"
 
-static int lcec_ax5200_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
+static int lcec_ax5200_init(int comp_id, struct lcec_slave *slave);
 
 static lcec_modparam_desc_t lcec_ax5200_modparams[] = {
   { "enableFB2", LCEC_AX5_PARAM_ENABLE_FB2, MODPARAM_TYPE_BIT } ,
@@ -31,8 +31,8 @@ static lcec_modparam_desc_t lcec_ax5200_modparams[] = {
 };
 
 static lcec_typelist_t types[]={
-  { "AX5203", LCEC_BECKHOFF_VID, 0x14536012, 0, 0, lcec_ax5200_preinit, lcec_ax5200_init, lcec_ax5200_modparams},
-  { "AX5206", LCEC_BECKHOFF_VID, 0x14566012, 0, 0, lcec_ax5200_preinit, lcec_ax5200_init, lcec_ax5200_modparams},
+  { "AX5203", LCEC_BECKHOFF_VID, 0x14536012, 0, lcec_ax5200_preinit, lcec_ax5200_init, lcec_ax5200_modparams},
+  { "AX5206", LCEC_BECKHOFF_VID, 0x14566012, 0, lcec_ax5200_preinit, lcec_ax5200_init, lcec_ax5200_modparams},
   { NULL },
 };
 ADD_TYPES(types);
@@ -60,13 +60,10 @@ static void lcec_ax5200_write(struct lcec_slave *slave, long period);
   // set FSOE conf (this will be used by the corresponding AX5805
   slave->fsoeConf = &fsoe_conf;
 
-  // set pdo count
-  slave->pdo_entry_count = lcec_class_ax5_pdos(slave) * LCEC_AX5200_CHANS;
-
   return 0;
 }
 
-static int lcec_ax5200_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
+static int lcec_ax5200_init(int comp_id, struct lcec_slave *slave) {
   lcec_master_t *master = slave->master;
   lcec_ax5200_data_t *hal_data;
   int i;
@@ -87,12 +84,12 @@ static int lcec_ax5200_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   slave->hal_data = hal_data;
 
   // initialize pins
-  for (i=0; i<LCEC_AX5200_CHANS; i++, pdo_entry_regs += lcec_class_ax5_pdos(slave)) {
+  for (i=0; i<LCEC_AX5200_CHANS; i++) {
     chan = &hal_data->chans[i];
 
     // init subclasses
     rtapi_snprintf(pfx, HAL_NAME_LEN, "ch%d.", i);
-    if ((err = lcec_class_ax5_init(slave, pdo_entry_regs, chan, i, pfx)) != 0) {
+    if ((err = lcec_class_ax5_init(slave, chan, i, pfx)) != 0) {
       return err;
     }
   }

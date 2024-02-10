@@ -20,11 +20,9 @@
 /// @file
 /// @brief Driver for Beckhoff EL7041 Stepper drives
 
-#include "lcec_el7041.h"
-
 #include "../lcec.h"
 
-static int lcec_el7041_init(int comp_id, struct lcec_slave *s, ec_pdo_entry_reg_t *r);
+static int lcec_el7041_init(int comp_id, struct lcec_slave *s);
 static void lcec_el7041_read(struct lcec_slave *s, long period);
 static void lcec_el7041_write(struct lcec_slave *s, long period);
 
@@ -71,10 +69,10 @@ static lcec_modparam_desc_t lcec_el7041_modparams[] = {
 };
 
 static lcec_typelist_t types[] = {
-    {"EL7041", LCEC_BECKHOFF_VID, 0x1B813052, LCEC_EL7041_PDOS, 0, NULL, lcec_el7041_init, lcec_el7041_modparams},
-    {"EL7041_1000", LCEC_BECKHOFF_VID, 0x1B813052, LCEC_EL7041_PDOS, 0, NULL, lcec_el7041_init, lcec_el7041_modparams},
-    {"EL7041-1000", LCEC_BECKHOFF_VID, 0x1B813052, LCEC_EL7041_PDOS, 0, NULL, lcec_el7041_init, lcec_el7041_modparams},
-    {"EP7041", LCEC_BECKHOFF_VID, 0x1B813052, LCEC_EL7041_PDOS, 0, NULL, lcec_el7041_init, lcec_el7041_modparams},
+    {"EL7041", LCEC_BECKHOFF_VID, 0x1B813052, 0, NULL, lcec_el7041_init, lcec_el7041_modparams},
+    {"EL7041_1000", LCEC_BECKHOFF_VID, 0x1B813052, 0, NULL, lcec_el7041_init, lcec_el7041_modparams},
+    {"EL7041-1000", LCEC_BECKHOFF_VID, 0x1B813052, 0, NULL, lcec_el7041_init, lcec_el7041_modparams},
+    {"EP7041", LCEC_BECKHOFF_VID, 0x1B813052, 0, NULL, lcec_el7041_init, lcec_el7041_modparams},
     {NULL},
 };
 ADD_TYPES(types);
@@ -494,7 +492,7 @@ static int handle_modparams(struct lcec_slave *slave) {
   return 0;
 }
 
-static int lcec_el7041_init(int comp_id, struct lcec_slave *s, ec_pdo_entry_reg_t *r) {
+static int lcec_el7041_init(int comp_id, struct lcec_slave *s) {
   lcec_master_t *m = s->master;
   lcec_el7041_data_t *hd;
   int err;
@@ -523,44 +521,44 @@ static int lcec_el7041_init(int comp_id, struct lcec_slave *s, ec_pdo_entry_reg_
   }
 
   // initialize PDO entries
-  LCEC_PDO_INIT(r, s->index, s->vid, s->pid, 0x7000, 0x01, &hd->ena_latch_c_pdo_os, &hd->ena_latch_c_pdo_bp);
-  LCEC_PDO_INIT(r, s->index, s->vid, s->pid, 0x7000, 0x02, &hd->ena_latch_ext_pos_pdo_os, &hd->ena_latch_ext_pos_pdo_bp);
-  LCEC_PDO_INIT(r, s->index, s->vid, s->pid, 0x7000, 0x03, &hd->set_count_pdo_os, &hd->set_count_pdo_bp);
-  LCEC_PDO_INIT(r, s->index, s->vid, s->pid, 0x7000, 0x04, &hd->ena_latch_ext_neg_pdo_os, &hd->ena_latch_ext_neg_pdo_bp);
-  LCEC_PDO_INIT(r, s->index, s->vid, s->pid, 0x7000, 0x11, &hd->set_count_val_pdo_os, NULL);
+  lcec_pdo_init(s, 0x7000, 0x01, &hd->ena_latch_c_pdo_os, &hd->ena_latch_c_pdo_bp);
+  lcec_pdo_init(s, 0x7000, 0x02, &hd->ena_latch_ext_pos_pdo_os, &hd->ena_latch_ext_pos_pdo_bp);
+  lcec_pdo_init(s, 0x7000, 0x03, &hd->set_count_pdo_os, &hd->set_count_pdo_bp);
+  lcec_pdo_init(s, 0x7000, 0x04, &hd->ena_latch_ext_neg_pdo_os, &hd->ena_latch_ext_neg_pdo_bp);
+  lcec_pdo_init(s, 0x7000, 0x11, &hd->set_count_val_pdo_os, NULL);
 
-  LCEC_PDO_INIT(r, s->index, s->vid, s->pid, 0x7010, 0x01, &hd->dcm_ena_pdo_os, &hd->dcm_ena_pdo_bp);
-  LCEC_PDO_INIT(r, s->index, s->vid, s->pid, 0x7010, 0x02, &hd->dcm_reset_pdo_os, &hd->dcm_reset_pdo_bp);
-  LCEC_PDO_INIT(r, s->index, s->vid, s->pid, 0x7010, 0x03, &hd->dcm_reduce_torque_pdo_os, &hd->dcm_reduce_torque_pdo_bp);
+  lcec_pdo_init(s, 0x7010, 0x01, &hd->dcm_ena_pdo_os, &hd->dcm_ena_pdo_bp);
+  lcec_pdo_init(s, 0x7010, 0x02, &hd->dcm_reset_pdo_os, &hd->dcm_reset_pdo_bp);
+  lcec_pdo_init(s, 0x7010, 0x03, &hd->dcm_reduce_torque_pdo_os, &hd->dcm_reduce_torque_pdo_bp);
 
-  LCEC_PDO_INIT(r, s->index, s->vid, s->pid, 0x7010, 0x21, &hd->dcm_velo_pdo_os, NULL);
+  lcec_pdo_init(s, 0x7010, 0x21, &hd->dcm_velo_pdo_os, NULL);
 
-  LCEC_PDO_INIT(r, s->index, s->vid, s->pid, 0x6000, 0x01, &hd->latch_c_valid_pdo_os, &hd->latch_c_valid_pdo_bp);
-  LCEC_PDO_INIT(r, s->index, s->vid, s->pid, 0x6000, 0x02, &hd->latch_ext_valid_pdo_os, &hd->latch_ext_valid_pdo_bp);
-  LCEC_PDO_INIT(r, s->index, s->vid, s->pid, 0x6000, 0x03, &hd->set_count_done_pdo_os, &hd->set_count_done_pdo_bp);
-  LCEC_PDO_INIT(r, s->index, s->vid, s->pid, 0x6000, 0x04, &hd->count_underflow_pdo_os, &hd->count_overflow_pdo_bp);
-  LCEC_PDO_INIT(r, s->index, s->vid, s->pid, 0x6000, 0x05, &hd->count_overflow_pdo_os, &hd->count_underflow_pdo_bp);
-  LCEC_PDO_INIT(r, s->index, s->vid, s->pid, 0x6000, 0x08, &hd->expol_stall_pdo_os, &hd->expol_stall_pdo_bp);
-  LCEC_PDO_INIT(r, s->index, s->vid, s->pid, 0x6000, 0x09, &hd->ina_pdo_os, &hd->ina_pdo_bp);
-  LCEC_PDO_INIT(r, s->index, s->vid, s->pid, 0x6000, 0x0a, &hd->inb_pdo_os, &hd->inb_pdo_bp);
-  LCEC_PDO_INIT(r, s->index, s->vid, s->pid, 0x6000, 0x0b, &hd->inc_pdo_os, &hd->inc_pdo_bp);
-  LCEC_PDO_INIT(r, s->index, s->vid, s->pid, 0x6000, 0x0d, &hd->inext_pdo_os, &hd->inext_pdo_bp);
-  LCEC_PDO_INIT(r, s->index, s->vid, s->pid, 0x6000, 0x0e, &hd->sync_err_pdo_os, &hd->sync_err_pdo_bp);
-  LCEC_PDO_INIT(r, s->index, s->vid, s->pid, 0x6000, 0x10, &hd->tx_toggle_pdo_os, &hd->tx_toggle_pdo_bp);
-  LCEC_PDO_INIT(r, s->index, s->vid, s->pid, 0x6000, 0x11, &hd->count_pdo_os, NULL);
-  LCEC_PDO_INIT(r, s->index, s->vid, s->pid, 0x6000, 0x12, &hd->latch_pdo_os, NULL);
+  lcec_pdo_init(s, 0x6000, 0x01, &hd->latch_c_valid_pdo_os, &hd->latch_c_valid_pdo_bp);
+  lcec_pdo_init(s, 0x6000, 0x02, &hd->latch_ext_valid_pdo_os, &hd->latch_ext_valid_pdo_bp);
+  lcec_pdo_init(s, 0x6000, 0x03, &hd->set_count_done_pdo_os, &hd->set_count_done_pdo_bp);
+  lcec_pdo_init(s, 0x6000, 0x04, &hd->count_underflow_pdo_os, &hd->count_overflow_pdo_bp);
+  lcec_pdo_init(s, 0x6000, 0x05, &hd->count_overflow_pdo_os, &hd->count_underflow_pdo_bp);
+  lcec_pdo_init(s, 0x6000, 0x08, &hd->expol_stall_pdo_os, &hd->expol_stall_pdo_bp);
+  lcec_pdo_init(s, 0x6000, 0x09, &hd->ina_pdo_os, &hd->ina_pdo_bp);
+  lcec_pdo_init(s, 0x6000, 0x0a, &hd->inb_pdo_os, &hd->inb_pdo_bp);
+  lcec_pdo_init(s, 0x6000, 0x0b, &hd->inc_pdo_os, &hd->inc_pdo_bp);
+  lcec_pdo_init(s, 0x6000, 0x0d, &hd->inext_pdo_os, &hd->inext_pdo_bp);
+  lcec_pdo_init(s, 0x6000, 0x0e, &hd->sync_err_pdo_os, &hd->sync_err_pdo_bp);
+  lcec_pdo_init(s, 0x6000, 0x10, &hd->tx_toggle_pdo_os, &hd->tx_toggle_pdo_bp);
+  lcec_pdo_init(s, 0x6000, 0x11, &hd->count_pdo_os, NULL);
+  lcec_pdo_init(s, 0x6000, 0x12, &hd->latch_pdo_os, NULL);
 
-  LCEC_PDO_INIT(r, s->index, s->vid, s->pid, 0x6010, 0x01, &hd->dcm_ready_to_enable_pdo_os, &hd->dcm_ready_to_enable_pdo_bp);
-  LCEC_PDO_INIT(r, s->index, s->vid, s->pid, 0x6010, 0x02, &hd->dcm_ready_pdo_os, &hd->dcm_ready_pdo_bp);
-  LCEC_PDO_INIT(r, s->index, s->vid, s->pid, 0x6010, 0x03, &hd->dcm_warning_pdo_os, &hd->dcm_warning_pdo_bp);
-  LCEC_PDO_INIT(r, s->index, s->vid, s->pid, 0x6010, 0x04, &hd->dcm_error_pdo_os, &hd->dcm_error_pdo_bp);
-  LCEC_PDO_INIT(r, s->index, s->vid, s->pid, 0x6010, 0x05, &hd->dcm_move_pos_pdo_os, &hd->dcm_move_pos_pdo_bp);
-  LCEC_PDO_INIT(r, s->index, s->vid, s->pid, 0x6010, 0x06, &hd->dcm_move_neg_pdo_os, &hd->dcm_move_neg_pdo_bp);
-  LCEC_PDO_INIT(r, s->index, s->vid, s->pid, 0x6010, 0x07, &hd->dcm_torque_reduced_pdo_os, &hd->dcm_torque_reduced_pdo_bp);
-  LCEC_PDO_INIT(r, s->index, s->vid, s->pid, 0x6010, 0x0c, &hd->dcm_din1_pdo_os, &hd->dcm_din1_pdo_bp);
-  LCEC_PDO_INIT(r, s->index, s->vid, s->pid, 0x6010, 0x0d, &hd->dcm_din2_pdo_os, &hd->dcm_din2_pdo_bp);
-  LCEC_PDO_INIT(r, s->index, s->vid, s->pid, 0x6010, 0x0e, &hd->dcm_sync_err_pdo_os, &hd->dcm_sync_err_pdo_bp);
-  LCEC_PDO_INIT(r, s->index, s->vid, s->pid, 0x6010, 0x10, &hd->dcm_tx_toggle_pdo_os, &hd->dcm_tx_toggle_pdo_bp);
+  lcec_pdo_init(s, 0x6010, 0x01, &hd->dcm_ready_to_enable_pdo_os, &hd->dcm_ready_to_enable_pdo_bp);
+  lcec_pdo_init(s, 0x6010, 0x02, &hd->dcm_ready_pdo_os, &hd->dcm_ready_pdo_bp);
+  lcec_pdo_init(s, 0x6010, 0x03, &hd->dcm_warning_pdo_os, &hd->dcm_warning_pdo_bp);
+  lcec_pdo_init(s, 0x6010, 0x04, &hd->dcm_error_pdo_os, &hd->dcm_error_pdo_bp);
+  lcec_pdo_init(s, 0x6010, 0x05, &hd->dcm_move_pos_pdo_os, &hd->dcm_move_pos_pdo_bp);
+  lcec_pdo_init(s, 0x6010, 0x06, &hd->dcm_move_neg_pdo_os, &hd->dcm_move_neg_pdo_bp);
+  lcec_pdo_init(s, 0x6010, 0x07, &hd->dcm_torque_reduced_pdo_os, &hd->dcm_torque_reduced_pdo_bp);
+  lcec_pdo_init(s, 0x6010, 0x0c, &hd->dcm_din1_pdo_os, &hd->dcm_din1_pdo_bp);
+  lcec_pdo_init(s, 0x6010, 0x0d, &hd->dcm_din2_pdo_os, &hd->dcm_din2_pdo_bp);
+  lcec_pdo_init(s, 0x6010, 0x0e, &hd->dcm_sync_err_pdo_os, &hd->dcm_sync_err_pdo_bp);
+  lcec_pdo_init(s, 0x6010, 0x10, &hd->dcm_tx_toggle_pdo_os, &hd->dcm_tx_toggle_pdo_bp);
 
   // export pins
   if ((err = lcec_pin_newf_list(hd, slave_pins, LCEC_MODULE_NAME, m->name, s->name)) != 0) {

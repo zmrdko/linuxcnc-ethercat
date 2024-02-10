@@ -19,14 +19,12 @@
 /// @file
 /// @brief Driver for EpoCAT FR4000 controllers
 
-#include "lcec_epocat.h"
-
 #include "../lcec.h"
 
-static int lcec_fr4000_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
+static int lcec_fr4000_init(int comp_id, struct lcec_slave *slave);
 
 static lcec_typelist_t types[] = {
-    {"EpoCAT", LCEC_ABET_VID, 0x04decade, LCEC_EPOCAT_PDOS, 0, NULL, lcec_fr4000_init},
+    {"EpoCAT", LCEC_ABET_VID, 0x04decade, 0, NULL, lcec_fr4000_init},
     {NULL},
 };
 
@@ -367,7 +365,7 @@ static int32_t counts[5];
 void lcec_fr4000_read(struct lcec_slave *slave, long period);
 void lcec_fr4000_write(struct lcec_slave *slave, long period);
 
-int lcec_fr4000_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
+int lcec_fr4000_init(int comp_id, struct lcec_slave *slave) {
   lcec_master_t *master = slave->master;
   lcec_fr4000_data_t *hal_data;
   int err;
@@ -388,21 +386,21 @@ int lcec_fr4000_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *
   slave->sync_info = lcec_fr4000_syncs;
 
   // initialize POD entries
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7006, 1, &hal_data->off_dig_out, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6007, 1, &hal_data->off_dig_inp, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7001, 1, &hal_data->off_PWM, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7003, 1, &hal_data->off_DIR, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6001, 1, &hal_data->off_ENC, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7006, 1, &hal_data->off_ENABLE_24V, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7002, 1, &hal_data->off_ENABLE_5V, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6003, 1, &hal_data->off_DRVOK, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6004, 1, &hal_data->off_HOME, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7000, 1, &hal_data->off_INVERTER, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000, 1, &hal_data->off_ADC1, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000, 2, &hal_data->off_ADC2, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6002, 1, &hal_data->off_LATCH, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6006, 1, &hal_data->off_FLAG, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7004, 1, &hal_data->off_RESET_FLAG, NULL);
+  lcec_pdo_init(slave,  0x7006, 1, &hal_data->off_dig_out, NULL);
+  lcec_pdo_init(slave,  0x6007, 1, &hal_data->off_dig_inp, NULL);
+  lcec_pdo_init(slave,  0x7001, 1, &hal_data->off_PWM, NULL);
+  lcec_pdo_init(slave,  0x7003, 1, &hal_data->off_DIR, NULL);
+  lcec_pdo_init(slave,  0x6001, 1, &hal_data->off_ENC, NULL);
+  lcec_pdo_init(slave,  0x7006, 1, &hal_data->off_ENABLE_24V, NULL);
+  lcec_pdo_init(slave,  0x7002, 1, &hal_data->off_ENABLE_5V, NULL);
+  lcec_pdo_init(slave,  0x6003, 1, &hal_data->off_DRVOK, NULL);
+  lcec_pdo_init(slave,  0x6004, 1, &hal_data->off_HOME, NULL);
+  lcec_pdo_init(slave,  0x7000, 1, &hal_data->off_INVERTER, NULL);
+  lcec_pdo_init(slave,  0x6000, 1, &hal_data->off_ADC1, NULL);
+  lcec_pdo_init(slave,  0x6000, 2, &hal_data->off_ADC2, NULL);
+  lcec_pdo_init(slave,  0x6002, 1, &hal_data->off_LATCH, NULL);
+  lcec_pdo_init(slave,  0x6006, 1, &hal_data->off_FLAG, NULL);
+  lcec_pdo_init(slave,  0x7004, 1, &hal_data->off_RESET_FLAG, NULL);
 
   // export pins
   if ((err = lcec_pin_newf_list(hal_data, slave_pins, LCEC_MODULE_NAME, master->name, slave->name)) != 0) {

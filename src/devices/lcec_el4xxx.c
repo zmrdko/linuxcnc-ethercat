@@ -22,20 +22,18 @@
 #include "../lcec.h"
 #include "lcec_class_aout.h"
 
-static int lcec_el4xxx_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
+static int lcec_el4xxx_init(int comp_id, struct lcec_slave *slave);
 
 /// Flags for describing devices
-#define F_S11 1<<8 ///< Uses subindex 11 instead of sub-index 1 for ports.
-#define F_CHANNELS(x) (x)  ///< Number of output channels
+#define F_S11         1 << 8  ///< Uses subindex 11 instead of sub-index 1 for ports.
+#define F_CHANNELS(x) (x)     ///< Number of output channels
 
-#define OUTPORTS(flag) ((flag)&0xf)      // Number of output channels
-#define PDOS(flag)     (OUTPORTS(flag))  // Number of PDOs
+#define OUTPORTS(flag) ((flag)&0xf)  // Number of output channels
 
 /// Macro to avoid repeating all of the unchanging fields in
-/// `lcec_typelist_t`.  Calculates the `pdo_count` based on total port
-/// count and port types.
+/// `lcec_typelist_t`.
 #define BECKHOFF_AOUT_DEVICE(name, pid, flags) \
-  { name, LCEC_BECKHOFF_VID, pid, PDOS(flags), 0, NULL, lcec_el4xxx_init, NULL, flags }
+  { name, LCEC_BECKHOFF_VID, pid, 0, NULL, lcec_el4xxx_init, NULL, flags }
 
 static lcec_typelist_t types[] = {
     // analog out, 1ch, 12 bits
@@ -82,7 +80,7 @@ ADD_TYPES(types);
 
 static void lcec_el4xxx_write(struct lcec_slave *slave, long period);
 
-static int lcec_el4xxx_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
+static int lcec_el4xxx_init(int comp_id, struct lcec_slave *slave) {
   lcec_master_t *master = slave->master;
   lcec_class_aout_channels_t *hal_data;
   int i;
@@ -101,9 +99,9 @@ static int lcec_el4xxx_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   for (i = 0; i < OUTPORTS(slave->flags); i++) {
     lcec_class_aout_options_t *options = lcec_aout_options();
     options->value_sidx = 0x01;
-    if (slave->flags & F_S11) options->value_sidx=0x11;
+    if (slave->flags & F_S11) options->value_sidx = 0x11;
 
-    hal_data->channels[i] = lcec_aout_register_channel(&pdo_entry_regs, slave, i, 0x7000 + (i << 4), options);
+    hal_data->channels[i] = lcec_aout_register_channel(slave, i, 0x7000 + (i << 4), options);
   }
 
   return 0;

@@ -20,15 +20,14 @@
 /// @brief Driver for Beckhoff EL2904 4-port safety output
 
 #include "../lcec.h"
-#include "lcec_el2904.h"
 
 static void lcec_el2904_read(struct lcec_slave *slave, long period);
 static void lcec_el2904_write(struct lcec_slave *slave, long period);
 static int lcec_el2904_preinit(struct lcec_slave *slave);
-static int lcec_el2904_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
+static int lcec_el2904_init(int comp_id, struct lcec_slave *slave);
 
 static lcec_typelist_t types[]={
-  { "EL2904", LCEC_BECKHOFF_VID, 0x0B583052, LCEC_EL2904_PDOS, 0, lcec_el2904_preinit, lcec_el2904_init},
+  { "EL2904", LCEC_BECKHOFF_VID, 0x0B583052, 0, lcec_el2904_preinit, lcec_el2904_init},
   { NULL },
 };
 ADD_TYPES(types);
@@ -111,7 +110,7 @@ static int lcec_el2904_preinit(struct lcec_slave *slave) {
   return 0;
 }
 
-static int lcec_el2904_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
+static int lcec_el2904_init(int comp_id, struct lcec_slave *slave) {
   lcec_master_t *master = slave->master;
   lcec_el2904_data_t *hal_data;
   int err;
@@ -129,20 +128,20 @@ static int lcec_el2904_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   slave->hal_data = hal_data;
 
   // initialize POD entries
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7000, 0x01, &hal_data->fsoe_master_cmd_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7001, 0x01, &hal_data->fsoe_out_0_os, &hal_data->fsoe_out_0_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7001, 0x02, &hal_data->fsoe_out_1_os, &hal_data->fsoe_out_1_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7001, 0x03, &hal_data->fsoe_out_2_os, &hal_data->fsoe_out_2_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7001, 0x04, &hal_data->fsoe_out_3_os, &hal_data->fsoe_out_3_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7000, 0x02, &hal_data->fsoe_master_crc_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7000, 0x03, &hal_data->fsoe_master_connid_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7010, 0x01, &hal_data->out_0_os, &hal_data->out_0_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7010, 0x02, &hal_data->out_1_os, &hal_data->out_1_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7010, 0x03, &hal_data->out_2_os, &hal_data->out_2_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7010, 0x04, &hal_data->out_3_os, &hal_data->out_3_bp);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000, 0x01, &hal_data->fsoe_slave_cmd_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000, 0x03, &hal_data->fsoe_slave_crc_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6000, 0x04, &hal_data->fsoe_slave_connid_os, NULL);
+  lcec_pdo_init(slave,  0x7000, 0x01, &hal_data->fsoe_master_cmd_os, NULL);
+  lcec_pdo_init(slave,  0x7001, 0x01, &hal_data->fsoe_out_0_os, &hal_data->fsoe_out_0_bp);
+  lcec_pdo_init(slave,  0x7001, 0x02, &hal_data->fsoe_out_1_os, &hal_data->fsoe_out_1_bp);
+  lcec_pdo_init(slave,  0x7001, 0x03, &hal_data->fsoe_out_2_os, &hal_data->fsoe_out_2_bp);
+  lcec_pdo_init(slave,  0x7001, 0x04, &hal_data->fsoe_out_3_os, &hal_data->fsoe_out_3_bp);
+  lcec_pdo_init(slave,  0x7000, 0x02, &hal_data->fsoe_master_crc_os, NULL);
+  lcec_pdo_init(slave,  0x7000, 0x03, &hal_data->fsoe_master_connid_os, NULL);
+  lcec_pdo_init(slave,  0x7010, 0x01, &hal_data->out_0_os, &hal_data->out_0_bp);
+  lcec_pdo_init(slave,  0x7010, 0x02, &hal_data->out_1_os, &hal_data->out_1_bp);
+  lcec_pdo_init(slave,  0x7010, 0x03, &hal_data->out_2_os, &hal_data->out_2_bp);
+  lcec_pdo_init(slave,  0x7010, 0x04, &hal_data->out_3_os, &hal_data->out_3_bp);
+  lcec_pdo_init(slave,  0x6000, 0x01, &hal_data->fsoe_slave_cmd_os, NULL);
+  lcec_pdo_init(slave,  0x6000, 0x03, &hal_data->fsoe_slave_crc_os, NULL);
+  lcec_pdo_init(slave,  0x6000, 0x04, &hal_data->fsoe_slave_connid_os, NULL);
 
   // export pins
   if ((err = lcec_pin_newf_list(hal_data, slave_pins, LCEC_MODULE_NAME, master->name, slave->name)) != 0) {

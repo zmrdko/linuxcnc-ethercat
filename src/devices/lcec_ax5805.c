@@ -27,10 +27,10 @@
 
 static void lcec_ax5805_read(struct lcec_slave *slave, long period);
 static int lcec_ax5805_preinit(struct lcec_slave *slave);
-static int lcec_ax5805_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
+static int lcec_ax5805_init(int comp_id, struct lcec_slave *slave);
 
 static lcec_typelist_t types[]={
-  { "AX5805", LCEC_BECKHOFF_VID, 0x16AD6012, 0, 0, lcec_ax5805_preinit, lcec_ax5805_init},
+  { "AX5805", LCEC_BECKHOFF_VID, 0x16AD6012, 0, lcec_ax5805_preinit, lcec_ax5805_init},
   { NULL },
 };
 ADD_TYPES(types);
@@ -118,13 +118,10 @@ static int lcec_ax5805_preinit(struct lcec_slave *slave) {
     return -EINVAL;
   }
 
-  // set PDO count
-  slave->pdo_entry_count = 4 + 3 * slave->fsoeConf->data_channels;
-
   return 0;
 }
 
-static int lcec_ax5805_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
+static int lcec_ax5805_init(int comp_id, struct lcec_slave *slave) {
   lcec_master_t *master = slave->master;
   lcec_ax5805_data_t *hal_data;
   int err;
@@ -142,19 +139,19 @@ static int lcec_ax5805_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
   slave->hal_data = hal_data;
 
   // initialize POD entries
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0xE700, 0x01, &hal_data->fsoe_master_cmd_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0xE700, 0x02, &hal_data->fsoe_master_connid_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0xE600, 0x01, &hal_data->fsoe_slave_cmd_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0xE600, 0x02, &hal_data->fsoe_slave_connid_os, NULL);
+  lcec_pdo_init(slave,  0xE700, 0x01, &hal_data->fsoe_master_cmd_os, NULL);
+  lcec_pdo_init(slave,  0xE700, 0x02, &hal_data->fsoe_master_connid_os, NULL);
+  lcec_pdo_init(slave,  0xE600, 0x01, &hal_data->fsoe_slave_cmd_os, NULL);
+  lcec_pdo_init(slave,  0xE600, 0x02, &hal_data->fsoe_slave_connid_os, NULL);
 
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0xE700, 0x03, &hal_data->fsoe_master_crc0_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0xE600, 0x03, &hal_data->fsoe_slave_crc0_os, NULL);
-  LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6640, 0x00, &hal_data->fsoe_in_sto0_os, &hal_data->fsoe_in_sto0_bp);
+  lcec_pdo_init(slave,  0xE700, 0x03, &hal_data->fsoe_master_crc0_os, NULL);
+  lcec_pdo_init(slave,  0xE600, 0x03, &hal_data->fsoe_slave_crc0_os, NULL);
+  lcec_pdo_init(slave,  0x6640, 0x00, &hal_data->fsoe_in_sto0_os, &hal_data->fsoe_in_sto0_bp);
 
   if (slave->fsoeConf->data_channels >= 2) {
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0xE700, 0x04, &hal_data->fsoe_master_crc1_os, NULL);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0xE600, 0x04, &hal_data->fsoe_slave_crc1_os, NULL);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x6E40, 0x00, &hal_data->fsoe_in_sto1_os, &hal_data->fsoe_in_sto1_bp);
+    lcec_pdo_init(slave,  0xE700, 0x04, &hal_data->fsoe_master_crc1_os, NULL);
+    lcec_pdo_init(slave,  0xE600, 0x04, &hal_data->fsoe_slave_crc1_os, NULL);
+    lcec_pdo_init(slave,  0x6E40, 0x00, &hal_data->fsoe_in_sto1_os, &hal_data->fsoe_in_sto1_bp);
 
     slave_pins = slave_pins_2ch;
   } else {

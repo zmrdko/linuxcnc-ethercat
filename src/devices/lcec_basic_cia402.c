@@ -44,7 +44,7 @@ static const lcec_modparam_desc_t modparams_lcec_basic_cia402[] = {
     {NULL},
 };
 
-static int lcec_basic_cia402_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
+static int lcec_basic_cia402_init(int comp_id, struct lcec_slave *slave);
 
 // When extending this, you will need to modify the number of PDOs
 // registered (the `8` here).  For now, the easiest way to do this is
@@ -60,7 +60,7 @@ static int lcec_basic_cia402_init(int comp_id, struct lcec_slave *slave, ec_pdo_
 // PID.  Feel free to add multiple devices here if they can share the
 // same driver.
 static lcec_typelist_t types[] = {
-    {"basic_cia402", /* fake vid */ -1, /* fake pid */ -1, 8, 0, NULL, lcec_basic_cia402_init, /* modparams implicitly added below */},
+    {"basic_cia402", /* fake vid */ -1, /* fake pid */ -1, 0, NULL, lcec_basic_cia402_init, /* modparams implicitly added below */},
     {NULL},
 };
 ADD_TYPES_WITH_CIA402_MODPARAMS(types, modparams_lcec_basic_cia402)
@@ -113,7 +113,7 @@ static int handle_modparams(struct lcec_slave *slave) {
   return 0;
 }
 
-static int lcec_basic_cia402_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
+static int lcec_basic_cia402_init(int comp_id, struct lcec_slave *slave) {
   lcec_master_t *master = slave->master;
   lcec_basic_cia402_data_t *hal_data;
   int err;
@@ -197,7 +197,7 @@ static int lcec_basic_cia402_init(int comp_id, struct lcec_slave *slave, ec_pdo_
   // XXXX: For multi-axis devices, you'll need to repeat this line,
   // changing `channels[0]` and changing the `0x6000` to `0x6800`,
   // `0x7000`, and `0x7800` for channels 1, 2, and 3, respectively.
-  hal_data->cia402->channels[0] = lcec_cia402_register_channel(&pdo_entry_regs, slave, 0x6000, options);
+  hal_data->cia402->channels[0] = lcec_cia402_register_channel(slave, 0x6000, options);
 
   // XXXX: The CiA 402 spec specifies how to use digital in and out ports,
   // but there doesn't seem to be a way to figure out how many ports
@@ -220,28 +220,28 @@ static int lcec_basic_cia402_init(int comp_id, struct lcec_slave *slave, ec_pdo_
   // XXXX: register device-specific PDOs.
   // If you need device-specific PDO entries registered, then do that here.
   //
-  // LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x200e, 0, &hal_data->alarm_code_os, NULL);
+  // lcec_pdo_init(slave,  0x200e, 0, &hal_data->alarm_code_os, NULL);
 
   // XXXX: If you want din/dout ports, then uncomment these.
   //
   // hal_data->din->channels[0] =
-  //    lcec_din_register_channel_packed(&pdo_entry_regs, slave, 0x60fd, 0, 0, "din-cw-limit");  // negative limit switch
+  //    lcec_din_register_channel_packed(slave, 0x60fd, 0, 0, "din-cw-limit");  // negative limit switch
   // hal_data->din->channels[1] =
-  //    lcec_din_register_channel_packed(&pdo_entry_regs, slave, 0x60fd, 0, 1, "din-ccw-limit");                      // positive limit
+  //    lcec_din_register_channel_packed(slave, 0x60fd, 0, 1, "din-ccw-limit");                      // positive limit
   //    switch
-  // hal_data->din->channels[2] = lcec_din_register_channel_packed(&pdo_entry_regs, slave, 0x60fd, 0, 2, "din-home");  // home
-  // hal_data->din->channels[2] = lcec_din_register_channel_packed(&pdo_entry_regs, slave, 0x60fd, 0, 3, "din-interlock");  // interlock?
-  // hal_data->din->channels[3] = lcec_din_register_channel_packed(&pdo_entry_regs, slave, 0x60fd, 0, 16, "din-1");
-  // hal_data->din->channels[4] = lcec_din_register_channel_packed(&pdo_entry_regs, slave, 0x60fd, 0, 17, "din-2");
-  // hal_data->din->channels[5] = lcec_din_register_channel_packed(&pdo_entry_regs, slave, 0x60fd, 0, 18, "din-3");
-  // hal_data->din->channels[6] = lcec_din_register_channel_packed(&pdo_entry_regs, slave, 0x60fd, 0, 19, "din-4");
-  // hal_data->din->channels[7] = lcec_din_register_channel_packed(&pdo_entry_regs, slave, 0x60fd, 0, 20, "din-5");
-  // hal_data->din->channels[8] = lcec_din_register_channel_packed(&pdo_entry_regs, slave, 0x60fd, 0, 21, "din-6");
+  // hal_data->din->channels[2] = lcec_din_register_channel_packed(slave, 0x60fd, 0, 2, "din-home");  // home
+  // hal_data->din->channels[2] = lcec_din_register_channel_packed(slave, 0x60fd, 0, 3, "din-interlock");  // interlock?
+  // hal_data->din->channels[3] = lcec_din_register_channel_packed(slave, 0x60fd, 0, 16, "din-1");
+  // hal_data->din->channels[4] = lcec_din_register_channel_packed(slave, 0x60fd, 0, 17, "din-2");
+  // hal_data->din->channels[5] = lcec_din_register_channel_packed(slave, 0x60fd, 0, 18, "din-3");
+  // hal_data->din->channels[6] = lcec_din_register_channel_packed(slave, 0x60fd, 0, 19, "din-4");
+  // hal_data->din->channels[7] = lcec_din_register_channel_packed(slave, 0x60fd, 0, 20, "din-5");
+  // hal_data->din->channels[8] = lcec_din_register_channel_packed(slave, 0x60fd, 0, 21, "din-6");
   //
   // Register dout ports
-  // hal_data->dout->channels[0] = lcec_dout_register_channel_packed(&pdo_entry_regs, slave, 0x60fe, 1, 16, "dout-brake");
-  // hal_data->dout->channels[1] = lcec_dout_register_channel_packed(&pdo_entry_regs, slave, 0x60fe, 1, 16, "dout-1");
-  // hal_data->dout->channels[2] = lcec_dout_register_channel_packed(&pdo_entry_regs, slave, 0x60fe, 1, 17, "dout-2");
+  // hal_data->dout->channels[0] = lcec_dout_register_channel_packed(slave, 0x60fe, 1, 16, "dout-brake");
+  // hal_data->dout->channels[1] = lcec_dout_register_channel_packed(slave, 0x60fe, 1, 16, "dout-1");
+  // hal_data->dout->channels[2] = lcec_dout_register_channel_packed(slave, 0x60fe, 1, 17, "dout-2");
 
   // export device-specific pins.  This shouldn't need edited, just edit `slave_pins` above.
   if ((err = lcec_pin_newf_list(hal_data, slave_pins, LCEC_MODULE_NAME, slave->master->name, slave->name)) != 0) {

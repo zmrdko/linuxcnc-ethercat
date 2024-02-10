@@ -102,7 +102,6 @@ lcec_class_ain_options_t *lcec_ain_options(void) {
 
 /// @brief registers a single analog-input channel and publishes it as a LinuxCNC HAL pin.
 ///
-/// @param pdo_entry_regs a pointer to the pdo_entry_regs passed into the device `_init` function.
 /// @param slave The slave, from `_init`.
 /// @param id  The pin ID.  Used for naming.  Should generally start at 0 and increment once per digital in pin.
 /// @param idx The PDO index for the digital input.
@@ -113,8 +112,7 @@ lcec_class_ain_options_t *lcec_ain_options(void) {
 /// @return A `lcec_class_ain_channel_t` that contains all per-channel data and can be used with `lcec_ain_read()`.
 ///
 /// See lcec_el3xxx.c for an example of use.
-lcec_class_ain_channel_t *lcec_ain_register_channel(
-    ec_pdo_entry_reg_t **pdo_entry_regs, struct lcec_slave *slave, int id, uint16_t idx, lcec_class_ain_options_t *opt) {
+lcec_class_ain_channel_t *lcec_ain_register_channel(struct lcec_slave *slave, int id, uint16_t idx, lcec_class_ain_options_t *opt) {
   lcec_class_ain_channel_t *data;
   int err;
 
@@ -189,20 +187,16 @@ lcec_class_ain_channel_t *lcec_ain_register_channel(
   data->is_unsigned = is_unsigned;
 
   // Register basic PDO pins
-  LCEC_PDO_INIT((*pdo_entry_regs), slave->index, slave->vid, slave->pid, value_idx, value_sidx, &data->val_pdo_os, NULL);
+  lcec_pdo_init(slave, value_idx, value_sidx, &data->val_pdo_os, NULL);
 
   // Register sync error PDO, if used.
-  if (has_sync)
-    LCEC_PDO_INIT((*pdo_entry_regs), slave->index, slave->vid, slave->pid, syncerror_idx, syncerror_sidx, &data->sync_err_pdo_os,
-        &data->sync_err_pdo_bp);
+  if (has_sync) lcec_pdo_init(slave, syncerror_idx, syncerror_sidx, &data->sync_err_pdo_os, &data->sync_err_pdo_bp);
 
   // Register error reporting PDOs, if used.
   if (!valueonly) {
-    LCEC_PDO_INIT(
-        (*pdo_entry_regs), slave->index, slave->vid, slave->pid, underrange_idx, underrange_sidx, &data->udr_pdo_os, &data->udr_pdo_bp);
-    LCEC_PDO_INIT(
-        (*pdo_entry_regs), slave->index, slave->vid, slave->pid, overrange_idx, overrange_sidx, &data->ovr_pdo_os, &data->ovr_pdo_bp);
-    LCEC_PDO_INIT((*pdo_entry_regs), slave->index, slave->vid, slave->pid, error_idx, error_sidx, &data->error_pdo_os, &data->error_pdo_bp);
+    lcec_pdo_init(slave, underrange_idx, underrange_sidx, &data->udr_pdo_os, &data->udr_pdo_bp);
+    lcec_pdo_init(slave, overrange_idx, overrange_sidx, &data->ovr_pdo_os, &data->ovr_pdo_bp);
+    lcec_pdo_init(slave, error_idx, error_sidx, &data->error_pdo_os, &data->error_pdo_bp);
   }
 
   // Register basic pins

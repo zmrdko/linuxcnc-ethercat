@@ -63,7 +63,7 @@
 #include "lcec_class_din.h"
 #include "lcec_class_dout.h"
 
-static int lcec_digitalcombo_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
+static int lcec_digitalcombo_init(int comp_id, struct lcec_slave *slave);
 
 #define F_IN(x)     (x)       // Input channels
 #define F_OUT(x)    (x * 32)  // Output channels
@@ -77,7 +77,7 @@ static int lcec_digitalcombo_init(int comp_id, struct lcec_slave *slave, ec_pdo_
 /// `lcec_typelist_t`.  Calculates the `pdo_count` based on total port
 /// count.  Digital I/O devices need one PDO per pin.
 #define BECKHOFF_IO_DEVICE(name, pid, flags) \
-  { name, LCEC_BECKHOFF_VID, pid, INPORTS(flags) + OUTPORTS(flags), 0, NULL, lcec_digitalcombo_init, NULL, flags }
+  { name, LCEC_BECKHOFF_VID, pid, 0, NULL, lcec_digitalcombo_init, NULL, flags }
 
 static lcec_typelist_t types[] = {
     BECKHOFF_IO_DEVICE("EL1252", 0x04E43052, F_IN(2) | F_DENSEPDOS),
@@ -116,7 +116,7 @@ typedef struct {
 static void lcec_digitalcombo_read(struct lcec_slave *slave, long period);
 static void lcec_digitalcombo_write(struct lcec_slave *slave, long period);
 
-static int lcec_digitalcombo_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
+static int lcec_digitalcombo_init(int comp_id, struct lcec_slave *slave) {
   lcec_digitalcombo_data_t *hal_data;
   int i;
   int in_channels = INPORTS(slave->flags);
@@ -151,7 +151,7 @@ static int lcec_digitalcombo_init(int comp_id, struct lcec_slave *slave, ec_pdo_
     }
 
     // Create pins
-    hal_data->channels_in->channels[i] = lcec_din_register_channel(&pdo_entry_regs, slave, i, idx, sidx);
+    hal_data->channels_in->channels[i] = lcec_din_register_channel(slave, i, idx, sidx);
   }
 
   // initialize output pins
@@ -169,7 +169,7 @@ static int lcec_digitalcombo_init(int comp_id, struct lcec_slave *slave, ec_pdo_
     }
 
     // Create pins
-    hal_data->channels_out->channels[i] = lcec_dout_register_channel(&pdo_entry_regs, slave, i, idx, sidx);
+    hal_data->channels_out->channels[i] = lcec_dout_register_channel(slave, i, idx, sidx);
   }
   return 0;
 }

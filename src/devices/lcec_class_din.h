@@ -36,12 +36,9 @@ typedef struct {
 } lcec_class_din_channels_t;
 
 lcec_class_din_channels_t *lcec_din_allocate_channels(int count);
-lcec_class_din_channel_t *lcec_din_register_channel(
-    ec_pdo_entry_reg_t **pdo_entry_regs, struct lcec_slave *slave, int id, uint16_t idx, uint16_t sidx);
-lcec_class_din_channel_t *lcec_din_register_channel_named(
-    ec_pdo_entry_reg_t **pdo_entry_regs, struct lcec_slave *slave, uint16_t idx, uint16_t sidx, char *name);
-lcec_class_din_channel_t *lcec_din_register_channel_packed(
-    ec_pdo_entry_reg_t **pdo_entry_regs, struct lcec_slave *slave, uint16_t idx, uint16_t sidx, int bit, char *name);
+lcec_class_din_channel_t *lcec_din_register_channel(struct lcec_slave *slave, int id, uint16_t idx, uint16_t sidx);
+lcec_class_din_channel_t *lcec_din_register_channel_named(struct lcec_slave *slave, uint16_t idx, uint16_t sidx, char *name);
+lcec_class_din_channel_t *lcec_din_register_channel_packed(struct lcec_slave *slave, uint16_t idx, uint16_t sidx, int bit, char *name);
 
 void lcec_din_read(struct lcec_slave *slave, lcec_class_din_channel_t *data);
 void lcec_din_read_all(struct lcec_slave *slave, lcec_class_din_channels_t *channels);

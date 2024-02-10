@@ -27,12 +27,12 @@
       http://www.beckhoff.com/english.asp?EtherCAT/el2202.htm%20 */
 
 #include "../lcec.h"
-#include "lcec_el2202.h"
+#define LCEC_EL2202_CHANS 2
 
-static int lcec_el2202_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
+static int lcec_el2202_init(int comp_id, struct lcec_slave *slave);
 
 static lcec_typelist_t types[]={
-  { "EL2202", LCEC_BECKHOFF_VID, 0x089A3052, LCEC_EL2202_PDOS, 0, NULL, lcec_el2202_init}, // 2 fast channels with tristate
+  { "EL2202", LCEC_BECKHOFF_VID, 0x089A3052, 0, NULL, lcec_el2202_init}, // 2 fast channels with tristate
   { NULL },
 };
 ADD_TYPES(types);
@@ -90,7 +90,7 @@ static const lcec_pindesc_t slave_pins[] = {
 /** \brief callback for periodic IO data access*/ 
 static void lcec_el2202_write(struct lcec_slave *slave, long period);
 
-static int lcec_el2202_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
+static int lcec_el2202_init(int comp_id, struct lcec_slave *slave) {
   lcec_master_t *master = slave->master;
 
   lcec_el2202_data_t *hal_data;
@@ -118,8 +118,8 @@ static int lcec_el2202_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
     chan = &hal_data->chans[i];
 
     // initialize PDO entries     position      vend.id     prod.code   index              sindx  offset             bit pos
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7000 + (i << 4), 0x01, &chan->out_offs, &chan->out_bitp);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x7000 + (i << 4), 0x02, &chan->tristate_offs, &chan->tristate_bitp);
+    lcec_pdo_init(slave,  0x7000 + (i << 4), 0x01, &chan->out_offs, &chan->out_bitp);
+    lcec_pdo_init(slave,  0x7000 + (i << 4), 0x02, &chan->tristate_offs, &chan->tristate_bitp);
 
     // export pins
     if ((err = lcec_pin_newf_list(chan, slave_pins, LCEC_MODULE_NAME, master->name, slave->name, i)) != 0) {

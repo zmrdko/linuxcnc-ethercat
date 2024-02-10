@@ -80,7 +80,6 @@ lcec_class_aout_options_t *lcec_aout_options(void) {
 
 /// @brief registers a single analog-output channel and publishes it as a set of LinuxCNC HAL pins.
 ///
-/// @param pdo_entry_regs a pointer to the pdo_entry_regs passed into the device `_init` function.
 /// @param slave The slave, from `_init`.
 /// @param id  The channel ID.  Used for naming.  Should generally start at 0 and increment once per analog out pin.
 /// @param idx The PDO index for the analog output.  The subindex is controlled via `opt`.
@@ -91,8 +90,7 @@ lcec_class_aout_options_t *lcec_aout_options(void) {
 /// @return A `lcec_class_aout_channel_t` that contains all per-channel data and can be used with `lcec_aout_write()`.
 ///
 /// See lcec_el3xxx.c for an example of use.
-lcec_class_aout_channel_t *lcec_aout_register_channel(
-    ec_pdo_entry_reg_t **pdo_entry_regs, struct lcec_slave *slave, int id, uint16_t idx, lcec_class_aout_options_t *opt) {
+lcec_class_aout_channel_t *lcec_aout_register_channel(struct lcec_slave *slave, int id, uint16_t idx, lcec_class_aout_options_t *opt) {
   lcec_class_aout_channel_t *data;
   int err;
 
@@ -135,7 +133,7 @@ lcec_class_aout_channel_t *lcec_aout_register_channel(
   opt->max_value = max_value;
 
   // Register PDO pin
-  LCEC_PDO_INIT((*pdo_entry_regs), slave->index, slave->vid, slave->pid, value_idx, value_sidx, &data->val_pdo_os, NULL);
+  lcec_pdo_init(slave, value_idx, value_sidx, &data->val_pdo_os, NULL);
 
   // Register basic pins
   err = lcec_pin_newf_list(data, slave_pins_basic, LCEC_MODULE_NAME, slave->master->name, slave->name, name_prefix, id);

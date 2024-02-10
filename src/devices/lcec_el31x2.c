@@ -20,17 +20,18 @@
 /// @brief Driver for Beckhoff EL31x2 Analog input modules
 
 #include "../lcec.h"
-#include "lcec_el31x2.h"
 
-static int lcec_el31x2_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs);
+#define LCEC_EL31x2_CHANS 2
+
+static int lcec_el31x2_init(int comp_id, struct lcec_slave *slave);
 
 static lcec_typelist_t types[]={
-  { "EL3102", LCEC_BECKHOFF_VID, 0x0C1E3052, LCEC_EL31x2_PDOS, 0, NULL, lcec_el31x2_init},
-  { "EL3112", LCEC_BECKHOFF_VID, 0x0C283052, LCEC_EL31x2_PDOS, 0, NULL, lcec_el31x2_init},
-  { "EL3122", LCEC_BECKHOFF_VID, 0x0C323052, LCEC_EL31x2_PDOS, 0, NULL, lcec_el31x2_init},
-  { "EL3142", LCEC_BECKHOFF_VID, 0x0C463052, LCEC_EL31x2_PDOS, 0, NULL, lcec_el31x2_init},
-  { "EL3152", LCEC_BECKHOFF_VID, 0x0C503052, LCEC_EL31x2_PDOS, 0, NULL, lcec_el31x2_init},
-  { "EL3162", LCEC_BECKHOFF_VID, 0x0C5A3052, LCEC_EL31x2_PDOS, 0, NULL, lcec_el31x2_init},
+  { "EL3102", LCEC_BECKHOFF_VID, 0x0C1E3052, 0, NULL, lcec_el31x2_init},
+  { "EL3112", LCEC_BECKHOFF_VID, 0x0C283052, 0, NULL, lcec_el31x2_init},
+  { "EL3122", LCEC_BECKHOFF_VID, 0x0C323052, 0, NULL, lcec_el31x2_init},
+  { "EL3142", LCEC_BECKHOFF_VID, 0x0C463052, 0, NULL, lcec_el31x2_init},
+  { "EL3152", LCEC_BECKHOFF_VID, 0x0C503052, 0, NULL, lcec_el31x2_init},
+  { "EL3162", LCEC_BECKHOFF_VID, 0x0C5A3052, 0, NULL, lcec_el31x2_init},
   { NULL },
 };
 ADD_TYPES(types);
@@ -87,7 +88,7 @@ static ec_sync_info_t lcec_el31x2_syncs[] = {
 
 static void lcec_el31x2_read(struct lcec_slave *slave, long period);
 
-static int lcec_el31x2_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_reg_t *pdo_entry_regs) {
+static int lcec_el31x2_init(int comp_id, struct lcec_slave *slave) {
   lcec_master_t *master = slave->master;
   lcec_el31x2_data_t *hal_data;
   lcec_el31x2_chan_t *chan;
@@ -113,8 +114,8 @@ static int lcec_el31x2_init(int comp_id, struct lcec_slave *slave, ec_pdo_entry_
     chan = &hal_data->chans[i];
 
     // initialize POD entries
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x3101 + i, 0x01, &chan->state_pdo_os, NULL);
-    LCEC_PDO_INIT(pdo_entry_regs, slave->index, slave->vid, slave->pid, 0x3101 + i, 0x02, &chan->val_pdo_os, NULL);
+    lcec_pdo_init(slave,  0x3101 + i, 0x01, &chan->state_pdo_os, NULL);
+    lcec_pdo_init(slave,  0x3101 + i, 0x02, &chan->val_pdo_os, NULL);
 
     // export pins
     if ((err = lcec_pin_newf_list(chan, slave_pins, LCEC_MODULE_NAME, master->name, slave->name, i)) != 0) {
