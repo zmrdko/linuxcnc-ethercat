@@ -25,20 +25,19 @@
 
 /// @brief Basic pins common to all analog in devices.
 static const lcec_pindesc_t slave_pins_basic[] = {
-  { HAL_FLOAT, HAL_IO, offsetof(lcec_class_aout_channel_t, scale), "%s.%s.%s.%s-%d-scale" },
-  { HAL_FLOAT, HAL_IO, offsetof(lcec_class_aout_channel_t, offset), "%s.%s.%s.%s-%d-offset" },
-  { HAL_FLOAT, HAL_IO, offsetof(lcec_class_aout_channel_t, min_dc), "%s.%s.%s.%s-%d-min-dc" },
-  { HAL_FLOAT, HAL_IO, offsetof(lcec_class_aout_channel_t, max_dc), "%s.%s.%s.%s-%d-max-dc" },
-  { HAL_FLOAT, HAL_OUT, offsetof(lcec_class_aout_channel_t, curr_dc), "%s.%s.%s.%s-%d-curr-dc" },
-  { HAL_BIT, HAL_IN, offsetof(lcec_class_aout_channel_t, enable), "%s.%s.%s.%s-%d-enable" },
-  { HAL_BIT, HAL_IN, offsetof(lcec_class_aout_channel_t, absmode), "%s.%s.%s.%s-%d-absmode" },
-  { HAL_FLOAT, HAL_IN, offsetof(lcec_class_aout_channel_t, value), "%s.%s.%s.%s-%d-value" },
-  { HAL_S32, HAL_OUT, offsetof(lcec_class_aout_channel_t, raw_val), "%s.%s.%s.%s-%d-raw" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_class_aout_channel_t, pos), "%s.%s.%s.%s-%d-pos" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_class_aout_channel_t, neg), "%s.%s.%s.%s-%d-neg" },
-  { HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL },
+    {HAL_FLOAT, HAL_IO, offsetof(lcec_class_aout_channel_t, scale), "%s.%s.%s.%s-%d-scale"},
+    {HAL_FLOAT, HAL_IO, offsetof(lcec_class_aout_channel_t, offset), "%s.%s.%s.%s-%d-offset"},
+    {HAL_FLOAT, HAL_IO, offsetof(lcec_class_aout_channel_t, min_dc), "%s.%s.%s.%s-%d-min-dc"},
+    {HAL_FLOAT, HAL_IO, offsetof(lcec_class_aout_channel_t, max_dc), "%s.%s.%s.%s-%d-max-dc"},
+    {HAL_FLOAT, HAL_OUT, offsetof(lcec_class_aout_channel_t, curr_dc), "%s.%s.%s.%s-%d-curr-dc"},
+    {HAL_BIT, HAL_IN, offsetof(lcec_class_aout_channel_t, enable), "%s.%s.%s.%s-%d-enable"},
+    {HAL_BIT, HAL_IN, offsetof(lcec_class_aout_channel_t, absmode), "%s.%s.%s.%s-%d-absmode"},
+    {HAL_FLOAT, HAL_IN, offsetof(lcec_class_aout_channel_t, value), "%s.%s.%s.%s-%d-value"},
+    {HAL_S32, HAL_OUT, offsetof(lcec_class_aout_channel_t, raw_val), "%s.%s.%s.%s-%d-raw"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_class_aout_channel_t, pos), "%s.%s.%s.%s-%d-pos"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_class_aout_channel_t, neg), "%s.%s.%s.%s-%d-neg"},
+    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
-
 
 /// @brief Allocate a block of memory for holding the results from
 /// `count` calls to `lcec_aout_register_device() and friends.
@@ -166,72 +165,72 @@ void lcec_aout_write(struct lcec_slave *slave, lcec_class_aout_channel_t *data) 
   uint8_t *pd = slave->master->process_data;
   int max_value = data->options->max_value;
   double tmpval, tmpdc, raw_val;
-  
+
   // validate duty cycle limits, both limits must be between
   // 0.0 and 1.0 (inclusive) and max must be greater then min
   if (*(data->max_dc) > 1.0) {
-      *(data->max_dc) = 1.0;
-    }
-    if (*(data->min_dc) > *(data->max_dc)) {
-      *(data->min_dc) = *(data->max_dc);
-    }
-    if (*(data->min_dc) < -1.0) {
-      *(data->min_dc) = -1.0;
-    }
-    if (*(data->max_dc) < *(data->min_dc)) {
-      *(data->max_dc) = *(data->min_dc);
-    }
+    *(data->max_dc) = 1.0;
+  }
+  if (*(data->min_dc) > *(data->max_dc)) {
+    *(data->min_dc) = *(data->max_dc);
+  }
+  if (*(data->min_dc) < -1.0) {
+    *(data->min_dc) = -1.0;
+  }
+  if (*(data->max_dc) < *(data->min_dc)) {
+    *(data->max_dc) = *(data->min_dc);
+  }
 
-    // do scale calcs only when scale changes
-    if (*(data->scale) != data->old_scale) {
-      // validate the new scale value
-      if ((*(data->scale) < 1e-20) && (*(data->scale) > -1e-20)) {
-        // value too small, divide by zero is a bad thing
-        *(data->scale) = 1.0;
-      }
-      // get ready to detect future scale changes
-      data->old_scale = *(data->scale);
-      // we will need the reciprocal
-      data->scale_recip = 1.0 / *(data->scale);
+  // do scale calcs only when scale changes
+  if (*(data->scale) != data->old_scale) {
+    // validate the new scale value
+    if ((*(data->scale) < 1e-20) && (*(data->scale) > -1e-20)) {
+      // value too small, divide by zero is a bad thing
+      *(data->scale) = 1.0;
     }
+    // get ready to detect future scale changes
+    data->old_scale = *(data->scale);
+    // we will need the reciprocal
+    data->scale_recip = 1.0 / *(data->scale);
+  }
 
-    // get command
-    tmpval = *(data->value);
-    if (*(data->absmode) && (tmpval < 0)) {
-      tmpval = -tmpval;
-    }
+  // get command
+  tmpval = *(data->value);
+  if (*(data->absmode) && (tmpval < 0)) {
+    tmpval = -tmpval;
+  }
 
-    // convert value command to duty cycle
-    tmpdc = tmpval * data->scale_recip + *(data->offset);
-    if (tmpdc < *(data->min_dc)) {
-      tmpdc = *(data->min_dc);
-    }
-    if (tmpdc > *(data->max_dc)) {
-      tmpdc = *(data->max_dc);
-    }
+  // convert value command to duty cycle
+  tmpdc = tmpval * data->scale_recip + *(data->offset);
+  if (tmpdc < *(data->min_dc)) {
+    tmpdc = *(data->min_dc);
+  }
+  if (tmpdc > *(data->max_dc)) {
+    tmpdc = *(data->max_dc);
+  }
 
-    // set output values
-    if (*(data->enable) == 0) {
-      raw_val = 0;
-      *(data->pos) = 0;
-      *(data->neg) = 0;
-      *(data->curr_dc) = 0;
-    } else {
-      raw_val = (double)max_value * tmpdc;
-      if (raw_val > (double)max_value) {
-        raw_val = (double)max_value;
-      }
-      if (raw_val < (double)-max_value) {
-        raw_val = (double)-max_value;
-      }
-      *(data->pos) = (*(data->value) > 0);
-      *(data->neg) = (*(data->value) < 0);
-      *(data->curr_dc) = tmpdc;
+  // set output values
+  if (*(data->enable) == 0) {
+    raw_val = 0;
+    *(data->pos) = 0;
+    *(data->neg) = 0;
+    *(data->curr_dc) = 0;
+  } else {
+    raw_val = (double)max_value * tmpdc;
+    if (raw_val > (double)max_value) {
+      raw_val = (double)max_value;
     }
+    if (raw_val < (double)-max_value) {
+      raw_val = (double)-max_value;
+    }
+    *(data->pos) = (*(data->value) > 0);
+    *(data->neg) = (*(data->value) < 0);
+    *(data->curr_dc) = tmpdc;
+  }
 
-    // update value
-    EC_WRITE_S16(&pd[data->val_pdo_os], (int16_t)raw_val);
-    *(data->raw_val) = (int32_t)raw_val;
+  // update value
+  EC_WRITE_S16(&pd[data->val_pdo_os], (int16_t)raw_val);
+  *(data->raw_val) = (int32_t)raw_val;
 }
 
 /// @brief Writess data to all analog out ports.

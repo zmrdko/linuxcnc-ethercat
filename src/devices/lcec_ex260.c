@@ -10,10 +10,10 @@
 static int lcec_ex260_init(int comp_id, struct lcec_slave *slave);
 
 static lcec_typelist_t types[] = {
-  {"EX260-SEC1", LCEC_SMC_VID, 0x01000001, 0, NULL, lcec_ex260_init, NULL, 4},
-  {"EX260-SEC2", LCEC_SMC_VID, 0x01000002, 0, NULL, lcec_ex260_init, NULL, 4},
-  {"EX260-SEC3", LCEC_SMC_VID, 0x01000003, 0, NULL, lcec_ex260_init, NULL, 2},
-  {"EX260-SEC4", LCEC_SMC_VID, 0x01000004, 0, NULL, lcec_ex260_init, NULL, 2},
+    {"EX260-SEC1", LCEC_SMC_VID, 0x01000001, 0, NULL, lcec_ex260_init, NULL, 4},
+    {"EX260-SEC2", LCEC_SMC_VID, 0x01000002, 0, NULL, lcec_ex260_init, NULL, 4},
+    {"EX260-SEC3", LCEC_SMC_VID, 0x01000003, 0, NULL, lcec_ex260_init, NULL, 2},
+    {"EX260-SEC4", LCEC_SMC_VID, 0x01000004, 0, NULL, lcec_ex260_init, NULL, 2},
     {NULL},
 };
 
@@ -41,7 +41,7 @@ static const lcec_pindesc_t slave_pins[] = {
     {HAL_BIT, HAL_IN, offsetof(lcec_ex260_pin_t, sol_3b), "%s.%s.%s.sol-%d-3b"},
     {HAL_BIT, HAL_IN, offsetof(lcec_ex260_pin_t, sol_4a), "%s.%s.%s.sol-%d-4a"},
     {HAL_BIT, HAL_IN, offsetof(lcec_ex260_pin_t, sol_4b), "%s.%s.%s.sol-%d-4b"},
-    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL}
+    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
 static void lcec_ex260_write(struct lcec_slave *slave, long period);
@@ -67,7 +67,7 @@ static int lcec_ex260_init(int comp_id, struct lcec_slave *slave) {
   // initialize pins
   for (i = 0, pin = hal_data; i < slave->flags; i++, pin++) {
     // initialize PDO entry
-    lcec_pdo_init(slave,  0x3101, 0x01 + i, &pin->pdo_os, &pin->pdo_bp);
+    lcec_pdo_init(slave, 0x3101, 0x01 + i, &pin->pdo_os, &pin->pdo_bp);
 
     if ((err = lcec_pin_newf_list(pin, slave_pins, LCEC_MODULE_NAME, master->name, slave->name, i)) != 0) {
       return err;

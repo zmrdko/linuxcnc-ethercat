@@ -24,12 +24,12 @@
 #include "../lcec.h"
 #include "lcec_class_enc.h"
 
-#define FLAG_LOWRES_ENC 1 << 0  // Device uses low res encoder as default 
+#define FLAG_LOWRES_ENC  1 << 0  // Device uses low res encoder as default
 #define FLAG_HIGHRES_ENC 1 << 1  // Device uses high res encoder as default x3 series
 
 #define LCEC_DESDA_MODPARAM_OPERATIONMODE 0
 
-#define DEASDA_PULSES_PER_REV_DEFLT_LOWRES (1280000)   // this is the default value for A2 (default value)
+#define DEASDA_PULSES_PER_REV_DEFLT_LOWRES  (1280000)   // this is the default value for A2 (default value)
 #define DEASDA_PULSES_PER_REV_DEFLT_HIGHRES (16777216)  // this is the default value for A3
 
 #define DEASDA_RPM_FACTOR (0.1)
@@ -66,7 +66,7 @@ static const drive_operationmodes_t drive_operationmodes[] = {
 static lcec_typelist_t types[] = {
     {"DeASDA", LCEC_DELTA_VID, 0x10305070, 0, NULL, lcec_deasda_init, lcec_deasda_modparams, FLAG_LOWRES_ENC},
     {"DeASDA3", LCEC_DELTA_VID, 0x00006010, 0, NULL, lcec_deasda_init, lcec_deasda_modparams, FLAG_HIGHRES_ENC},
-    {"DeASDB3", LCEC_DELTA_VID, 0x00006080, 0, NULL, lcec_deasda_init, lcec_deasda_modparams, FLAG_HIGHRES_ENC},    
+    {"DeASDB3", LCEC_DELTA_VID, 0x00006080, 0, NULL, lcec_deasda_init, lcec_deasda_modparams, FLAG_HIGHRES_ENC},
     {NULL},
 };
 
@@ -116,7 +116,6 @@ typedef struct {
   hal_bit_t *di_6;
   hal_bit_t *di_7;
 
-
   lcec_class_enc_data_t enc;
   lcec_class_enc_data_t extenc;
 
@@ -132,7 +131,6 @@ typedef struct {
   unsigned int divalue_pdo_os;
   unsigned int torque_pdo_os;
 
-
   hal_bit_t last_switch_on;
   hal_bit_t internal_fault;
 
@@ -142,7 +140,8 @@ typedef struct {
 
 } lcec_deasda_data_t;
 
-static const lcec_pindesc_t slave_pins[] = {{HAL_FLOAT, HAL_OUT, offsetof(lcec_deasda_data_t, vel_fb), "%s.%s.%s.srv-vel-fb"},
+static const lcec_pindesc_t slave_pins[] = {
+    {HAL_FLOAT, HAL_OUT, offsetof(lcec_deasda_data_t, vel_fb), "%s.%s.%s.srv-vel-fb"},
     {HAL_FLOAT, HAL_OUT, offsetof(lcec_deasda_data_t, vel_fb_rpm), "%s.%s.%s.srv-vel-fb-rpm"},
     {HAL_FLOAT, HAL_OUT, offsetof(lcec_deasda_data_t, vel_fb_rpm_abs), "%s.%s.%s.srv-vel-fb-rpm-abs"},
     {HAL_FLOAT, HAL_OUT, offsetof(lcec_deasda_data_t, vel_rpm), "%s.%s.%s.srv-vel-rpm"},
@@ -165,7 +164,8 @@ static const lcec_pindesc_t slave_pins[] = {{HAL_FLOAT, HAL_OUT, offsetof(lcec_d
     {HAL_BIT, HAL_IN, offsetof(lcec_deasda_data_t, fault_reset), "%s.%s.%s.srv-fault-reset"},
     {HAL_BIT, HAL_IN, offsetof(lcec_deasda_data_t, halt), "%s.%s.%s.srv-halt"},
     {HAL_U32, HAL_OUT, offsetof(lcec_deasda_data_t, operation_mode), "%s.%s.%s.srv-operation-mode"},
-    {HAL_FLOAT, HAL_OUT, offsetof(lcec_deasda_data_t, torque), "%s.%s.%s.srv-torque-rel"}, // relative value (5) - hence current would be redundant
+    {HAL_FLOAT, HAL_OUT, offsetof(lcec_deasda_data_t, torque),
+        "%s.%s.%s.srv-torque-rel"},  // relative value (5) - hence current would be redundant
     {HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, di_1), "%s.%s.%s.din-1"},
     {HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, di_2), "%s.%s.%s.din-2"},
     {HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, di_3), "%s.%s.%s.din-3"},
@@ -176,62 +176,77 @@ static const lcec_pindesc_t slave_pins[] = {{HAL_FLOAT, HAL_OUT, offsetof(lcec_d
     {HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, neg_lim_switch), "%s.%s.%s.din-neg-lim"},
     {HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, pos_lim_switch), "%s.%s.%s.din-pos-lim"},
     {HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, home_switch), "%s.%s.%s.din-home"},
-    
-    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL}};
 
-static const lcec_pindesc_t slave_pins_csv[] = {{HAL_FLOAT, HAL_IN, offsetof(lcec_deasda_data_t, cmd_value), "%s.%s.%s.srv-vel-cmd"},
-    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL}};
+    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
+};
 
-static const lcec_pindesc_t slave_pins_csp[] = {{HAL_FLOAT, HAL_IN, offsetof(lcec_deasda_data_t, cmd_value), "%s.%s.%s.srv-pos-cmd"},
-    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL}};
+static const lcec_pindesc_t slave_pins_csv[] = {
+    {HAL_FLOAT, HAL_IN, offsetof(lcec_deasda_data_t, cmd_value), "%s.%s.%s.srv-vel-cmd"},
+    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
+};
+
+static const lcec_pindesc_t slave_pins_csp[] = {
+    {HAL_FLOAT, HAL_IN, offsetof(lcec_deasda_data_t, cmd_value), "%s.%s.%s.srv-pos-cmd"},
+    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
+};
 
 // Exposed parameters are identical for both drives and modes
-static const lcec_pindesc_t slave_params[] = {{HAL_FLOAT, HAL_RW, offsetof(lcec_deasda_data_t, pos_scale), "%s.%s.%s.pos-scale"},
+static const lcec_pindesc_t slave_params[] = {
+    {HAL_FLOAT, HAL_RW, offsetof(lcec_deasda_data_t, pos_scale), "%s.%s.%s.pos-scale"},
     {HAL_FLOAT, HAL_RW, offsetof(lcec_deasda_data_t, extenc_scale), "%s.%s.%s.extenc-scale"},
     {HAL_U32, HAL_RW, offsetof(lcec_deasda_data_t, pprev), "%s.%s.%s.srv-pulses-per-rev"},
     {HAL_U32, HAL_RW, offsetof(lcec_deasda_data_t, fault_autoreset_cycles), "%s.%s.%s.srv-fault-autoreset-cycles"},
     {HAL_U32, HAL_RW, offsetof(lcec_deasda_data_t, fault_autoreset_retries), "%s.%s.%s.srv-fault-autoreset-retries"},
-    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL}};
+    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
+};
 
 static ec_pdo_entry_info_t lcec_deasda_in[] = {
-    {0x6041, 0x00, 16}, // Status Word
-    {0x606C, 0x00, 32}, // Current Velocity
-    {0x6064, 0x00, 32}, // Current Position
-    {0x2511, 0x00, 32}, // External encoder
-    {0x6077, 0x00, 16}, // Torque
-    {0x60FD, 0x00, 32}  // Digital Inputs
+    {0x6041, 0x00, 16},  // Status Word
+    {0x606C, 0x00, 32},  // Current Velocity
+    {0x6064, 0x00, 32},  // Current Position
+    {0x2511, 0x00, 32},  // External encoder
+    {0x6077, 0x00, 16},  // Torque
+    {0x60FD, 0x00, 32},  // Digital Inputs
 
 };
 
 static ec_pdo_entry_info_t lcec_deasda_out_csv[] = {
     {0x6040, 0x00, 16},  // Control Word
-    {0x60FF, 0x00, 32}   // Target Velocity
+    {0x60FF, 0x00, 32},  // Target Velocity
 };
 
 static ec_pdo_entry_info_t lcec_deasda_out_csp[] = {
     {0x6040, 0x00, 16},  // Control Word
-    {0x607A, 0x00, 32}   // Target Position
+    {0x607A, 0x00, 32},  // Target Position
 };
 
-static ec_pdo_info_t lcec_deasda_pdos_out_csv[] = {{0x1602, 2, lcec_deasda_out_csv}};
+static ec_pdo_info_t lcec_deasda_pdos_out_csv[] = {
+    {0x1602, 2, lcec_deasda_out_csv},
+};
 
-static ec_pdo_info_t lcec_deasda_pdos_out_csp[] = {{0x1602, 2, lcec_deasda_out_csp}};
+static ec_pdo_info_t lcec_deasda_pdos_out_csp[] = {
+    {0x1602, 2, lcec_deasda_out_csp},
+};
 
-static ec_pdo_info_t lcec_deasda_pdos_in[] = {{0x1a02, 6, lcec_deasda_in}};
+static ec_pdo_info_t lcec_deasda_pdos_in[] = {
+    {0x1a02, 6, lcec_deasda_in},
+};
 
 static ec_sync_info_t lcec_deasda_syncs_csv[] = {
     {0, EC_DIR_OUTPUT, 0, NULL},
     {1, EC_DIR_INPUT, 0, NULL},
     {2, EC_DIR_OUTPUT, 1, lcec_deasda_pdos_out_csv},
-    {3, EC_DIR_INPUT, 1, lcec_deasda_pdos_in}, {0xff}
-  };
+    {3, EC_DIR_INPUT, 1, lcec_deasda_pdos_in},
+    {0xff},
+};
 
 static ec_sync_info_t lcec_deasda_syncs_csp[] = {
     {0, EC_DIR_OUTPUT, 0, NULL},
     {1, EC_DIR_INPUT, 0, NULL},
     {2, EC_DIR_OUTPUT, 1, lcec_deasda_pdos_out_csp},
-    {3, EC_DIR_INPUT, 1, lcec_deasda_pdos_in}, {0xff}
-  };
+    {3, EC_DIR_INPUT, 1, lcec_deasda_pdos_in},
+    {0xff},
+};
 
 static void lcec_deasda_check_scales(lcec_deasda_data_t *hal_data);
 
@@ -293,7 +308,8 @@ static int lcec_deasda_init(int comp_id, struct lcec_slave *slave) {
 
   // set to 0x6060 to requested mode (CSV, CSP)
   if (lcec_write_sdo8(slave, 0x6060, 0x00, operationmode) != 0) {
-    rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo to op mode %d\n", master->name, slave->name, operationmode);
+    rtapi_print_msg(
+        RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo to op mode %d\n", master->name, slave->name, operationmode);
     return -1;
   }
 
@@ -301,13 +317,16 @@ static int lcec_deasda_init(int comp_id, struct lcec_slave *slave) {
   tu = master->app_time_period;
   ti = -9;
 
-  while ((tu % 10) == 0 || tu > 255) { tu /=  10; ti++; }
+  while ((tu % 10) == 0 || tu > 255) {
+    tu /= 10;
+    ti++;
+  }
   if (lcec_write_sdo8(slave, 0x60C2, 0x01, (uint8_t)tu) != 0) {
-    rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo ipol time period units\n", master->name, slave->name);
+    rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo ipol time period units\n", master->name, slave->name);
     return -1;
   }
   if (lcec_write_sdo8(slave, 0x60C2, 0x02, ti) != 0) {
-    rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo ipol time period index\n", master->name, slave->name);
+    rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo ipol time period index\n", master->name, slave->name);
     return -1;
   }
 
@@ -315,14 +334,14 @@ static int lcec_deasda_init(int comp_id, struct lcec_slave *slave) {
     // initialize sync info
     slave->sync_info = lcec_deasda_syncs_csv;
     // initialize POD entries
-    lcec_pdo_init(slave,  0x6041, 0x00, &hal_data->status_pdo_os, NULL);
-    lcec_pdo_init(slave,  0x606C, 0x00, &hal_data->currvel_pdo_os, NULL);
-    lcec_pdo_init(slave,  0x6064, 0x00, &hal_data->currpos_pdo_os, NULL);
-    lcec_pdo_init(slave,  0x2511, 0x00, &hal_data->extenc_pdo_os, NULL);
-    lcec_pdo_init(slave,  0x6040, 0x00, &hal_data->control_pdo_os, NULL);
-    lcec_pdo_init(slave,  0x60FF, 0x00, &hal_data->cmdvalue_pdo_os, NULL);
-    lcec_pdo_init(slave,  0x6077, 0x00, &hal_data->torque_pdo_os, NULL);
-    lcec_pdo_init(slave,  0x60FD, 0x00, &hal_data->divalue_pdo_os, NULL);
+    lcec_pdo_init(slave, 0x6041, 0x00, &hal_data->status_pdo_os, NULL);
+    lcec_pdo_init(slave, 0x606C, 0x00, &hal_data->currvel_pdo_os, NULL);
+    lcec_pdo_init(slave, 0x6064, 0x00, &hal_data->currpos_pdo_os, NULL);
+    lcec_pdo_init(slave, 0x2511, 0x00, &hal_data->extenc_pdo_os, NULL);
+    lcec_pdo_init(slave, 0x6040, 0x00, &hal_data->control_pdo_os, NULL);
+    lcec_pdo_init(slave, 0x60FF, 0x00, &hal_data->cmdvalue_pdo_os, NULL);
+    lcec_pdo_init(slave, 0x6077, 0x00, &hal_data->torque_pdo_os, NULL);
+    lcec_pdo_init(slave, 0x60FD, 0x00, &hal_data->divalue_pdo_os, NULL);
 
     // export pins common
     if ((err = lcec_pin_newf_list(hal_data, slave_pins, LCEC_MODULE_NAME, master->name, slave->name)) != 0) return err;
@@ -334,20 +353,19 @@ static int lcec_deasda_init(int comp_id, struct lcec_slave *slave) {
     // initialize sync info
     slave->sync_info = lcec_deasda_syncs_csp;
     // initialize POD entries
-    lcec_pdo_init(slave,  0x6041, 0x00, &hal_data->status_pdo_os, NULL);
-    lcec_pdo_init(slave,  0x606C, 0x00, &hal_data->currvel_pdo_os, NULL);
-    lcec_pdo_init(slave,  0x6064, 0x00, &hal_data->currpos_pdo_os, NULL);
-    lcec_pdo_init(slave,  0x2511, 0x00, &hal_data->extenc_pdo_os, NULL);
-    lcec_pdo_init(slave,  0x6040, 0x00, &hal_data->control_pdo_os, NULL);
-    lcec_pdo_init(slave,  0x607A, 0x00, &hal_data->cmdvalue_pdo_os, NULL);
-    lcec_pdo_init(slave,  0x6077, 0x00, &hal_data->torque_pdo_os, NULL);
-    lcec_pdo_init(slave,  0x60FD, 0x00, &hal_data->divalue_pdo_os, NULL);
+    lcec_pdo_init(slave, 0x6041, 0x00, &hal_data->status_pdo_os, NULL);
+    lcec_pdo_init(slave, 0x606C, 0x00, &hal_data->currvel_pdo_os, NULL);
+    lcec_pdo_init(slave, 0x6064, 0x00, &hal_data->currpos_pdo_os, NULL);
+    lcec_pdo_init(slave, 0x2511, 0x00, &hal_data->extenc_pdo_os, NULL);
+    lcec_pdo_init(slave, 0x6040, 0x00, &hal_data->control_pdo_os, NULL);
+    lcec_pdo_init(slave, 0x607A, 0x00, &hal_data->cmdvalue_pdo_os, NULL);
+    lcec_pdo_init(slave, 0x6077, 0x00, &hal_data->torque_pdo_os, NULL);
+    lcec_pdo_init(slave, 0x60FD, 0x00, &hal_data->divalue_pdo_os, NULL);
 
     // export pins common
     if ((err = lcec_pin_newf_list(hal_data, slave_pins, LCEC_MODULE_NAME, master->name, slave->name)) != 0) return err;
     // export pins specific
     if ((err = lcec_pin_newf_list(hal_data, slave_pins_csp, LCEC_MODULE_NAME, master->name, slave->name)) != 0) return err;
-
   }
 
   *(hal_data->operation_mode) = operationmode;
@@ -369,14 +387,15 @@ static int lcec_deasda_init(int comp_id, struct lcec_slave *slave) {
   // change based on FLAG_LOWRES_ENC/FLAG_HIGHRES_ENC
   if (flags & FLAG_LOWRES_ENC) {
     hal_data->pprev = DEASDA_PULSES_PER_REV_DEFLT_LOWRES;
-    rtapi_print_msg(RTAPI_MSG_DBG, LCEC_MSG_PFX "Setting pprev to Low Res Encoder (1,280,000) for device %s.%s.\n", master->name, slave->name);
+    rtapi_print_msg(
+        RTAPI_MSG_DBG, LCEC_MSG_PFX "Setting pprev to Low Res Encoder (1,280,000) for device %s.%s.\n", master->name, slave->name);
   } else if (flags & FLAG_HIGHRES_ENC) {
     hal_data->pprev = DEASDA_PULSES_PER_REV_DEFLT_HIGHRES;
-    rtapi_print_msg(RTAPI_MSG_DBG, LCEC_MSG_PFX "Setting pprev to High Res Encoder (16,777,216) for device %s.%s.\n", master->name, slave->name);
+    rtapi_print_msg(
+        RTAPI_MSG_DBG, LCEC_MSG_PFX "Setting pprev to High Res Encoder (16,777,216) for device %s.%s.\n", master->name, slave->name);
   }
 
   // TODO: Add additional registers here if avialalbe: e.g. DIDO based on servo type FLAG_SERVO_X2/FLAG_SERVO_X3
-
 
   hal_data->last_switch_on = 0;
   hal_data->internal_fault = 0;
@@ -479,27 +498,22 @@ static void lcec_deasda_read(struct lcec_slave *slave, long period) {
   pos_cnt = EC_READ_U32(&pd[hal_data->extenc_pdo_os]);
   class_enc_update(&hal_data->extenc, 1, hal_data->extenc_scale, pos_cnt, 0, 0);
 
-
   // read current
-  *(hal_data->torque) = (double) EC_READ_S16(&pd[hal_data->torque_pdo_os]) * 0.1;
+  *(hal_data->torque) = (double)EC_READ_S16(&pd[hal_data->torque_pdo_os]) * 0.1;
 
   // read DI status word
   status_di = EC_READ_U32(&pd[hal_data->divalue_pdo_os]);
 
-
   *(hal_data->neg_lim_switch) = (status_di >> 0) & 0x01;
   *(hal_data->pos_lim_switch) = (status_di >> 1) & 0x01;
   *(hal_data->home_switch) = (status_di >> 2) & 0x01;
-   *(hal_data->di_1) = (status_di >> 16) & 0x01;
+  *(hal_data->di_1) = (status_di >> 16) & 0x01;
   *(hal_data->di_2) = (status_di >> 17) & 0x01;
   *(hal_data->di_3) = (status_di >> 18) & 0x01;
   *(hal_data->di_4) = (status_di >> 19) & 0x01;
   *(hal_data->di_5) = (status_di >> 20) & 0x01;
   *(hal_data->di_6) = (status_di >> 21) & 0x01;
   *(hal_data->di_7) = (status_di >> 22) & 0x01;
-
-
-
 }
 
 static void lcec_deasda_write_csv(struct lcec_slave *slave, long period) {

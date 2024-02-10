@@ -124,8 +124,8 @@ static int lcec_digitalcombo_init(int comp_id, struct lcec_slave *slave) {
   int idx, sidx;
 
   // initialize callbacks
-  if (in_channels>0) slave->proc_read = lcec_digitalcombo_read;
-  if (out_channels>0) slave->proc_write = lcec_digitalcombo_write;
+  if (in_channels > 0) slave->proc_read = lcec_digitalcombo_read;
+  if (out_channels > 0) slave->proc_write = lcec_digitalcombo_write;
 
   // alloc hal memory
   if ((hal_data = hal_malloc(sizeof(lcec_digitalcombo_data_t))) == NULL) {
@@ -136,8 +136,8 @@ static int lcec_digitalcombo_init(int comp_id, struct lcec_slave *slave) {
   slave->hal_data = hal_data;
 
   // Allocate memory for I/O pin definitions
-  if (in_channels>0) hal_data->channels_in = lcec_din_allocate_channels(in_channels);
-  if (out_channels>0) hal_data->channels_out = lcec_dout_allocate_channels(out_channels);
+  if (in_channels > 0) hal_data->channels_in = lcec_din_allocate_channels(in_channels);
+  if (out_channels > 0) hal_data->channels_out = lcec_dout_allocate_channels(out_channels);
 
   // initialize input pins
   for (i = 0; i < in_channels; i++) {

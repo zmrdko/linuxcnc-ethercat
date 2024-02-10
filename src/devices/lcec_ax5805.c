@@ -19,19 +19,19 @@
 /// @file
 /// @brief Driver for Beckhoff AX5805 Servo controllers
 
-#include "../lcec.h"
 #include "lcec_ax5805.h"
+
+#include "../lcec.h"
 #include "lcec_ax5100.h"
 #include "lcec_ax5200.h"
-
 
 static void lcec_ax5805_read(struct lcec_slave *slave, long period);
 static int lcec_ax5805_preinit(struct lcec_slave *slave);
 static int lcec_ax5805_init(int comp_id, struct lcec_slave *slave);
 
-static lcec_typelist_t types[]={
-  { "AX5805", LCEC_BECKHOFF_VID, 0x16AD6012, 0, lcec_ax5805_preinit, lcec_ax5805_init},
-  { NULL },
+static lcec_typelist_t types[] = {
+    {"AX5805", LCEC_BECKHOFF_VID, 0x16AD6012, 0, lcec_ax5805_preinit, lcec_ax5805_init},
+    {NULL},
 };
 ADD_TYPES(types);
 
@@ -67,28 +67,28 @@ typedef struct {
 } lcec_ax5805_data_t;
 
 static const lcec_pindesc_t slave_pins_1ch[] = {
-  { HAL_U32, HAL_OUT, offsetof(lcec_ax5805_data_t, fsoe_master_cmd), "%s.%s.%s.fsoe-master-cmd" },
-  { HAL_U32, HAL_OUT, offsetof(lcec_ax5805_data_t, fsoe_master_crc0), "%s.%s.%s.fsoe-master-crc" },
-  { HAL_U32, HAL_OUT, offsetof(lcec_ax5805_data_t, fsoe_master_connid), "%s.%s.%s.fsoe-master-connid" },
-  { HAL_U32, HAL_OUT, offsetof(lcec_ax5805_data_t, fsoe_slave_cmd), "%s.%s.%s.fsoe-slave-cmd" },
-  { HAL_U32, HAL_OUT, offsetof(lcec_ax5805_data_t, fsoe_slave_crc0), "%s.%s.%s.fsoe-slave-crc" },
-  { HAL_U32, HAL_OUT, offsetof(lcec_ax5805_data_t, fsoe_slave_connid), "%s.%s.%s.fsoe-slave-connid" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_ax5805_data_t, fsoe_in_sto0), "%s.%s.%s.fsoe-in-sto" },
-  { HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL }
+    {HAL_U32, HAL_OUT, offsetof(lcec_ax5805_data_t, fsoe_master_cmd), "%s.%s.%s.fsoe-master-cmd"},
+    {HAL_U32, HAL_OUT, offsetof(lcec_ax5805_data_t, fsoe_master_crc0), "%s.%s.%s.fsoe-master-crc"},
+    {HAL_U32, HAL_OUT, offsetof(lcec_ax5805_data_t, fsoe_master_connid), "%s.%s.%s.fsoe-master-connid"},
+    {HAL_U32, HAL_OUT, offsetof(lcec_ax5805_data_t, fsoe_slave_cmd), "%s.%s.%s.fsoe-slave-cmd"},
+    {HAL_U32, HAL_OUT, offsetof(lcec_ax5805_data_t, fsoe_slave_crc0), "%s.%s.%s.fsoe-slave-crc"},
+    {HAL_U32, HAL_OUT, offsetof(lcec_ax5805_data_t, fsoe_slave_connid), "%s.%s.%s.fsoe-slave-connid"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_ax5805_data_t, fsoe_in_sto0), "%s.%s.%s.fsoe-in-sto"},
+    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
 static const lcec_pindesc_t slave_pins_2ch[] = {
-  { HAL_U32, HAL_OUT, offsetof(lcec_ax5805_data_t, fsoe_master_cmd), "%s.%s.%s.fsoe-master-cmd" },
-  { HAL_U32, HAL_OUT, offsetof(lcec_ax5805_data_t, fsoe_master_crc0), "%s.%s.%s.fsoe-master-crc-0" },
-  { HAL_U32, HAL_OUT, offsetof(lcec_ax5805_data_t, fsoe_master_crc1), "%s.%s.%s.fsoe-master-crc-1" },
-  { HAL_U32, HAL_OUT, offsetof(lcec_ax5805_data_t, fsoe_master_connid), "%s.%s.%s.fsoe-master-connid" },
-  { HAL_U32, HAL_OUT, offsetof(lcec_ax5805_data_t, fsoe_slave_cmd), "%s.%s.%s.fsoe-slave-cmd" },
-  { HAL_U32, HAL_OUT, offsetof(lcec_ax5805_data_t, fsoe_slave_crc0), "%s.%s.%s.fsoe-slave-crc-0" },
-  { HAL_U32, HAL_OUT, offsetof(lcec_ax5805_data_t, fsoe_slave_crc1), "%s.%s.%s.fsoe-slave-crc-1" },
-  { HAL_U32, HAL_OUT, offsetof(lcec_ax5805_data_t, fsoe_slave_connid), "%s.%s.%s.fsoe-slave-connid" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_ax5805_data_t, fsoe_in_sto0), "%s.%s.%s.fsoe-in-sto-0" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_ax5805_data_t, fsoe_in_sto1), "%s.%s.%s.fsoe-in-sto-1" },
-  { HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL }
+    {HAL_U32, HAL_OUT, offsetof(lcec_ax5805_data_t, fsoe_master_cmd), "%s.%s.%s.fsoe-master-cmd"},
+    {HAL_U32, HAL_OUT, offsetof(lcec_ax5805_data_t, fsoe_master_crc0), "%s.%s.%s.fsoe-master-crc-0"},
+    {HAL_U32, HAL_OUT, offsetof(lcec_ax5805_data_t, fsoe_master_crc1), "%s.%s.%s.fsoe-master-crc-1"},
+    {HAL_U32, HAL_OUT, offsetof(lcec_ax5805_data_t, fsoe_master_connid), "%s.%s.%s.fsoe-master-connid"},
+    {HAL_U32, HAL_OUT, offsetof(lcec_ax5805_data_t, fsoe_slave_cmd), "%s.%s.%s.fsoe-slave-cmd"},
+    {HAL_U32, HAL_OUT, offsetof(lcec_ax5805_data_t, fsoe_slave_crc0), "%s.%s.%s.fsoe-slave-crc-0"},
+    {HAL_U32, HAL_OUT, offsetof(lcec_ax5805_data_t, fsoe_slave_crc1), "%s.%s.%s.fsoe-slave-crc-1"},
+    {HAL_U32, HAL_OUT, offsetof(lcec_ax5805_data_t, fsoe_slave_connid), "%s.%s.%s.fsoe-slave-connid"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_ax5805_data_t, fsoe_in_sto0), "%s.%s.%s.fsoe-in-sto-0"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_ax5805_data_t, fsoe_in_sto1), "%s.%s.%s.fsoe-in-sto-1"},
+    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
 static int lcec_ax5805_preinit(struct lcec_slave *slave) {
@@ -98,13 +98,15 @@ static int lcec_ax5805_preinit(struct lcec_slave *slave) {
   // try to find corresponding ax5n
   ax5n_slave = lcec_slave_by_index(master, slave->index - 1);
   if (ax5n_slave == NULL) {
-    rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "%s.%s: Unable to find corresponding AX5nxx with index %d.\n", master->name, slave->name, slave->index - 1);
+    rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "%s.%s: Unable to find corresponding AX5nxx with index %d.\n", master->name, slave->name,
+        slave->index - 1);
     return -EINVAL;
   }
 
   // check for AX5nxx
   if (ax5n_slave->proc_preinit != lcec_ax5100_preinit && ax5n_slave->proc_preinit != lcec_ax5200_preinit) {
-    rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "%s.%s: Slave with index %d is not an AX5nxx.\n", master->name, slave->name, ax5n_slave->index);
+    rtapi_print_msg(
+        RTAPI_MSG_ERR, LCEC_MSG_PFX "%s.%s: Slave with index %d is not an AX5nxx.\n", master->name, slave->name, ax5n_slave->index);
     return -EINVAL;
   }
 
@@ -114,7 +116,8 @@ static int lcec_ax5805_preinit(struct lcec_slave *slave) {
   // use FSOE config from AX5nxx
   slave->fsoeConf = ax5n_slave->fsoeConf;
   if (slave->fsoeConf == NULL) {
-    rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "%s.%s: Corresponding AX5nxx with index %d has no FSOE config.\n", master->name, slave->name, ax5n_slave->index);
+    rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "%s.%s: Corresponding AX5nxx with index %d has no FSOE config.\n", master->name,
+        slave->name, ax5n_slave->index);
     return -EINVAL;
   }
 
@@ -139,19 +142,19 @@ static int lcec_ax5805_init(int comp_id, struct lcec_slave *slave) {
   slave->hal_data = hal_data;
 
   // initialize POD entries
-  lcec_pdo_init(slave,  0xE700, 0x01, &hal_data->fsoe_master_cmd_os, NULL);
-  lcec_pdo_init(slave,  0xE700, 0x02, &hal_data->fsoe_master_connid_os, NULL);
-  lcec_pdo_init(slave,  0xE600, 0x01, &hal_data->fsoe_slave_cmd_os, NULL);
-  lcec_pdo_init(slave,  0xE600, 0x02, &hal_data->fsoe_slave_connid_os, NULL);
+  lcec_pdo_init(slave, 0xE700, 0x01, &hal_data->fsoe_master_cmd_os, NULL);
+  lcec_pdo_init(slave, 0xE700, 0x02, &hal_data->fsoe_master_connid_os, NULL);
+  lcec_pdo_init(slave, 0xE600, 0x01, &hal_data->fsoe_slave_cmd_os, NULL);
+  lcec_pdo_init(slave, 0xE600, 0x02, &hal_data->fsoe_slave_connid_os, NULL);
 
-  lcec_pdo_init(slave,  0xE700, 0x03, &hal_data->fsoe_master_crc0_os, NULL);
-  lcec_pdo_init(slave,  0xE600, 0x03, &hal_data->fsoe_slave_crc0_os, NULL);
-  lcec_pdo_init(slave,  0x6640, 0x00, &hal_data->fsoe_in_sto0_os, &hal_data->fsoe_in_sto0_bp);
+  lcec_pdo_init(slave, 0xE700, 0x03, &hal_data->fsoe_master_crc0_os, NULL);
+  lcec_pdo_init(slave, 0xE600, 0x03, &hal_data->fsoe_slave_crc0_os, NULL);
+  lcec_pdo_init(slave, 0x6640, 0x00, &hal_data->fsoe_in_sto0_os, &hal_data->fsoe_in_sto0_bp);
 
   if (slave->fsoeConf->data_channels >= 2) {
-    lcec_pdo_init(slave,  0xE700, 0x04, &hal_data->fsoe_master_crc1_os, NULL);
-    lcec_pdo_init(slave,  0xE600, 0x04, &hal_data->fsoe_slave_crc1_os, NULL);
-    lcec_pdo_init(slave,  0x6E40, 0x00, &hal_data->fsoe_in_sto1_os, &hal_data->fsoe_in_sto1_bp);
+    lcec_pdo_init(slave, 0xE700, 0x04, &hal_data->fsoe_master_crc1_os, NULL);
+    lcec_pdo_init(slave, 0xE600, 0x04, &hal_data->fsoe_slave_crc1_os, NULL);
+    lcec_pdo_init(slave, 0x6E40, 0x00, &hal_data->fsoe_in_sto1_os, &hal_data->fsoe_in_sto1_bp);
 
     slave_pins = slave_pins_2ch;
   } else {
@@ -168,7 +171,7 @@ static int lcec_ax5805_init(int comp_id, struct lcec_slave *slave) {
 
 static void lcec_ax5805_read(struct lcec_slave *slave, long period) {
   lcec_master_t *master = slave->master;
-  lcec_ax5805_data_t *hal_data = (lcec_ax5805_data_t *) slave->hal_data;
+  lcec_ax5805_data_t *hal_data = (lcec_ax5805_data_t *)slave->hal_data;
   uint8_t *pd = master->process_data;
 
   copy_fsoe_data(slave, hal_data->fsoe_slave_cmd_os, hal_data->fsoe_master_cmd_os);
@@ -188,4 +191,3 @@ static void lcec_ax5805_read(struct lcec_slave *slave, long period) {
     *(hal_data->fsoe_in_sto1) = EC_READ_BIT(&pd[hal_data->fsoe_in_sto1_os], hal_data->fsoe_in_sto1_bp);
   }
 }
-

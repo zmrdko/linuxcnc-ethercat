@@ -93,14 +93,14 @@ static const lcec_modparam_desc_t modparams_rtec[] = {
 static int lcec_rtec_init(int comp_id, struct lcec_slave *slave);
 
 static lcec_typelist_t types[] = {
-    {"ECR60", LCEC_RTELLIGENT_VID, 0x0a880001,  0, NULL, lcec_rtec_init, /* modparams_rtec */},
-    {"ECR60x2", LCEC_RTELLIGENT_VID, 0x0a880005,  0, NULL, lcec_rtec_init,
+    {"ECR60", LCEC_RTELLIGENT_VID, 0x0a880001, 0, NULL, lcec_rtec_init, /* modparams_rtec */},
+    {"ECR60x2", LCEC_RTELLIGENT_VID, 0x0a880005, 0, NULL, lcec_rtec_init,
         /* modparams_rtec */},  // Only one channel supported right now
-    {"ECT60", LCEC_RTELLIGENT_VID, 0x0a880002,  0, NULL, lcec_rtec_init, /* modparams_rtec */},
-    {"ECT60x2", LCEC_RTELLIGENT_VID, 0x0a880006,  0, NULL, lcec_rtec_init,
+    {"ECT60", LCEC_RTELLIGENT_VID, 0x0a880002, 0, NULL, lcec_rtec_init, /* modparams_rtec */},
+    {"ECT60x2", LCEC_RTELLIGENT_VID, 0x0a880006, 0, NULL, lcec_rtec_init,
         /* modparams_rtec */},  // Only one channel supported right now
-    {"ECR86", LCEC_RTELLIGENT_VID, 0x0a880003,  0, NULL, lcec_rtec_init, /* modparams_rtec */},
-    {"ECT86", LCEC_RTELLIGENT_VID, 0x0a880004,  0, NULL, lcec_rtec_init, /* modparams_rtec */},
+    {"ECR86", LCEC_RTELLIGENT_VID, 0x0a880003, 0, NULL, lcec_rtec_init, /* modparams_rtec */},
+    {"ECT86", LCEC_RTELLIGENT_VID, 0x0a880004, 0, NULL, lcec_rtec_init, /* modparams_rtec */},
     {NULL},
 };
 ADD_TYPES_WITH_CIA402_MODPARAMS(types, modparams_rtec)
@@ -467,15 +467,15 @@ static int lcec_rtec_init(int comp_id, struct lcec_slave *slave) {
   }
 
   // Register rtec-specific PDOs.
-  lcec_pdo_init(slave,  0x200e, 0, &hal_data->alarm_code_os, NULL);
-  lcec_pdo_init(slave,  0x200f, 0, &hal_data->status_code_os, NULL);
-  lcec_pdo_init(slave,  0x2021, 0, &hal_data->encoder_position_os, NULL);
-  lcec_pdo_init(slave,  0x2044, 0, &hal_data->current_rpm_os, NULL);
-  lcec_pdo_init(slave,  0x2048, 0, &hal_data->voltage_os, NULL);
+  lcec_pdo_init(slave, 0x200e, 0, &hal_data->alarm_code_os, NULL);
+  lcec_pdo_init(slave, 0x200f, 0, &hal_data->status_code_os, NULL);
+  lcec_pdo_init(slave, 0x2021, 0, &hal_data->encoder_position_os, NULL);
+  lcec_pdo_init(slave, 0x2044, 0, &hal_data->current_rpm_os, NULL);
+  lcec_pdo_init(slave, 0x2048, 0, &hal_data->voltage_os, NULL);
 
-  hal_data->din->channels[0] = lcec_din_register_channel_packed(slave, 0x60fd, 0, 0, "din-cw-limit");  // negative limit switch
-  hal_data->din->channels[1] = lcec_din_register_channel_packed(slave, 0x60fd, 0, 1, "din-ccw-limit");                      // positive limit switch
-  hal_data->din->channels[2] = lcec_din_register_channel_packed(slave, 0x60fd, 0, 2, "din-home");  // home
+  hal_data->din->channels[0] = lcec_din_register_channel_packed(slave, 0x60fd, 0, 0, "din-cw-limit");   // negative limit switch
+  hal_data->din->channels[1] = lcec_din_register_channel_packed(slave, 0x60fd, 0, 1, "din-ccw-limit");  // positive limit switch
+  hal_data->din->channels[2] = lcec_din_register_channel_packed(slave, 0x60fd, 0, 2, "din-home");       // home
   hal_data->din->channels[3] = lcec_din_register_channel_packed(slave, 0x60fd, 0, 3, "din-interlock");  // interlock?
   hal_data->din->channels[4] = lcec_din_register_channel_packed(slave, 0x60fd, 0, 16, "din-1");
   hal_data->din->channels[5] = lcec_din_register_channel_packed(slave, 0x60fd, 0, 17, "din-2");

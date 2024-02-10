@@ -207,10 +207,10 @@ static const lcec_pindesc_t slave_pins[] = {
     {HAL_FLOAT, HAL_OUT, offsetof(lcec_fr4000_data_t, adc1), "%s.%s.%s.adc0-value"},
     {HAL_FLOAT, HAL_OUT, offsetof(lcec_fr4000_data_t, adc2), "%s.%s.%s.adc1-value"},
 
-    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL}};
+    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
+};
 
-static const lcec_pindesc_t slave_params[] = {
-    {HAL_FLOAT, HAL_RW, offsetof(lcec_fr4000_data_t, enc_00_scale), "%s.%s.%s.axis0-enc-scale"},
+static const lcec_pindesc_t slave_params[] = {{HAL_FLOAT, HAL_RW, offsetof(lcec_fr4000_data_t, enc_00_scale), "%s.%s.%s.axis0-enc-scale"},
     {HAL_FLOAT, HAL_RW, offsetof(lcec_fr4000_data_t, enc_01_scale), "%s.%s.%s.axis1-enc-scale"},
     {HAL_FLOAT, HAL_RW, offsetof(lcec_fr4000_data_t, enc_02_scale), "%s.%s.%s.axis2-enc-scale"},
     {HAL_FLOAT, HAL_RW, offsetof(lcec_fr4000_data_t, enc_03_scale), "%s.%s.%s.axis3-enc-scale"},
@@ -355,9 +355,11 @@ static ec_pdo_info_t lcec_fr4000_pdos[] = {
     {0x1a07, 8, lcec_fr4000_pdo_entries + 90}, /* Ingressi digitali */
 };
 
-static ec_sync_info_t lcec_fr4000_syncs[] = {{0, EC_DIR_OUTPUT, 7, lcec_fr4000_pdos + 0, EC_WD_DISABLE},
-                                             {1, EC_DIR_INPUT, 8, lcec_fr4000_pdos + 7, EC_WD_DISABLE},
-                                             {0xff}};
+static ec_sync_info_t lcec_fr4000_syncs[] = {
+    {0, EC_DIR_OUTPUT, 7, lcec_fr4000_pdos + 0, EC_WD_DISABLE},
+    {1, EC_DIR_INPUT, 8, lcec_fr4000_pdos + 7, EC_WD_DISABLE},
+    {0xff},
+};
 
 static uint16_t raw_counts_old[5];
 static int32_t counts[5];
@@ -386,21 +388,21 @@ int lcec_fr4000_init(int comp_id, struct lcec_slave *slave) {
   slave->sync_info = lcec_fr4000_syncs;
 
   // initialize POD entries
-  lcec_pdo_init(slave,  0x7006, 1, &hal_data->off_dig_out, NULL);
-  lcec_pdo_init(slave,  0x6007, 1, &hal_data->off_dig_inp, NULL);
-  lcec_pdo_init(slave,  0x7001, 1, &hal_data->off_PWM, NULL);
-  lcec_pdo_init(slave,  0x7003, 1, &hal_data->off_DIR, NULL);
-  lcec_pdo_init(slave,  0x6001, 1, &hal_data->off_ENC, NULL);
-  lcec_pdo_init(slave,  0x7006, 1, &hal_data->off_ENABLE_24V, NULL);
-  lcec_pdo_init(slave,  0x7002, 1, &hal_data->off_ENABLE_5V, NULL);
-  lcec_pdo_init(slave,  0x6003, 1, &hal_data->off_DRVOK, NULL);
-  lcec_pdo_init(slave,  0x6004, 1, &hal_data->off_HOME, NULL);
-  lcec_pdo_init(slave,  0x7000, 1, &hal_data->off_INVERTER, NULL);
-  lcec_pdo_init(slave,  0x6000, 1, &hal_data->off_ADC1, NULL);
-  lcec_pdo_init(slave,  0x6000, 2, &hal_data->off_ADC2, NULL);
-  lcec_pdo_init(slave,  0x6002, 1, &hal_data->off_LATCH, NULL);
-  lcec_pdo_init(slave,  0x6006, 1, &hal_data->off_FLAG, NULL);
-  lcec_pdo_init(slave,  0x7004, 1, &hal_data->off_RESET_FLAG, NULL);
+  lcec_pdo_init(slave, 0x7006, 1, &hal_data->off_dig_out, NULL);
+  lcec_pdo_init(slave, 0x6007, 1, &hal_data->off_dig_inp, NULL);
+  lcec_pdo_init(slave, 0x7001, 1, &hal_data->off_PWM, NULL);
+  lcec_pdo_init(slave, 0x7003, 1, &hal_data->off_DIR, NULL);
+  lcec_pdo_init(slave, 0x6001, 1, &hal_data->off_ENC, NULL);
+  lcec_pdo_init(slave, 0x7006, 1, &hal_data->off_ENABLE_24V, NULL);
+  lcec_pdo_init(slave, 0x7002, 1, &hal_data->off_ENABLE_5V, NULL);
+  lcec_pdo_init(slave, 0x6003, 1, &hal_data->off_DRVOK, NULL);
+  lcec_pdo_init(slave, 0x6004, 1, &hal_data->off_HOME, NULL);
+  lcec_pdo_init(slave, 0x7000, 1, &hal_data->off_INVERTER, NULL);
+  lcec_pdo_init(slave, 0x6000, 1, &hal_data->off_ADC1, NULL);
+  lcec_pdo_init(slave, 0x6000, 2, &hal_data->off_ADC2, NULL);
+  lcec_pdo_init(slave, 0x6002, 1, &hal_data->off_LATCH, NULL);
+  lcec_pdo_init(slave, 0x6006, 1, &hal_data->off_FLAG, NULL);
+  lcec_pdo_init(slave, 0x7004, 1, &hal_data->off_RESET_FLAG, NULL);
 
   // export pins
   if ((err = lcec_pin_newf_list(hal_data, slave_pins, LCEC_MODULE_NAME, master->name, slave->name)) != 0) {
