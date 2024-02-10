@@ -19,28 +19,29 @@
 /// @file
 /// @brief Driver for Beckhoff EL5101 Encoder modules
 
-#include "../lcec.h"
 #include "lcec_el5101.h"
+
+#include "../lcec.h"
 
 static int lcec_el5101_init(int comp_id, struct lcec_slave *slave);
 
-static lcec_typelist_t types[]={
-  { "EL5101", LCEC_BECKHOFF_VID, 0x13ed3052, 0, NULL, lcec_el5101_init},
-  { NULL },
+static lcec_typelist_t types[] = {
+    {"EL5101", LCEC_BECKHOFF_VID, 0x13ed3052, 0, NULL, lcec_el5101_init},
+    {NULL},
 };
 ADD_TYPES(types);
 
-#define LCEC_EL5101_STATUS_INPUT        (1 << 5)
-#define LCEC_EL5101_STATUS_OVERFLOW     (1 << 4)
-#define LCEC_EL5101_STATUS_UNDERFLOW    (1 << 3)
-#define LCEC_EL5101_STATUS_CNTSET_ACC   (1 << 2)
-#define LCEC_EL5101_STATUS_LAT_EXT_VAL  (1 << 1)
-#define LCEC_EL5101_STATUS_LATC_VAL     (1 << 0)
+#define LCEC_EL5101_STATUS_INPUT       (1 << 5)
+#define LCEC_EL5101_STATUS_OVERFLOW    (1 << 4)
+#define LCEC_EL5101_STATUS_UNDERFLOW   (1 << 3)
+#define LCEC_EL5101_STATUS_CNTSET_ACC  (1 << 2)
+#define LCEC_EL5101_STATUS_LAT_EXT_VAL (1 << 1)
+#define LCEC_EL5101_STATUS_LATC_VAL    (1 << 0)
 
-#define LCEC_EL5101_CTRL_EN_LATCH_EXTN  (1 << 3)
-#define LCEC_EL5101_CTRL_CNT_SET        (1 << 2)
-#define LCEC_EL5101_CTRL_EN_LATCH_EXTP  (1 << 1)
-#define LCEC_EL5101_CTRL_EN_LATC        (1 << 0)
+#define LCEC_EL5101_CTRL_EN_LATCH_EXTN (1 << 3)
+#define LCEC_EL5101_CTRL_CNT_SET       (1 << 2)
+#define LCEC_EL5101_CTRL_EN_LATCH_EXTP (1 << 1)
+#define LCEC_EL5101_CTRL_EN_LATC       (1 << 0)
 
 typedef struct {
   hal_bit_t *ena_latch_c;
@@ -83,64 +84,63 @@ typedef struct {
 } lcec_el5101_data_t;
 
 static const lcec_pindesc_t slave_pins[] = {
-  { HAL_BIT, HAL_IO, offsetof(lcec_el5101_data_t, ena_latch_c), "%s.%s.%s.enc-index-c-enable" },
-  { HAL_BIT, HAL_IO, offsetof(lcec_el5101_data_t, ena_latch_ext_pos), "%s.%s.%s.enc-index-ext-pos-enable" },
-  { HAL_BIT, HAL_IO, offsetof(lcec_el5101_data_t, ena_latch_ext_neg), "%s.%s.%s.enc-index-ext-neg-enable" },
-  { HAL_BIT, HAL_IN, offsetof(lcec_el5101_data_t, reset), "%s.%s.%s.enc-reset" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el5101_data_t, inext), "%s.%s.%s.enc-inext" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el5101_data_t, overflow), "%s.%s.%s.enc-overflow" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el5101_data_t, underflow), "%s.%s.%s.enc-underflow" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el5101_data_t, latch_c_valid), "%s.%s.%s.enc-latch-c-valid" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el5101_data_t, latch_ext_valid), "%s.%s.%s.enc-latch-ext-valid" },
-  { HAL_BIT, HAL_IO, offsetof(lcec_el5101_data_t, set_raw_count), "%s.%s.%s.enc-set-raw-count" },
-  { HAL_S32, HAL_IN, offsetof(lcec_el5101_data_t, set_raw_count_val), "%s.%s.%s.enc-set-raw-count-val" },
-  { HAL_S32, HAL_OUT, offsetof(lcec_el5101_data_t, raw_count), "%s.%s.%s.enc-raw-count" },
-  { HAL_S32, HAL_OUT, offsetof(lcec_el5101_data_t, count), "%s.%s.%s.enc-count" },
-  { HAL_S32, HAL_OUT, offsetof(lcec_el5101_data_t, raw_latch), "%s.%s.%s.enc-raw-latch" },
-  { HAL_U32, HAL_OUT, offsetof(lcec_el5101_data_t, raw_frequency), "%s.%s.%s.enc-raw-freq" },
-  { HAL_U32, HAL_OUT, offsetof(lcec_el5101_data_t, raw_period), "%s.%s.%s.enc-raw-period" },
-  { HAL_U32, HAL_OUT, offsetof(lcec_el5101_data_t, raw_window), "%s.%s.%s.enc-raw-window" },
-  { HAL_FLOAT, HAL_OUT, offsetof(lcec_el5101_data_t, pos), "%s.%s.%s.enc-pos" },
-  { HAL_FLOAT, HAL_OUT, offsetof(lcec_el5101_data_t, period), "%s.%s.%s.enc-period" },
-  { HAL_FLOAT, HAL_OUT, offsetof(lcec_el5101_data_t, frequency), "%s.%s.%s.enc-frequency" },
-  { HAL_FLOAT, HAL_IO, offsetof(lcec_el5101_data_t, pos_scale), "%s.%s.%s.enc-pos-scale" },
-  { HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL }
+    {HAL_BIT, HAL_IO, offsetof(lcec_el5101_data_t, ena_latch_c), "%s.%s.%s.enc-index-c-enable"},
+    {HAL_BIT, HAL_IO, offsetof(lcec_el5101_data_t, ena_latch_ext_pos), "%s.%s.%s.enc-index-ext-pos-enable"},
+    {HAL_BIT, HAL_IO, offsetof(lcec_el5101_data_t, ena_latch_ext_neg), "%s.%s.%s.enc-index-ext-neg-enable"},
+    {HAL_BIT, HAL_IN, offsetof(lcec_el5101_data_t, reset), "%s.%s.%s.enc-reset"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_el5101_data_t, inext), "%s.%s.%s.enc-inext"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_el5101_data_t, overflow), "%s.%s.%s.enc-overflow"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_el5101_data_t, underflow), "%s.%s.%s.enc-underflow"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_el5101_data_t, latch_c_valid), "%s.%s.%s.enc-latch-c-valid"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_el5101_data_t, latch_ext_valid), "%s.%s.%s.enc-latch-ext-valid"},
+    {HAL_BIT, HAL_IO, offsetof(lcec_el5101_data_t, set_raw_count), "%s.%s.%s.enc-set-raw-count"},
+    {HAL_S32, HAL_IN, offsetof(lcec_el5101_data_t, set_raw_count_val), "%s.%s.%s.enc-set-raw-count-val"},
+    {HAL_S32, HAL_OUT, offsetof(lcec_el5101_data_t, raw_count), "%s.%s.%s.enc-raw-count"},
+    {HAL_S32, HAL_OUT, offsetof(lcec_el5101_data_t, count), "%s.%s.%s.enc-count"},
+    {HAL_S32, HAL_OUT, offsetof(lcec_el5101_data_t, raw_latch), "%s.%s.%s.enc-raw-latch"},
+    {HAL_U32, HAL_OUT, offsetof(lcec_el5101_data_t, raw_frequency), "%s.%s.%s.enc-raw-freq"},
+    {HAL_U32, HAL_OUT, offsetof(lcec_el5101_data_t, raw_period), "%s.%s.%s.enc-raw-period"},
+    {HAL_U32, HAL_OUT, offsetof(lcec_el5101_data_t, raw_window), "%s.%s.%s.enc-raw-window"},
+    {HAL_FLOAT, HAL_OUT, offsetof(lcec_el5101_data_t, pos), "%s.%s.%s.enc-pos"},
+    {HAL_FLOAT, HAL_OUT, offsetof(lcec_el5101_data_t, period), "%s.%s.%s.enc-period"},
+    {HAL_FLOAT, HAL_OUT, offsetof(lcec_el5101_data_t, frequency), "%s.%s.%s.enc-frequency"},
+    {HAL_FLOAT, HAL_IO, offsetof(lcec_el5101_data_t, pos_scale), "%s.%s.%s.enc-pos-scale"},
+    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
 static ec_pdo_entry_info_t lcec_el5101_in[] = {
-   {0x6000, 0x01,  8}, // Status
-   {0x6000, 0x02, 16}, // Value
-   {0x6000, 0x03, 16}  // Latch
+    {0x6000, 0x01, 8},   // Status
+    {0x6000, 0x02, 16},  // Value
+    {0x6000, 0x03, 16},  // Latch
 };
 
 static ec_pdo_entry_info_t lcec_el5101_period[] = {
-   {0x6000, 0x04, 32}, // Frequency
-   {0x6000, 0x05, 16}, // Period
-   {0x6000, 0x06, 16}  // Window
+    {0x6000, 0x04, 32},  // Frequency
+    {0x6000, 0x05, 16},  // Period
+    {0x6000, 0x06, 16},  // Window
 };
 
 static ec_pdo_entry_info_t lcec_el5101_out[] = {
-   {0x7000, 0x01,  8}, // Ctrl
-   {0x7000, 0x02, 16}  // Value
+    {0x7000, 0x01, 8},   // Ctrl
+    {0x7000, 0x02, 16},  // Value
 };
 
 static ec_pdo_info_t lcec_el5101_pdos_out[] = {
-    {0x1600,  2, lcec_el5101_out}
+    {0x1600, 2, lcec_el5101_out},
 };
 
 static ec_pdo_info_t lcec_el5101_pdos_in[] = {
-    {0x1A00,  3, lcec_el5101_in},
-    {0x1A02,  3, lcec_el5101_period}
+    {0x1A00, 3, lcec_el5101_in},
+    {0x1A02, 3, lcec_el5101_period},
 };
 
 static ec_sync_info_t lcec_el5101_syncs[] = {
     {0, EC_DIR_OUTPUT, 0, NULL},
-    {1, EC_DIR_INPUT,  0, NULL},
+    {1, EC_DIR_INPUT, 0, NULL},
     {2, EC_DIR_OUTPUT, 1, lcec_el5101_pdos_out},
-    {3, EC_DIR_INPUT,  2, lcec_el5101_pdos_in},
-    {0xff}
+    {3, EC_DIR_INPUT, 2, lcec_el5101_pdos_in},
+    {0xff},
 };
-
 
 static void lcec_el5101_read(struct lcec_slave *slave, long period);
 static void lcec_el5101_write(struct lcec_slave *slave, long period);
@@ -169,14 +169,14 @@ static int lcec_el5101_init(int comp_id, struct lcec_slave *slave) {
   hal_data->last_operational = 0;
 
   // initialize POD entries
-  lcec_pdo_init(slave,  0x6000, 0x01, &hal_data->status_pdo_os, NULL);
-  lcec_pdo_init(slave,  0x6000, 0x02, &hal_data->value_pdo_os, NULL);
-  lcec_pdo_init(slave,  0x6000, 0x03, &hal_data->latch_pdo_os, NULL);
-  lcec_pdo_init(slave,  0x6000, 0x04, &hal_data->frequency_pdo_os, NULL);
-  lcec_pdo_init(slave,  0x6000, 0x05, &hal_data->period_pdo_os, NULL);
-  lcec_pdo_init(slave,  0x6000, 0x06, &hal_data->window_pdo_os, NULL);
-  lcec_pdo_init(slave,  0x7000, 0x01, &hal_data->control_pdo_os, NULL);
-  lcec_pdo_init(slave,  0x7000, 0x02, &hal_data->setval_pdo_os, NULL);
+  lcec_pdo_init(slave, 0x6000, 0x01, &hal_data->status_pdo_os, NULL);
+  lcec_pdo_init(slave, 0x6000, 0x02, &hal_data->value_pdo_os, NULL);
+  lcec_pdo_init(slave, 0x6000, 0x03, &hal_data->latch_pdo_os, NULL);
+  lcec_pdo_init(slave, 0x6000, 0x04, &hal_data->frequency_pdo_os, NULL);
+  lcec_pdo_init(slave, 0x6000, 0x05, &hal_data->period_pdo_os, NULL);
+  lcec_pdo_init(slave, 0x6000, 0x06, &hal_data->window_pdo_os, NULL);
+  lcec_pdo_init(slave, 0x7000, 0x01, &hal_data->control_pdo_os, NULL);
+  lcec_pdo_init(slave, 0x7000, 0x02, &hal_data->setval_pdo_os, NULL);
 
   // export pins
   if ((err = lcec_pin_newf_list(hal_data, slave_pins, LCEC_MODULE_NAME, master->name, slave->name)) != 0) {
@@ -197,7 +197,7 @@ static int lcec_el5101_init(int comp_id, struct lcec_slave *slave) {
 
 static void lcec_el5101_read(struct lcec_slave *slave, long period) {
   lcec_master_t *master = slave->master;
-  lcec_el5101_data_t *hal_data = (lcec_el5101_data_t *) slave->hal_data;
+  lcec_el5101_data_t *hal_data = (lcec_el5101_data_t *)slave->hal_data;
   uint8_t *pd = master->process_data;
   uint8_t raw_status;
   int16_t raw_count, raw_latch, raw_delta;
@@ -250,7 +250,7 @@ static void lcec_el5101_read(struct lcec_slave *slave, long period) {
   }
 
   // update raw values
-  if (! *(hal_data->set_raw_count)) {
+  if (!*(hal_data->set_raw_count)) {
     *(hal_data->raw_count) = raw_count;
     *(hal_data->raw_frequency) = raw_frequency;
     *(hal_data->raw_period) = raw_period;
@@ -288,15 +288,15 @@ static void lcec_el5101_read(struct lcec_slave *slave, long period) {
   *(hal_data->pos) = *(hal_data->count) * hal_data->scale;
 
   // scale period
-  *(hal_data->frequency) = ((double) (*(hal_data->raw_frequency))) * LCEC_EL5101_FREQUENCY_SCALE;
-  *(hal_data->period) = ((double) (*(hal_data->raw_period))) * LCEC_EL5101_PERIOD_SCALE;
+  *(hal_data->frequency) = ((double)(*(hal_data->raw_frequency))) * LCEC_EL5101_FREQUENCY_SCALE;
+  *(hal_data->period) = ((double)(*(hal_data->raw_period))) * LCEC_EL5101_PERIOD_SCALE;
 
   hal_data->last_operational = 1;
 }
 
 static void lcec_el5101_write(struct lcec_slave *slave, long period) {
   lcec_master_t *master = slave->master;
-  lcec_el5101_data_t *hal_data = (lcec_el5101_data_t *) slave->hal_data;
+  lcec_el5101_data_t *hal_data = (lcec_el5101_data_t *)slave->hal_data;
   uint8_t *pd = master->process_data;
   uint8_t raw_ctrl;
 
@@ -319,4 +319,3 @@ static void lcec_el5101_write(struct lcec_slave *slave, long period) {
   EC_WRITE_U8(&pd[hal_data->control_pdo_os], raw_ctrl);
   EC_WRITE_S16(&pd[hal_data->setval_pdo_os], *(hal_data->set_raw_count_val));
 }
-

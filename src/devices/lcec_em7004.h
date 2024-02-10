@@ -24,9 +24,9 @@
 
 #include "../lcec.h"
 
-#define LCEC_EM7004_DIN_COUNT 16
+#define LCEC_EM7004_DIN_COUNT  16
 #define LCEC_EM7004_DOUT_COUNT 16
 #define LCEC_EM7004_AOUT_COUNT 4
-#define LCEC_EM7004_ENC_COUNT 4
+#define LCEC_EM7004_ENC_COUNT  4
 
 #endif

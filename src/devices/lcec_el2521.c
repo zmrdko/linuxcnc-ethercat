@@ -19,9 +19,8 @@
 /// @file
 /// @brief Driver for Beckhoff EL2521 pulse train output modules
 
-#include "hal.h"
-
 #include "../lcec.h"
+#include "hal.h"
 
 // ****************************************************************************
 // CONFIG ISSUES:
@@ -33,35 +32,35 @@
 
 static int lcec_el2521_init(int comp_id, struct lcec_slave *slave);
 
-static lcec_typelist_t types[]={
-  { "EL2521", LCEC_BECKHOFF_VID, 0x09d93052, 0, NULL, lcec_el2521_init},
-  { NULL },
+static lcec_typelist_t types[] = {
+    {"EL2521", LCEC_BECKHOFF_VID, 0x09d93052, 0, NULL, lcec_el2521_init},
+    {NULL},
 };
 ADD_TYPES(types);
 
 typedef struct {
-  hal_s32_t *count;		// pin: captured feedback in counts
-  hal_float_t *pos_fb;		// pin: position feedback (position units)
-  hal_bit_t *ramp_active;       // pin: ramp currently active
-  hal_bit_t *ramp_disable;      // pin: disable ramp
-  hal_bit_t *in_z;              // pin: input z
-  hal_bit_t *in_z_not;          // pin: input z inverted
-  hal_bit_t *in_t;              // pin: input t
-  hal_bit_t *in_t_not;          // pin: input t inverted
+  hal_s32_t *count;         // pin: captured feedback in counts
+  hal_float_t *pos_fb;      // pin: position feedback (position units)
+  hal_bit_t *ramp_active;   // pin: ramp currently active
+  hal_bit_t *ramp_disable;  // pin: disable ramp
+  hal_bit_t *in_z;          // pin: input z
+  hal_bit_t *in_z_not;      // pin: input z inverted
+  hal_bit_t *in_t;          // pin: input t
+  hal_bit_t *in_t_not;      // pin: input t inverted
 
-  hal_bit_t *enable;		// pin for enable stepgen
-  hal_float_t *vel_cmd;		// pin: velocity command (pos units/sec)
+  hal_bit_t *enable;     // pin for enable stepgen
+  hal_float_t *vel_cmd;  // pin: velocity command (pos units/sec)
 
-  hal_float_t pos_scale;	// param: steps per position unit
-  hal_float_t freq;		// param: current frequency
-  hal_float_t maxvel;		// param: max velocity, (pos units/sec)
-  hal_float_t maxaccel_rise;	// param: max accel (pos units/sec^2)
-  hal_float_t maxaccel_fall;	// param: max accel (pos units/sec^2)
+  hal_float_t pos_scale;      // param: steps per position unit
+  hal_float_t freq;           // param: current frequency
+  hal_float_t maxvel;         // param: max velocity, (pos units/sec)
+  hal_float_t maxaccel_rise;  // param: max accel (pos units/sec^2)
+  hal_float_t maxaccel_fall;  // param: max accel (pos units/sec^2)
 
   int last_operational;
-  int16_t last_hw_count;	// last hw counter value
-  double old_scale;		// stored scale value
-  double scale_recip;		// reciprocal value used for scaling
+  int16_t last_hw_count;  // last hw counter value
+  double old_scale;       // stored scale value
+  double scale_recip;     // reciprocal value used for scaling
 
   unsigned int state_pdo_os;
   unsigned int count_pdo_os;
@@ -83,36 +82,36 @@ typedef struct {
 } lcec_el2521_data_t;
 
 static const lcec_pindesc_t slave_pins[] = {
-  { HAL_S32, HAL_OUT, offsetof(lcec_el2521_data_t, count), "%s.%s.%s.stp-counts" },
-  { HAL_FLOAT, HAL_OUT, offsetof(lcec_el2521_data_t, pos_fb), "%s.%s.%s.stp-pos-fb" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el2521_data_t, ramp_active), "%s.%s.%s.stp-ramp-active" },
-  { HAL_BIT, HAL_IN, offsetof(lcec_el2521_data_t, ramp_disable), "%s.%s.%s.stp-ramp-disable" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el2521_data_t, in_z), "%s.%s.%s.stp-in-z" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el2521_data_t, in_z_not), "%s.%s.%s.stp-in-z-not" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el2521_data_t, in_t), "%s.%s.%s.stp-in-t" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el2521_data_t, in_t_not), "%s.%s.%s.stp-in-t-not" },
-  { HAL_BIT, HAL_IN, offsetof(lcec_el2521_data_t, enable), "%s.%s.%s.stp-enable" },
-  { HAL_FLOAT, HAL_IN, offsetof(lcec_el2521_data_t, vel_cmd), "%s.%s.%s.stp-velo-cmd" },
-  { HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL }
+    {HAL_S32, HAL_OUT, offsetof(lcec_el2521_data_t, count), "%s.%s.%s.stp-counts"},
+    {HAL_FLOAT, HAL_OUT, offsetof(lcec_el2521_data_t, pos_fb), "%s.%s.%s.stp-pos-fb"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_el2521_data_t, ramp_active), "%s.%s.%s.stp-ramp-active"},
+    {HAL_BIT, HAL_IN, offsetof(lcec_el2521_data_t, ramp_disable), "%s.%s.%s.stp-ramp-disable"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_el2521_data_t, in_z), "%s.%s.%s.stp-in-z"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_el2521_data_t, in_z_not), "%s.%s.%s.stp-in-z-not"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_el2521_data_t, in_t), "%s.%s.%s.stp-in-t"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_el2521_data_t, in_t_not), "%s.%s.%s.stp-in-t-not"},
+    {HAL_BIT, HAL_IN, offsetof(lcec_el2521_data_t, enable), "%s.%s.%s.stp-enable"},
+    {HAL_FLOAT, HAL_IN, offsetof(lcec_el2521_data_t, vel_cmd), "%s.%s.%s.stp-velo-cmd"},
+    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
 static const lcec_pindesc_t slave_params[] = {
-  { HAL_FLOAT, HAL_RO, offsetof(lcec_el2521_data_t, freq), "%s.%s.%s.stp-freq" },
-  { HAL_FLOAT, HAL_RO, offsetof(lcec_el2521_data_t, maxvel), "%s.%s.%s.stp-maxvel" },
-  { HAL_FLOAT, HAL_RO, offsetof(lcec_el2521_data_t, maxaccel_fall), "%s.%s.%s.stp-maxaccel-fall" },
-  { HAL_FLOAT, HAL_RO, offsetof(lcec_el2521_data_t, maxaccel_rise), "%s.%s.%s.stp-maxaccel-rise" },
-  { HAL_FLOAT, HAL_RW, offsetof(lcec_el2521_data_t, pos_scale), "%s.%s.%s.stp-pos-scale" },
-  { HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL }
+    {HAL_FLOAT, HAL_RO, offsetof(lcec_el2521_data_t, freq), "%s.%s.%s.stp-freq"},
+    {HAL_FLOAT, HAL_RO, offsetof(lcec_el2521_data_t, maxvel), "%s.%s.%s.stp-maxvel"},
+    {HAL_FLOAT, HAL_RO, offsetof(lcec_el2521_data_t, maxaccel_fall), "%s.%s.%s.stp-maxaccel-fall"},
+    {HAL_FLOAT, HAL_RO, offsetof(lcec_el2521_data_t, maxaccel_rise), "%s.%s.%s.stp-maxaccel-rise"},
+    {HAL_FLOAT, HAL_RW, offsetof(lcec_el2521_data_t, pos_scale), "%s.%s.%s.stp-pos-scale"},
+    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
 static ec_pdo_entry_info_t lcec_el2521_in[] = {
-   {0x6000, 0x01, 16}, // state word
-   {0x6000, 0x02, 16}  // counter value
+    {0x6000, 0x01, 16},  // state word
+    {0x6000, 0x02, 16}   // counter value
 };
 
 static ec_pdo_entry_info_t lcec_el2521_out[] = {
-   {0x7000, 0x01, 16}, // control word
-   {0x7000, 0x02, 16}  // frequency value
+    {0x7000, 0x01, 16},  // control word
+    {0x7000, 0x02, 16}   // frequency value
 };
 
 static ec_pdo_info_t lcec_el2521_pdos_in[] = {
@@ -125,12 +124,11 @@ static ec_pdo_info_t lcec_el2521_pdos_out[] = {
 
 static ec_sync_info_t lcec_el2521_syncs[] = {
     {0, EC_DIR_OUTPUT, 0, NULL},
-    {1, EC_DIR_INPUT,  0, NULL},
+    {1, EC_DIR_INPUT, 0, NULL},
     {2, EC_DIR_OUTPUT, 1, lcec_el2521_pdos_out},
-    {3, EC_DIR_INPUT,  1, lcec_el2521_pdos_in},
-    {0xff}
+    {3, EC_DIR_INPUT, 1, lcec_el2521_pdos_in},
+    {0xff},
 };
-
 
 static void lcec_el2521_check_scale(lcec_el2521_data_t *hal_data);
 static void lcec_el2521_read(struct lcec_slave *slave, long period);
@@ -181,10 +179,10 @@ static int lcec_el2521_init(int comp_id, struct lcec_slave *slave) {
   slave->sync_info = lcec_el2521_syncs;
 
   // initialize POD entries
-  lcec_pdo_init(slave,  0x6000, 0x01, &hal_data->state_pdo_os, NULL);
-  lcec_pdo_init(slave,  0x6000, 0x02, &hal_data->count_pdo_os, NULL);
-  lcec_pdo_init(slave,  0x7000, 0x01, &hal_data->ctrl_pdo_os, NULL);
-  lcec_pdo_init(slave,  0x7000, 0x02, &hal_data->freq_pdo_os, NULL);
+  lcec_pdo_init(slave, 0x6000, 0x01, &hal_data->state_pdo_os, NULL);
+  lcec_pdo_init(slave, 0x6000, 0x02, &hal_data->count_pdo_os, NULL);
+  lcec_pdo_init(slave, 0x7000, 0x01, &hal_data->ctrl_pdo_os, NULL);
+  lcec_pdo_init(slave, 0x7000, 0x02, &hal_data->freq_pdo_os, NULL);
 
   // export pins
   if ((err = lcec_pin_newf_list(hal_data, slave_pins, LCEC_MODULE_NAME, master->name, slave->name)) != 0) {
@@ -248,7 +246,7 @@ static void lcec_el2521_check_scale(lcec_el2521_data_t *hal_data) {
 
 static void lcec_el2521_read(struct lcec_slave *slave, long period) {
   lcec_master_t *master = slave->master;
-  lcec_el2521_data_t *hal_data = (lcec_el2521_data_t *) slave->hal_data;
+  lcec_el2521_data_t *hal_data = (lcec_el2521_data_t *)slave->hal_data;
   uint8_t *pd = master->process_data;
   int16_t hw_count, hw_count_diff;
   uint16_t state;
@@ -290,14 +288,14 @@ static void lcec_el2521_read(struct lcec_slave *slave, long period) {
   *(hal_data->count) += hw_count_diff;
 
   // scale position
-  *(hal_data->pos_fb) = (double) (*(hal_data->count)) * hal_data->scale_recip;
+  *(hal_data->pos_fb) = (double)(*(hal_data->count)) * hal_data->scale_recip;
 
   hal_data->last_operational = 1;
 }
 
 static void lcec_el2521_write(struct lcec_slave *slave, long period) {
   lcec_master_t *master = slave->master;
-  lcec_el2521_data_t *hal_data = (lcec_el2521_data_t *) slave->hal_data;
+  lcec_el2521_data_t *hal_data = (lcec_el2521_data_t *)slave->hal_data;
   uint8_t *pd = master->process_data;
   uint16_t ctrl;
   int32_t freq_raw;
@@ -329,4 +327,3 @@ static void lcec_el2521_write(struct lcec_slave *slave, long period) {
   }
   EC_WRITE_S16(&pd[hal_data->freq_pdo_os], freq_raw);
 }
-

@@ -25,9 +25,9 @@
 
 static int lcec_el3255_init(int comp_id, struct lcec_slave *slave);
 
-static lcec_typelist_t types[]={
-  { "EL3255", LCEC_BECKHOFF_VID, 0x0CB73052, 0, NULL, lcec_el3255_init},
-  { NULL },
+static lcec_typelist_t types[] = {
+    {"EL3255", LCEC_BECKHOFF_VID, 0x0CB73052, 0, NULL, lcec_el3255_init},
+    {NULL},
 };
 ADD_TYPES(types);
 
@@ -56,103 +56,92 @@ typedef struct {
 } lcec_el3255_data_t;
 
 static const lcec_pindesc_t slave_pins[] = {
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el3255_chan_t, overrange), "%s.%s.%s.pot-%d-overrange" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el3255_chan_t, underrange), "%s.%s.%s.pot-%d-underrange" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el3255_chan_t, error), "%s.%s.%s.pot-%d-error" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el3255_chan_t, sync_err), "%s.%s.%s.pot-%d-sync-err" },
-  { HAL_S32, HAL_OUT, offsetof(lcec_el3255_chan_t, raw_val), "%s.%s.%s.pot-%d-raw" },
-  { HAL_FLOAT, HAL_OUT, offsetof(lcec_el3255_chan_t, val), "%s.%s.%s.pot-%d-val" },
-  { HAL_FLOAT, HAL_IO, offsetof(lcec_el3255_chan_t, scale), "%s.%s.%s.pot-%d-scale" },
-  { HAL_FLOAT, HAL_IO, offsetof(lcec_el3255_chan_t, bias), "%s.%s.%s.pot-%d-bias" },
-  { HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL }
+    {HAL_BIT, HAL_OUT, offsetof(lcec_el3255_chan_t, overrange), "%s.%s.%s.pot-%d-overrange"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_el3255_chan_t, underrange), "%s.%s.%s.pot-%d-underrange"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_el3255_chan_t, error), "%s.%s.%s.pot-%d-error"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_el3255_chan_t, sync_err), "%s.%s.%s.pot-%d-sync-err"},
+    {HAL_S32, HAL_OUT, offsetof(lcec_el3255_chan_t, raw_val), "%s.%s.%s.pot-%d-raw"},
+    {HAL_FLOAT, HAL_OUT, offsetof(lcec_el3255_chan_t, val), "%s.%s.%s.pot-%d-val"},
+    {HAL_FLOAT, HAL_IO, offsetof(lcec_el3255_chan_t, scale), "%s.%s.%s.pot-%d-scale"},
+    {HAL_FLOAT, HAL_IO, offsetof(lcec_el3255_chan_t, bias), "%s.%s.%s.pot-%d-bias"},
+    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
-
 static ec_pdo_entry_info_t lcec_el3255_channel1[] = {
-    {0x6000, 0x01,  1}, // Underrange
-    {0x6000, 0x02,  1}, // Overrange
-    {0x6000, 0x03,  2}, // Limit 1
-    {0x6000, 0x05,  2}, // Limit 2
-    {0x6000, 0x07,  1}, // Error
-    {0x0000, 0x00,  1}, // Gap
-    {0x0000, 0x00,  5}, // Gap
-    {0x6000, 0x0e,  1}, // Sync error
-    {0x6000, 0x0f,  1}, // TxPDO State
-    {0x6000, 0x10,  1}, // TxPDO Toggle
-    {0x6000, 0x11, 16}  // Value
+    {0x6000, 0x01, 1},   // Underrange
+    {0x6000, 0x02, 1},   // Overrange
+    {0x6000, 0x03, 2},   // Limit 1
+    {0x6000, 0x05, 2},   // Limit 2
+    {0x6000, 0x07, 1},   // Error
+    {0x0000, 0x00, 1},   // Gap
+    {0x0000, 0x00, 5},   // Gap
+    {0x6000, 0x0e, 1},   // Sync error
+    {0x6000, 0x0f, 1},   // TxPDO State
+    {0x6000, 0x10, 1},   // TxPDO Toggle
+    {0x6000, 0x11, 16},  // Value
 };
 
 static ec_pdo_entry_info_t lcec_el3255_channel2[] = {
-    {0x6010, 0x01,  1}, // Underrange
-    {0x6010, 0x02,  1}, // Overrange
-    {0x6010, 0x03,  2}, // Limit 1
-    {0x6010, 0x05,  2}, // Limit 2
-    {0x6010, 0x07,  1}, // Error
-    {0x0000, 0x00,  1}, // Gap
-    {0x0000, 0x00,  5}, // Gap
-    {0x6010, 0x0e,  1}, // Sync error
-    {0x6010, 0x0f,  1}, // TxPDO State
-    {0x6010, 0x10,  1}, // TxPDO Toggle
-    {0x6010, 0x11, 16}  // Value
+    {0x6010, 0x01, 1},   // Underrange
+    {0x6010, 0x02, 1},   // Overrange
+    {0x6010, 0x03, 2},   // Limit 1
+    {0x6010, 0x05, 2},   // Limit 2
+    {0x6010, 0x07, 1},   // Error
+    {0x0000, 0x00, 1},   // Gap
+    {0x0000, 0x00, 5},   // Gap
+    {0x6010, 0x0e, 1},   // Sync error
+    {0x6010, 0x0f, 1},   // TxPDO State
+    {0x6010, 0x10, 1},   // TxPDO Toggle
+    {0x6010, 0x11, 16},  // Value
 };
 
 static ec_pdo_entry_info_t lcec_el3255_channel3[] = {
-    {0x6020, 0x01,  1}, // Underrange
-    {0x6020, 0x02,  1}, // Overrange
-    {0x6020, 0x03,  2}, // Limit 1
-    {0x6020, 0x05,  2}, // Limit 2
-    {0x6020, 0x07,  1}, // Error
-    {0x0000, 0x00,  1}, // Gap
-    {0x0000, 0x00,  5}, // Gap
-    {0x6020, 0x0e,  1}, // Sync error
-    {0x6020, 0x0f,  1}, // TxPDO State
-    {0x6020, 0x10,  1}, // TxPDO Toggle
+    {0x6020, 0x01, 1},  // Underrange
+    {0x6020, 0x02, 1},  // Overrange
+    {0x6020, 0x03, 2},  // Limit 1
+    {0x6020, 0x05, 2},  // Limit 2
+    {0x6020, 0x07, 1},  // Error
+    {0x0000, 0x00, 1},  // Gap
+    {0x0000, 0x00, 5},  // Gap
+    {0x6020, 0x0e, 1},  // Sync error
+    {0x6020, 0x0f, 1},  // TxPDO State
+    {0x6020, 0x10, 1},  // TxPDO Toggle
     {0x6020, 0x11, 16}  // Value
 };
 
 static ec_pdo_entry_info_t lcec_el3255_channel4[] = {
-    {0x6030, 0x01,  1}, // Underrange
-    {0x6030, 0x02,  1}, // Overrange
-    {0x6030, 0x03,  2}, // Limit 1
-    {0x6030, 0x05,  2}, // Limit 2
-    {0x6030, 0x07,  1}, // Error
-    {0x0000, 0x00,  1}, // Gap
-    {0x0000, 0x00,  5}, // Gap
-    {0x6030, 0x0e,  1}, // Sync error
-    {0x6030, 0x0f,  1}, // TxPDO State
-    {0x6030, 0x10,  1}, // TxPDO Toggle
+    {0x6030, 0x01, 1},  // Underrange
+    {0x6030, 0x02, 1},  // Overrange
+    {0x6030, 0x03, 2},  // Limit 1
+    {0x6030, 0x05, 2},  // Limit 2
+    {0x6030, 0x07, 1},  // Error
+    {0x0000, 0x00, 1},  // Gap
+    {0x0000, 0x00, 5},  // Gap
+    {0x6030, 0x0e, 1},  // Sync error
+    {0x6030, 0x0f, 1},  // TxPDO State
+    {0x6030, 0x10, 1},  // TxPDO Toggle
     {0x6030, 0x11, 16}  // Value
 };
 
 static ec_pdo_entry_info_t lcec_el3255_channel5[] = {
-    {0x6040, 0x01,  1}, // Underrange
-    {0x6040, 0x02,  1}, // Overrange
-    {0x6040, 0x03,  2}, // Limit 1
-    {0x6040, 0x05,  2}, // Limit 2
-    {0x6040, 0x07,  1}, // Error
-    {0x0000, 0x00,  1}, // Gap
-    {0x0000, 0x00,  5}, // Gap
-    {0x6040, 0x0e,  1}, // Sync error
-    {0x6040, 0x0f,  1}, // TxPDO State
-    {0x6040, 0x10,  1}, // TxPDO Toggle
+    {0x6040, 0x01, 1},  // Underrange
+    {0x6040, 0x02, 1},  // Overrange
+    {0x6040, 0x03, 2},  // Limit 1
+    {0x6040, 0x05, 2},  // Limit 2
+    {0x6040, 0x07, 1},  // Error
+    {0x0000, 0x00, 1},  // Gap
+    {0x0000, 0x00, 5},  // Gap
+    {0x6040, 0x0e, 1},  // Sync error
+    {0x6040, 0x0f, 1},  // TxPDO State
+    {0x6040, 0x10, 1},  // TxPDO Toggle
     {0x6040, 0x11, 16}  // Value
 };
 
-static ec_pdo_info_t lcec_el3255_pdos_in[] = {
-    {0x1A00, 11, lcec_el3255_channel1},
-    {0x1A02, 11, lcec_el3255_channel2},
-    {0x1A04, 11, lcec_el3255_channel3},
-    {0x1A06, 11, lcec_el3255_channel4},
-    {0x1A08, 11, lcec_el3255_channel5}
-};
+static ec_pdo_info_t lcec_el3255_pdos_in[] = {{0x1A00, 11, lcec_el3255_channel1}, {0x1A02, 11, lcec_el3255_channel2},
+    {0x1A04, 11, lcec_el3255_channel3}, {0x1A06, 11, lcec_el3255_channel4}, {0x1A08, 11, lcec_el3255_channel5}};
 
-static ec_sync_info_t lcec_el3255_syncs[] = {
-    {0, EC_DIR_OUTPUT, 0, NULL},
-    {1, EC_DIR_INPUT,  0, NULL},
-    {2, EC_DIR_OUTPUT, 0, NULL},
-    {3, EC_DIR_INPUT,  5, lcec_el3255_pdos_in},
-    {0xff}
-};
+static ec_sync_info_t lcec_el3255_syncs[] = {{0, EC_DIR_OUTPUT, 0, NULL}, {1, EC_DIR_INPUT, 0, NULL}, {2, EC_DIR_OUTPUT, 0, NULL},
+    {3, EC_DIR_INPUT, 5, lcec_el3255_pdos_in}, {0xff}};
 
 static void lcec_el3255_read(struct lcec_slave *slave, long period);
 
@@ -178,15 +167,15 @@ static int lcec_el3255_init(int comp_id, struct lcec_slave *slave) {
   slave->sync_info = lcec_el3255_syncs;
 
   // initialize pins
-  for (i=0; i<LCEC_EL3255_CHANS; i++) {
+  for (i = 0; i < LCEC_EL3255_CHANS; i++) {
     chan = &hal_data->chans[i];
 
     // initialize POD entries
-    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x01, &chan->ovr_pdo_os, &chan->ovr_pdo_bp);
-    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x02, &chan->udr_pdo_os, &chan->udr_pdo_bp);
-    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x07, &chan->error_pdo_os, &chan->error_pdo_bp);
-    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x0e, &chan->sync_err_pdo_os, &chan->sync_err_pdo_bp);
-    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x11, &chan->val_pdo_os, NULL);
+    lcec_pdo_init(slave, 0x6000 + (i << 4), 0x01, &chan->ovr_pdo_os, &chan->ovr_pdo_bp);
+    lcec_pdo_init(slave, 0x6000 + (i << 4), 0x02, &chan->udr_pdo_os, &chan->udr_pdo_bp);
+    lcec_pdo_init(slave, 0x6000 + (i << 4), 0x07, &chan->error_pdo_os, &chan->error_pdo_bp);
+    lcec_pdo_init(slave, 0x6000 + (i << 4), 0x0e, &chan->sync_err_pdo_os, &chan->sync_err_pdo_bp);
+    lcec_pdo_init(slave, 0x6000 + (i << 4), 0x11, &chan->val_pdo_os, NULL);
 
     // export pins
     if ((err = lcec_pin_newf_list(chan, slave_pins, LCEC_MODULE_NAME, master->name, slave->name, i)) != 0) {
@@ -202,7 +191,7 @@ static int lcec_el3255_init(int comp_id, struct lcec_slave *slave) {
 
 static void lcec_el3255_read(struct lcec_slave *slave, long period) {
   lcec_master_t *master = slave->master;
-  lcec_el3255_data_t *hal_data = (lcec_el3255_data_t *) slave->hal_data;
+  lcec_el3255_data_t *hal_data = (lcec_el3255_data_t *)slave->hal_data;
   uint8_t *pd = master->process_data;
   int i;
   lcec_el3255_chan_t *chan;
@@ -214,7 +203,7 @@ static void lcec_el3255_read(struct lcec_slave *slave, long period) {
   }
 
   // check inputs
-  for (i=0; i<LCEC_EL3255_CHANS; i++) {
+  for (i = 0; i < LCEC_EL3255_CHANS; i++) {
     chan = &hal_data->chans[i];
 
     // update state
@@ -226,7 +215,6 @@ static void lcec_el3255_read(struct lcec_slave *slave, long period) {
     // update value
     value = EC_READ_S16(&pd[chan->val_pdo_os]);
     *(chan->raw_val) = value;
-    *(chan->val) = *(chan->bias) + *(chan->scale) * (double)value * ((double)1/(double)0x7fff);
+    *(chan->val) = *(chan->bias) + *(chan->scale) * (double)value * ((double)1 / (double)0x7fff);
   }
 }
-

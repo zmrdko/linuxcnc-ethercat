@@ -25,14 +25,14 @@
 
 static int lcec_el31x2_init(int comp_id, struct lcec_slave *slave);
 
-static lcec_typelist_t types[]={
-  { "EL3102", LCEC_BECKHOFF_VID, 0x0C1E3052, 0, NULL, lcec_el31x2_init},
-  { "EL3112", LCEC_BECKHOFF_VID, 0x0C283052, 0, NULL, lcec_el31x2_init},
-  { "EL3122", LCEC_BECKHOFF_VID, 0x0C323052, 0, NULL, lcec_el31x2_init},
-  { "EL3142", LCEC_BECKHOFF_VID, 0x0C463052, 0, NULL, lcec_el31x2_init},
-  { "EL3152", LCEC_BECKHOFF_VID, 0x0C503052, 0, NULL, lcec_el31x2_init},
-  { "EL3162", LCEC_BECKHOFF_VID, 0x0C5A3052, 0, NULL, lcec_el31x2_init},
-  { NULL },
+static lcec_typelist_t types[] = {
+    {"EL3102", LCEC_BECKHOFF_VID, 0x0C1E3052, 0, NULL, lcec_el31x2_init},
+    {"EL3112", LCEC_BECKHOFF_VID, 0x0C283052, 0, NULL, lcec_el31x2_init},
+    {"EL3122", LCEC_BECKHOFF_VID, 0x0C323052, 0, NULL, lcec_el31x2_init},
+    {"EL3142", LCEC_BECKHOFF_VID, 0x0C463052, 0, NULL, lcec_el31x2_init},
+    {"EL3152", LCEC_BECKHOFF_VID, 0x0C503052, 0, NULL, lcec_el31x2_init},
+    {"EL3162", LCEC_BECKHOFF_VID, 0x0C5A3052, 0, NULL, lcec_el31x2_init},
+    {NULL},
 };
 ADD_TYPES(types);
 
@@ -49,14 +49,14 @@ typedef struct {
 } lcec_el31x2_chan_t;
 
 static const lcec_pindesc_t slave_pins[] = {
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el31x2_chan_t ,error), "%s.%s.%s.ain-%d-error" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el31x2_chan_t ,overrange), "%s.%s.%s.ain-%d-overrange" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el31x2_chan_t ,underrange), "%s.%s.%s.ain-%d-underrange" },
-  { HAL_S32, HAL_OUT, offsetof(lcec_el31x2_chan_t ,raw_val), "%s.%s.%s.ain-%d-raw" },
-  { HAL_FLOAT, HAL_OUT, offsetof(lcec_el31x2_chan_t ,val), "%s.%s.%s.ain-%d-val" },
-  { HAL_FLOAT, HAL_IO, offsetof(lcec_el31x2_chan_t ,scale), "%s.%s.%s.ain-%d-scale" },
-  { HAL_FLOAT, HAL_IO, offsetof(lcec_el31x2_chan_t ,bias), "%s.%s.%s.ain-%d-bias" },
-  { HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL }
+    {HAL_BIT, HAL_OUT, offsetof(lcec_el31x2_chan_t, error), "%s.%s.%s.ain-%d-error"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_el31x2_chan_t, overrange), "%s.%s.%s.ain-%d-overrange"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_el31x2_chan_t, underrange), "%s.%s.%s.ain-%d-underrange"},
+    {HAL_S32, HAL_OUT, offsetof(lcec_el31x2_chan_t, raw_val), "%s.%s.%s.ain-%d-raw"},
+    {HAL_FLOAT, HAL_OUT, offsetof(lcec_el31x2_chan_t, val), "%s.%s.%s.ain-%d-val"},
+    {HAL_FLOAT, HAL_IO, offsetof(lcec_el31x2_chan_t, scale), "%s.%s.%s.ain-%d-scale"},
+    {HAL_FLOAT, HAL_IO, offsetof(lcec_el31x2_chan_t, bias), "%s.%s.%s.ain-%d-bias"},
+    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
 typedef struct {
@@ -64,26 +64,26 @@ typedef struct {
 } lcec_el31x2_data_t;
 
 static ec_pdo_entry_info_t lcec_el31x2_channel1[] = {
-    {0x3101, 1,  8}, // status
-    {0x3101, 2, 16}  // value
+    {0x3101, 1, 8},   // status
+    {0x3101, 2, 16},  // value
 };
 
 static ec_pdo_entry_info_t lcec_el31x2_channel2[] = {
-    {0x3102, 1,  8}, // status
-    {0x3102, 2, 16}  // value
+    {0x3102, 1, 8},   // status
+    {0x3102, 2, 16},  // value
 };
 
 static ec_pdo_info_t lcec_el31x2_pdos_in[] = {
     {0x1A00, 2, lcec_el31x2_channel1},
-    {0x1A01, 2, lcec_el31x2_channel2}
+    {0x1A01, 2, lcec_el31x2_channel2},
 };
 
 static ec_sync_info_t lcec_el31x2_syncs[] = {
     {0, EC_DIR_OUTPUT, 0, NULL},
-    {1, EC_DIR_INPUT,  0, NULL},
+    {1, EC_DIR_INPUT, 0, NULL},
     {2, EC_DIR_OUTPUT, 0, NULL},
-    {3, EC_DIR_INPUT,  2, lcec_el31x2_pdos_in},
-    {0xff}
+    {3, EC_DIR_INPUT, 2, lcec_el31x2_pdos_in},
+    {0xff},
 };
 
 static void lcec_el31x2_read(struct lcec_slave *slave, long period);
@@ -110,12 +110,12 @@ static int lcec_el31x2_init(int comp_id, struct lcec_slave *slave) {
   slave->sync_info = lcec_el31x2_syncs;
 
   // initialize pins
-  for (i=0; i<LCEC_EL31x2_CHANS; i++) {
+  for (i = 0; i < LCEC_EL31x2_CHANS; i++) {
     chan = &hal_data->chans[i];
 
     // initialize POD entries
-    lcec_pdo_init(slave,  0x3101 + i, 0x01, &chan->state_pdo_os, NULL);
-    lcec_pdo_init(slave,  0x3101 + i, 0x02, &chan->val_pdo_os, NULL);
+    lcec_pdo_init(slave, 0x3101 + i, 0x01, &chan->state_pdo_os, NULL);
+    lcec_pdo_init(slave, 0x3101 + i, 0x02, &chan->val_pdo_os, NULL);
 
     // export pins
     if ((err = lcec_pin_newf_list(chan, slave_pins, LCEC_MODULE_NAME, master->name, slave->name, i)) != 0) {
@@ -131,7 +131,7 @@ static int lcec_el31x2_init(int comp_id, struct lcec_slave *slave) {
 
 static void lcec_el31x2_read(struct lcec_slave *slave, long period) {
   lcec_master_t *master = slave->master;
-  lcec_el31x2_data_t *hal_data = (lcec_el31x2_data_t *) slave->hal_data;
+  lcec_el31x2_data_t *hal_data = (lcec_el31x2_data_t *)slave->hal_data;
   uint8_t *pd = master->process_data;
   int i;
   lcec_el31x2_chan_t *chan;
@@ -144,7 +144,7 @@ static void lcec_el31x2_read(struct lcec_slave *slave, long period) {
   }
 
   // check inputs
-  for (i=0; i<LCEC_EL31x2_CHANS; i++) {
+  for (i = 0; i < LCEC_EL31x2_CHANS; i++) {
     chan = &hal_data->chans[i];
 
     // update state
@@ -156,6 +156,6 @@ static void lcec_el31x2_read(struct lcec_slave *slave, long period) {
     // update value
     value = EC_READ_S16(&pd[chan->val_pdo_os]);
     *(chan->raw_val) = value;
-    *(chan->val) = *(chan->bias) + *(chan->scale) * (double)value * ((double)1/(double)0x7fff);
+    *(chan->val) = *(chan->bias) + *(chan->scale) * (double)value * ((double)1 / (double)0x7fff);
   }
 }

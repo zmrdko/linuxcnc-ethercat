@@ -19,14 +19,15 @@
 /// @file
 /// @brief Driver for Beckhoff EL5032 Encoder modules
 
-#include "../lcec.h"
 #include "lcec_el5032.h"
+
+#include "../lcec.h"
 
 static int lcec_el5032_init(int comp_id, struct lcec_slave *slave);
 
-static lcec_typelist_t types[]={
-  { "EL5032", LCEC_BECKHOFF_VID, 0x13a83052, 0, NULL, lcec_el5032_init},
-  { NULL },
+static lcec_typelist_t types[] = {
+    {"EL5032", LCEC_BECKHOFF_VID, 0x13a83052, 0, NULL, lcec_el5032_init},
+    {NULL},
 };
 ADD_TYPES(types);
 
@@ -71,57 +72,57 @@ typedef struct {
 } lcec_el5032_data_t;
 
 static const lcec_pindesc_t slave_pins[] = {
-  { HAL_BIT, HAL_IN, offsetof(lcec_el5032_chan_t, reset), "%s.%s.%s.enc-%d-reset" },
-  { HAL_BIT, HAL_IN, offsetof(lcec_el5032_chan_t, abs_mode), "%s.%s.%s.enc-%d-abs-mode" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el5032_chan_t, warn), "%s.%s.%s.enc-%d-warn" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el5032_chan_t, error), "%s.%s.%s.enc-%d-error" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el5032_chan_t, ready), "%s.%s.%s.enc-%d-ready" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el5032_chan_t, diag), "%s.%s.%s.enc-%d-diag" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el5032_chan_t, tx_state), "%s.%s.%s.enc-%d-tx-state" },
-  { HAL_S32, HAL_OUT, offsetof(lcec_el5032_chan_t, cyc_cnt), "%s.%s.%s.enc-%d-cyc-cnt" },
-  { HAL_S32, HAL_OUT, offsetof(lcec_el5032_chan_t, raw_count_lo), "%s.%s.%s.enc-%d-raw-count-lo" },
-  { HAL_S32, HAL_OUT, offsetof(lcec_el5032_chan_t, raw_count_hi), "%s.%s.%s.enc-%d-raw-count-hi" },
-  { HAL_S32, HAL_OUT, offsetof(lcec_el5032_chan_t, count), "%s.%s.%s.enc-%d-count" },
-  { HAL_FLOAT, HAL_OUT, offsetof(lcec_el5032_chan_t, pos), "%s.%s.%s.enc-%d-pos" },
-  { HAL_FLOAT, HAL_IO, offsetof(lcec_el5032_chan_t, pos_scale), "%s.%s.%s.enc-%d-pos-scale" },
-  { HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL }
+    {HAL_BIT, HAL_IN, offsetof(lcec_el5032_chan_t, reset), "%s.%s.%s.enc-%d-reset"},
+    {HAL_BIT, HAL_IN, offsetof(lcec_el5032_chan_t, abs_mode), "%s.%s.%s.enc-%d-abs-mode"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_el5032_chan_t, warn), "%s.%s.%s.enc-%d-warn"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_el5032_chan_t, error), "%s.%s.%s.enc-%d-error"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_el5032_chan_t, ready), "%s.%s.%s.enc-%d-ready"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_el5032_chan_t, diag), "%s.%s.%s.enc-%d-diag"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_el5032_chan_t, tx_state), "%s.%s.%s.enc-%d-tx-state"},
+    {HAL_S32, HAL_OUT, offsetof(lcec_el5032_chan_t, cyc_cnt), "%s.%s.%s.enc-%d-cyc-cnt"},
+    {HAL_S32, HAL_OUT, offsetof(lcec_el5032_chan_t, raw_count_lo), "%s.%s.%s.enc-%d-raw-count-lo"},
+    {HAL_S32, HAL_OUT, offsetof(lcec_el5032_chan_t, raw_count_hi), "%s.%s.%s.enc-%d-raw-count-hi"},
+    {HAL_S32, HAL_OUT, offsetof(lcec_el5032_chan_t, count), "%s.%s.%s.enc-%d-count"},
+    {HAL_FLOAT, HAL_OUT, offsetof(lcec_el5032_chan_t, pos), "%s.%s.%s.enc-%d-pos"},
+    {HAL_FLOAT, HAL_IO, offsetof(lcec_el5032_chan_t, pos_scale), "%s.%s.%s.enc-%d-pos-scale"},
+    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
 static ec_pdo_entry_info_t lcec_el5032_channel1_in[] = {
-   {0x6000, 0x01,  1}, // warning
-   {0x6000, 0x02,  1}, // error
-   {0x6000, 0x03,  1}, // ready
-   {0x0000, 0x00,  5}, // Gap
-   {0x0000, 0x00,  4}, // Gap
-   {0x6000, 0x0d,  1}, // diag
-   {0x6000, 0x0e,  1}, // TxPDO state
-   {0x6000, 0x0f,  2}, // cycle counter
-   {0x6000, 0x11, 64}, // counter
+    {0x6000, 0x01, 1},   // warning
+    {0x6000, 0x02, 1},   // error
+    {0x6000, 0x03, 1},   // ready
+    {0x0000, 0x00, 5},   // Gap
+    {0x0000, 0x00, 4},   // Gap
+    {0x6000, 0x0d, 1},   // diag
+    {0x6000, 0x0e, 1},   // TxPDO state
+    {0x6000, 0x0f, 2},   // cycle counter
+    {0x6000, 0x11, 64},  // counter
 };
 
 static ec_pdo_entry_info_t lcec_el5032_channel2_in[] = {
-   {0x6010, 0x01,  1}, // warning
-   {0x6010, 0x02,  1}, // error
-   {0x6010, 0x03,  1}, // ready
-   {0x0000, 0x00,  5}, // Gap
-   {0x0000, 0x00,  4}, // Gap
-   {0x6010, 0x0d,  1}, // diag
-   {0x6010, 0x0e,  1}, // TxPDO state
-   {0x6010, 0x0f,  2}, // cycle counter
-   {0x6010, 0x11, 64}, // counter
+    {0x6010, 0x01, 1},   // warning
+    {0x6010, 0x02, 1},   // error
+    {0x6010, 0x03, 1},   // ready
+    {0x0000, 0x00, 5},   // Gap
+    {0x0000, 0x00, 4},   // Gap
+    {0x6010, 0x0d, 1},   // diag
+    {0x6010, 0x0e, 1},   // TxPDO state
+    {0x6010, 0x0f, 2},   // cycle counter
+    {0x6010, 0x11, 64},  // counter
 };
 
 static ec_pdo_info_t lcec_el5032_pdos_in[] = {
     {0x1A00, 9, lcec_el5032_channel1_in},
-    {0x1A01, 9, lcec_el5032_channel2_in}
+    {0x1A01, 9, lcec_el5032_channel2_in},
 };
 
 static ec_sync_info_t lcec_el5032_syncs[] = {
     {0, EC_DIR_OUTPUT, 0, NULL},
-    {1, EC_DIR_INPUT,  0, NULL},
+    {1, EC_DIR_INPUT, 0, NULL},
     {2, EC_DIR_OUTPUT, 0, NULL},
-    {3, EC_DIR_INPUT,  2, lcec_el5032_pdos_in},
-    {0xff}
+    {3, EC_DIR_INPUT, 2, lcec_el5032_pdos_in},
+    {0xff},
 };
 
 static void lcec_el5032_read(struct lcec_slave *slave, long period);
@@ -151,17 +152,17 @@ static int lcec_el5032_init(int comp_id, struct lcec_slave *slave) {
   hal_data->last_operational = 0;
 
   // initialize pins
-  for (i=0; i<LCEC_EL5032_CHANS; i++) {
+  for (i = 0; i < LCEC_EL5032_CHANS; i++) {
     chan = &hal_data->chans[i];
 
     // initialize POD entries
-    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x01, &chan->warn_os, &chan->warn_bp);
-    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x02, &chan->error_os, &chan->error_bp);
-    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x03, &chan->ready_os, &chan->ready_bp);
-    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x0d, &chan->diag_os, &chan->diag_bp);
-    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x0e, &chan->tx_state_os, &chan->tx_state_bp);
-    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x0f, &chan->cyc_cnt_os, &chan->cyc_cnt_bp);
-    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x11, &chan->count_pdo_os, NULL);
+    lcec_pdo_init(slave, 0x6000 + (i << 4), 0x01, &chan->warn_os, &chan->warn_bp);
+    lcec_pdo_init(slave, 0x6000 + (i << 4), 0x02, &chan->error_os, &chan->error_bp);
+    lcec_pdo_init(slave, 0x6000 + (i << 4), 0x03, &chan->ready_os, &chan->ready_bp);
+    lcec_pdo_init(slave, 0x6000 + (i << 4), 0x0d, &chan->diag_os, &chan->diag_bp);
+    lcec_pdo_init(slave, 0x6000 + (i << 4), 0x0e, &chan->tx_state_os, &chan->tx_state_bp);
+    lcec_pdo_init(slave, 0x6000 + (i << 4), 0x0f, &chan->cyc_cnt_os, &chan->cyc_cnt_bp);
+    lcec_pdo_init(slave, 0x6000 + (i << 4), 0x11, &chan->count_pdo_os, NULL);
 
     // export pins
     if ((err = lcec_pin_newf_list(chan, slave_pins, LCEC_MODULE_NAME, master->name, slave->name, i)) != 0) {
@@ -183,7 +184,7 @@ static int lcec_el5032_init(int comp_id, struct lcec_slave *slave) {
 
 static void lcec_el5032_read(struct lcec_slave *slave, long period) {
   lcec_master_t *master = slave->master;
-  lcec_el5032_data_t *hal_data = (lcec_el5032_data_t *) slave->hal_data;
+  lcec_el5032_data_t *hal_data = (lcec_el5032_data_t *)slave->hal_data;
   uint8_t *pd = master->process_data;
   int i;
   lcec_el5032_chan_t *chan;
@@ -196,7 +197,7 @@ static void lcec_el5032_read(struct lcec_slave *slave, long period) {
   }
 
   // check inputs
-  for (i=0; i<LCEC_EL5032_CHANS; i++) {
+  for (i = 0; i < LCEC_EL5032_CHANS; i++) {
     chan = &hal_data->chans[i];
 
     // check for change in scale value
@@ -256,4 +257,3 @@ static void lcec_el5032_read(struct lcec_slave *slave, long period) {
 
   hal_data->last_operational = 1;
 }
-

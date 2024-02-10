@@ -19,41 +19,42 @@
 /// @file
 /// @brief Driver for Beckhoff EL5002 Encoder modules
 
-#include "../lcec.h"
 #include "lcec_el5002.h"
+
+#include "../lcec.h"
 
 static int lcec_el5002_init(int comp_id, struct lcec_slave *slave);
 
 static lcec_modparam_desc_t lcec_el5002_modparams[] = {
-  { "ch0DisFrameErr", LCEC_EL5002_PARAM_CH_0 || LCEC_EL5002_PARAM_DIS_FRAME_ERR, MODPARAM_TYPE_BIT } ,
-  { "ch0EnPwrFailChk", LCEC_EL5002_PARAM_CH_0 || LCEC_EL5002_PARAM_EN_PWR_FAIL_CHK, MODPARAM_TYPE_BIT } ,
-  { "ch0EnInhibitTime", LCEC_EL5002_PARAM_CH_0 || LCEC_EL5002_PARAM_EN_INHIBIT_TIME, MODPARAM_TYPE_BIT } ,
-  { "ch0Coding", LCEC_EL5002_PARAM_CH_0 || LCEC_EL5002_PARAM_CODING, MODPARAM_TYPE_U32 } ,
-  { "ch0Baudrate", LCEC_EL5002_PARAM_CH_0 || LCEC_EL5002_PARAM_BAUDRATE, MODPARAM_TYPE_U32 } ,
-  { "ch0ClkJitComp", LCEC_EL5002_PARAM_CH_0 || LCEC_EL5002_PARAM_CLK_JIT_COMP, MODPARAM_TYPE_U32 } ,
-  { "ch0FrameType", LCEC_EL5002_PARAM_CH_0 || LCEC_EL5002_PARAM_FRAME_TYPE, MODPARAM_TYPE_U32 } ,
-  { "ch0FrameSize", LCEC_EL5002_PARAM_CH_0 || LCEC_EL5002_PARAM_FRAME_SIZE, MODPARAM_TYPE_U32 } ,
-  { "ch0DataLen", LCEC_EL5002_PARAM_CH_0 || LCEC_EL5002_PARAM_DATA_LEN, MODPARAM_TYPE_U32 } ,
-  { "ch0MinInhibitTime", LCEC_EL5002_PARAM_CH_0 || LCEC_EL5002_PARAM_MIN_INHIBIT_TIME, MODPARAM_TYPE_U32 } ,
-  { "ch0NoClkBursts", LCEC_EL5002_PARAM_CH_0 || LCEC_EL5002_PARAM_NO_CLK_BURSTS, MODPARAM_TYPE_U32 } ,
-  { "ch1DisFrameErr", LCEC_EL5002_PARAM_CH_1 || LCEC_EL5002_PARAM_DIS_FRAME_ERR, MODPARAM_TYPE_BIT } ,
-  { "ch1EnPwrFailChk", LCEC_EL5002_PARAM_CH_1 || LCEC_EL5002_PARAM_EN_PWR_FAIL_CHK, MODPARAM_TYPE_BIT } ,
-  { "ch1EnInhibitTime", LCEC_EL5002_PARAM_CH_1 || LCEC_EL5002_PARAM_EN_INHIBIT_TIME, MODPARAM_TYPE_BIT } ,
-  { "ch1Coding", LCEC_EL5002_PARAM_CH_1 || LCEC_EL5002_PARAM_CODING, MODPARAM_TYPE_U32 } ,
-  { "ch1Baudrate", LCEC_EL5002_PARAM_CH_1 || LCEC_EL5002_PARAM_BAUDRATE, MODPARAM_TYPE_U32 } ,
-  { "ch1ClkJitComp", LCEC_EL5002_PARAM_CH_1 || LCEC_EL5002_PARAM_CLK_JIT_COMP, MODPARAM_TYPE_U32 } ,
-  { "ch1FrameType", LCEC_EL5002_PARAM_CH_1 || LCEC_EL5002_PARAM_FRAME_TYPE, MODPARAM_TYPE_U32 } ,
-  { "ch1FrameSize", LCEC_EL5002_PARAM_CH_1 || LCEC_EL5002_PARAM_FRAME_SIZE, MODPARAM_TYPE_U32 } ,
-  { "ch1DataLen", LCEC_EL5002_PARAM_CH_1 || LCEC_EL5002_PARAM_DATA_LEN, MODPARAM_TYPE_U32 } ,
-  { "ch1MinInhibitTime", LCEC_EL5002_PARAM_CH_1 || LCEC_EL5002_PARAM_MIN_INHIBIT_TIME, MODPARAM_TYPE_U32 } ,
-  { "ch1NoClkBursts", LCEC_EL5002_PARAM_CH_1 || LCEC_EL5002_PARAM_NO_CLK_BURSTS, MODPARAM_TYPE_U32 } ,
-  { NULL }
+    {"ch0DisFrameErr", LCEC_EL5002_PARAM_CH_0 || LCEC_EL5002_PARAM_DIS_FRAME_ERR, MODPARAM_TYPE_BIT},
+    {"ch0EnPwrFailChk", LCEC_EL5002_PARAM_CH_0 || LCEC_EL5002_PARAM_EN_PWR_FAIL_CHK, MODPARAM_TYPE_BIT},
+    {"ch0EnInhibitTime", LCEC_EL5002_PARAM_CH_0 || LCEC_EL5002_PARAM_EN_INHIBIT_TIME, MODPARAM_TYPE_BIT},
+    {"ch0Coding", LCEC_EL5002_PARAM_CH_0 || LCEC_EL5002_PARAM_CODING, MODPARAM_TYPE_U32},
+    {"ch0Baudrate", LCEC_EL5002_PARAM_CH_0 || LCEC_EL5002_PARAM_BAUDRATE, MODPARAM_TYPE_U32},
+    {"ch0ClkJitComp", LCEC_EL5002_PARAM_CH_0 || LCEC_EL5002_PARAM_CLK_JIT_COMP, MODPARAM_TYPE_U32},
+    {"ch0FrameType", LCEC_EL5002_PARAM_CH_0 || LCEC_EL5002_PARAM_FRAME_TYPE, MODPARAM_TYPE_U32},
+    {"ch0FrameSize", LCEC_EL5002_PARAM_CH_0 || LCEC_EL5002_PARAM_FRAME_SIZE, MODPARAM_TYPE_U32},
+    {"ch0DataLen", LCEC_EL5002_PARAM_CH_0 || LCEC_EL5002_PARAM_DATA_LEN, MODPARAM_TYPE_U32},
+    {"ch0MinInhibitTime", LCEC_EL5002_PARAM_CH_0 || LCEC_EL5002_PARAM_MIN_INHIBIT_TIME, MODPARAM_TYPE_U32},
+    {"ch0NoClkBursts", LCEC_EL5002_PARAM_CH_0 || LCEC_EL5002_PARAM_NO_CLK_BURSTS, MODPARAM_TYPE_U32},
+    {"ch1DisFrameErr", LCEC_EL5002_PARAM_CH_1 || LCEC_EL5002_PARAM_DIS_FRAME_ERR, MODPARAM_TYPE_BIT},
+    {"ch1EnPwrFailChk", LCEC_EL5002_PARAM_CH_1 || LCEC_EL5002_PARAM_EN_PWR_FAIL_CHK, MODPARAM_TYPE_BIT},
+    {"ch1EnInhibitTime", LCEC_EL5002_PARAM_CH_1 || LCEC_EL5002_PARAM_EN_INHIBIT_TIME, MODPARAM_TYPE_BIT},
+    {"ch1Coding", LCEC_EL5002_PARAM_CH_1 || LCEC_EL5002_PARAM_CODING, MODPARAM_TYPE_U32},
+    {"ch1Baudrate", LCEC_EL5002_PARAM_CH_1 || LCEC_EL5002_PARAM_BAUDRATE, MODPARAM_TYPE_U32},
+    {"ch1ClkJitComp", LCEC_EL5002_PARAM_CH_1 || LCEC_EL5002_PARAM_CLK_JIT_COMP, MODPARAM_TYPE_U32},
+    {"ch1FrameType", LCEC_EL5002_PARAM_CH_1 || LCEC_EL5002_PARAM_FRAME_TYPE, MODPARAM_TYPE_U32},
+    {"ch1FrameSize", LCEC_EL5002_PARAM_CH_1 || LCEC_EL5002_PARAM_FRAME_SIZE, MODPARAM_TYPE_U32},
+    {"ch1DataLen", LCEC_EL5002_PARAM_CH_1 || LCEC_EL5002_PARAM_DATA_LEN, MODPARAM_TYPE_U32},
+    {"ch1MinInhibitTime", LCEC_EL5002_PARAM_CH_1 || LCEC_EL5002_PARAM_MIN_INHIBIT_TIME, MODPARAM_TYPE_U32},
+    {"ch1NoClkBursts", LCEC_EL5002_PARAM_CH_1 || LCEC_EL5002_PARAM_NO_CLK_BURSTS, MODPARAM_TYPE_U32},
+    {NULL},
 };
 
-static lcec_typelist_t types[]={
-  { "EL5002", LCEC_BECKHOFF_VID, 0x138a3052, 0, NULL, lcec_el5002_init, lcec_el5002_modparams},
-  { "EJ5002", LCEC_BECKHOFF_VID, 0x138a2852, 0, NULL, lcec_el5002_init, lcec_el5002_modparams},
-  { NULL },
+static lcec_typelist_t types[] = {
+    {"EL5002", LCEC_BECKHOFF_VID, 0x138a3052, 0, NULL, lcec_el5002_init, lcec_el5002_modparams},
+    {"EJ5002", LCEC_BECKHOFF_VID, 0x138a2852, 0, NULL, lcec_el5002_init, lcec_el5002_modparams},
+    {NULL},
 };
 ADD_TYPES(types);
 
@@ -97,56 +98,56 @@ typedef struct {
 } lcec_el5002_data_t;
 
 static const lcec_pindesc_t slave_pins[] = {
-  { HAL_BIT, HAL_IN, offsetof(lcec_el5002_chan_t, reset), "%s.%s.%s.enc-%d-reset" },
-  { HAL_BIT, HAL_IN, offsetof(lcec_el5002_chan_t, abs_mode), "%s.%s.%s.enc-%d-abs-mode" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el5002_chan_t, err_data), "%s.%s.%s.enc-%d-err-data" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el5002_chan_t, err_frame), "%s.%s.%s.enc-%d-err-frame" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el5002_chan_t, err_power), "%s.%s.%s.enc-%d-err-power" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el5002_chan_t, err_sync), "%s.%s.%s.enc-%d-err-sync" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el5002_chan_t, tx_state), "%s.%s.%s.enc-%d-tx-state" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el5002_chan_t, tx_toggle), "%s.%s.%s.enc-%d-tx-toggle" },
-  { HAL_S32, HAL_OUT, offsetof(lcec_el5002_chan_t, raw_count), "%s.%s.%s.enc-%d-raw-count" },
-  { HAL_S32, HAL_OUT, offsetof(lcec_el5002_chan_t, count), "%s.%s.%s.enc-%d-count" },
-  { HAL_FLOAT, HAL_OUT, offsetof(lcec_el5002_chan_t, pos), "%s.%s.%s.enc-%d-pos" },
-  { HAL_FLOAT, HAL_IO, offsetof(lcec_el5002_chan_t, pos_scale), "%s.%s.%s.enc-%d-pos-scale" },
-  { HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL }
+    {HAL_BIT, HAL_IN, offsetof(lcec_el5002_chan_t, reset), "%s.%s.%s.enc-%d-reset"},
+    {HAL_BIT, HAL_IN, offsetof(lcec_el5002_chan_t, abs_mode), "%s.%s.%s.enc-%d-abs-mode"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_el5002_chan_t, err_data), "%s.%s.%s.enc-%d-err-data"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_el5002_chan_t, err_frame), "%s.%s.%s.enc-%d-err-frame"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_el5002_chan_t, err_power), "%s.%s.%s.enc-%d-err-power"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_el5002_chan_t, err_sync), "%s.%s.%s.enc-%d-err-sync"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_el5002_chan_t, tx_state), "%s.%s.%s.enc-%d-tx-state"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_el5002_chan_t, tx_toggle), "%s.%s.%s.enc-%d-tx-toggle"},
+    {HAL_S32, HAL_OUT, offsetof(lcec_el5002_chan_t, raw_count), "%s.%s.%s.enc-%d-raw-count"},
+    {HAL_S32, HAL_OUT, offsetof(lcec_el5002_chan_t, count), "%s.%s.%s.enc-%d-count"},
+    {HAL_FLOAT, HAL_OUT, offsetof(lcec_el5002_chan_t, pos), "%s.%s.%s.enc-%d-pos"},
+    {HAL_FLOAT, HAL_IO, offsetof(lcec_el5002_chan_t, pos_scale), "%s.%s.%s.enc-%d-pos-scale"},
+    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
 static ec_pdo_entry_info_t lcec_el5002_channel1_in[] = {
-   {0x6000, 0x01,  1}, // Data error
-   {0x6000, 0x02,  1}, // Frame error
-   {0x6000, 0x03,  1}, // Power fail
-   {0x6000, 0x04,  1}, // ?
-   {0x0000, 0x00,  9}, // Gap
-   {0x6000, 0x0e,  1}, // Sync error
-   {0x6000, 0x0f,  1}, // TxPDO state
-   {0x6000, 0x10,  1}, // TxPDO toggle
-   {0x6000, 0x11, 32}, // counter
+    {0x6000, 0x01, 1},   // Data error
+    {0x6000, 0x02, 1},   // Frame error
+    {0x6000, 0x03, 1},   // Power fail
+    {0x6000, 0x04, 1},   // ?
+    {0x0000, 0x00, 9},   // Gap
+    {0x6000, 0x0e, 1},   // Sync error
+    {0x6000, 0x0f, 1},   // TxPDO state
+    {0x6000, 0x10, 1},   // TxPDO toggle
+    {0x6000, 0x11, 32},  // counter
 };
 
 static ec_pdo_entry_info_t lcec_el5002_channel2_in[] = {
-   {0x6010, 0x01,  1}, // Data error
-   {0x6010, 0x02,  1}, // Frame error
-   {0x6010, 0x03,  1}, // Power fail
-   {0x6010, 0x04,  1}, // ?
-   {0x0010, 0x00,  9}, // Gap
-   {0x6010, 0x0e,  1}, // Sync error
-   {0x6010, 0x0f,  1}, // TxPDO state
-   {0x6010, 0x10,  1}, // TxPDO toggle
-   {0x6010, 0x11, 32}, // counter
+    {0x6010, 0x01, 1},   // Data error
+    {0x6010, 0x02, 1},   // Frame error
+    {0x6010, 0x03, 1},   // Power fail
+    {0x6010, 0x04, 1},   // ?
+    {0x0010, 0x00, 9},   // Gap
+    {0x6010, 0x0e, 1},   // Sync error
+    {0x6010, 0x0f, 1},   // TxPDO state
+    {0x6010, 0x10, 1},   // TxPDO toggle
+    {0x6010, 0x11, 32},  // counter
 };
 
 static ec_pdo_info_t lcec_el5002_pdos_in[] = {
     {0x1A00, 9, lcec_el5002_channel1_in},
-    {0x1A01, 9, lcec_el5002_channel2_in}
+    {0x1A01, 9, lcec_el5002_channel2_in},
 };
 
 static ec_sync_info_t lcec_el5002_syncs[] = {
     {0, EC_DIR_OUTPUT, 0, NULL},
-    {1, EC_DIR_INPUT,  0, NULL},
+    {1, EC_DIR_INPUT, 0, NULL},
     {2, EC_DIR_OUTPUT, 0, NULL},
-    {3, EC_DIR_INPUT,  2, lcec_el5002_pdos_in},
-    {0xff}
+    {3, EC_DIR_INPUT, 2, lcec_el5002_pdos_in},
+    {0xff},
 };
 
 static void lcec_el5002_read(struct lcec_slave *slave, long period);
@@ -163,70 +164,70 @@ static int lcec_el5002_init(int comp_id, struct lcec_slave *slave) {
   for (p = slave->modparams; p != NULL && p->id >= 0; p++) {
     // get channel offset
     i = (p->id & LCEC_EL5002_PARAM_CH_MASK) << 4;
-    switch(p->id & LCEC_EL5002_PARAM_FNK_MASK) {
+    switch (p->id & LCEC_EL5002_PARAM_FNK_MASK) {
       case LCEC_EL5002_PARAM_DIS_FRAME_ERR:
         if (lcec_write_sdo8(slave, 0x8000 + i, 0x01, p->value.bit) != 0) {
-          rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo DisFrameErr\n", master->name, slave->name);
+          rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo DisFrameErr\n", master->name, slave->name);
           return -1;
         }
         break;
       case LCEC_EL5002_PARAM_EN_PWR_FAIL_CHK:
         if (lcec_write_sdo8(slave, 0x8000 + i, 0x02, p->value.bit) != 0) {
-          rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo EnPwrFailChk\n", master->name, slave->name);
+          rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo EnPwrFailChk\n", master->name, slave->name);
           return -1;
         }
         break;
       case LCEC_EL5002_PARAM_EN_INHIBIT_TIME:
         if (lcec_write_sdo8(slave, 0x8000 + i, 0x03, p->value.bit) != 0) {
-          rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo EnInhibitTime\n", master->name, slave->name);
+          rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo EnInhibitTime\n", master->name, slave->name);
           return -1;
         }
         break;
       case LCEC_EL5002_PARAM_CODING:
         if (lcec_write_sdo8(slave, 0x8000 + i, 0x06, p->value.u32) != 0) {
-          rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo Coding\n", master->name, slave->name);
+          rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo Coding\n", master->name, slave->name);
           return -1;
         }
         break;
       case LCEC_EL5002_PARAM_BAUDRATE:
         if (lcec_write_sdo8(slave, 0x8000 + i, 0x09, p->value.u32) != 0) {
-          rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo Baudrate\n", master->name, slave->name);
+          rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo Baudrate\n", master->name, slave->name);
           return -1;
         }
         break;
       case LCEC_EL5002_PARAM_CLK_JIT_COMP:
         if (lcec_write_sdo8(slave, 0x8000 + i, 0x0c, p->value.u32) != 0) {
-          rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo ClkJitComp\n", master->name, slave->name);
+          rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo ClkJitComp\n", master->name, slave->name);
           return -1;
         }
         break;
       case LCEC_EL5002_PARAM_FRAME_TYPE:
         if (lcec_write_sdo8(slave, 0x8000 + i, 0x0f, p->value.u32) != 0) {
-          rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo FrameType\n", master->name, slave->name);
+          rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo FrameType\n", master->name, slave->name);
           return -1;
         }
         break;
       case LCEC_EL5002_PARAM_FRAME_SIZE:
         if (lcec_write_sdo16(slave, 0x8000 + i, 0x11, p->value.u32) != 0) {
-          rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo FrameSize\n", master->name, slave->name);
+          rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo FrameSize\n", master->name, slave->name);
           return -1;
         }
         break;
       case LCEC_EL5002_PARAM_DATA_LEN:
         if (lcec_write_sdo16(slave, 0x8000 + i, 0x12, p->value.u32) != 0) {
-          rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo DataLen\n", master->name, slave->name);
+          rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo DataLen\n", master->name, slave->name);
           return -1;
         }
         break;
       case LCEC_EL5002_PARAM_MIN_INHIBIT_TIME:
         if (lcec_write_sdo16(slave, 0x8000 + i, 0x13, p->value.u32) != 0) {
-          rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo MinInhibitTime\n", master->name, slave->name);
+          rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo MinInhibitTime\n", master->name, slave->name);
           return -1;
         }
         break;
       case LCEC_EL5002_PARAM_NO_CLK_BURSTS:
         if (lcec_write_sdo16(slave, 0x8000 + i, 0x14, p->value.u32) != 0) {
-          rtapi_print_msg (RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo NoClkBursts\n", master->name, slave->name);
+          rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo NoClkBursts\n", master->name, slave->name);
           return -1;
         }
         break;
@@ -251,17 +252,17 @@ static int lcec_el5002_init(int comp_id, struct lcec_slave *slave) {
   hal_data->last_operational = 0;
 
   // initialize pins
-  for (i=0; i<LCEC_EL5002_CHANS; i++) {
+  for (i = 0; i < LCEC_EL5002_CHANS; i++) {
     chan = &hal_data->chans[i];
 
     // initialize POD entries
-    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x01, &chan->err_data_os, &chan->err_data_bp);
-    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x02, &chan->err_frame_os, &chan->err_frame_bp);
-    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x03, &chan->err_power_os, &chan->err_power_bp);
-    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x0e, &chan->err_sync_os, &chan->err_sync_bp);
-    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x0f, &chan->tx_state_os, &chan->tx_state_bp);
-    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x10, &chan->tx_toggle_os, &chan->tx_toggle_bp);
-    lcec_pdo_init(slave,  0x6000 + (i << 4), 0x11, &chan->count_pdo_os, NULL);
+    lcec_pdo_init(slave, 0x6000 + (i << 4), 0x01, &chan->err_data_os, &chan->err_data_bp);
+    lcec_pdo_init(slave, 0x6000 + (i << 4), 0x02, &chan->err_frame_os, &chan->err_frame_bp);
+    lcec_pdo_init(slave, 0x6000 + (i << 4), 0x03, &chan->err_power_os, &chan->err_power_bp);
+    lcec_pdo_init(slave, 0x6000 + (i << 4), 0x0e, &chan->err_sync_os, &chan->err_sync_bp);
+    lcec_pdo_init(slave, 0x6000 + (i << 4), 0x0f, &chan->tx_state_os, &chan->tx_state_bp);
+    lcec_pdo_init(slave, 0x6000 + (i << 4), 0x10, &chan->tx_toggle_os, &chan->tx_toggle_bp);
+    lcec_pdo_init(slave, 0x6000 + (i << 4), 0x11, &chan->count_pdo_os, NULL);
 
     // export pins
     if ((err = lcec_pin_newf_list(chan, slave_pins, LCEC_MODULE_NAME, master->name, slave->name, i)) != 0) {
@@ -283,7 +284,7 @@ static int lcec_el5002_init(int comp_id, struct lcec_slave *slave) {
 
 static void lcec_el5002_read(struct lcec_slave *slave, long period) {
   lcec_master_t *master = slave->master;
-  lcec_el5002_data_t *hal_data = (lcec_el5002_data_t *) slave->hal_data;
+  lcec_el5002_data_t *hal_data = (lcec_el5002_data_t *)slave->hal_data;
   uint8_t *pd = master->process_data;
   int i;
   lcec_el5002_chan_t *chan;
@@ -296,7 +297,7 @@ static void lcec_el5002_read(struct lcec_slave *slave, long period) {
   }
 
   // check inputs
-  for (i=0; i<LCEC_EL5002_CHANS; i++) {
+  for (i = 0; i < LCEC_EL5002_CHANS; i++) {
     chan = &hal_data->chans[i];
 
     // check for change in scale value
@@ -353,4 +354,3 @@ static void lcec_el5002_read(struct lcec_slave *slave, long period) {
 
   hal_data->last_operational = 1;
 }
-

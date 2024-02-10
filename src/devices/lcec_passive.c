@@ -22,13 +22,13 @@
 #include "lcec.h"
 
 static lcec_typelist_t types[] = {
-  // bus coupler, no actual driver.
-  { "EK1100", LCEC_BECKHOFF_VID, 0x044C2C52,  0, NULL, NULL},
-  { "EK1101", LCEC_BECKHOFF_VID, 0x044D2C52,  0, NULL, NULL},
-  { "EK1110", LCEC_BECKHOFF_VID, 0x04562C52,  0, NULL, NULL},
-  { "EK1122", LCEC_BECKHOFF_VID, 0x04622C52,  0, NULL, NULL},
-  { "EP1122", LCEC_BECKHOFF_VID, 0x04624052,  0, NULL, NULL},
-  { NULL },
+    // bus coupler, no actual driver.
+    {"EK1100", LCEC_BECKHOFF_VID, 0x044C2C52, 0, NULL, NULL},
+    {"EK1101", LCEC_BECKHOFF_VID, 0x044D2C52, 0, NULL, NULL},
+    {"EK1110", LCEC_BECKHOFF_VID, 0x04562C52, 0, NULL, NULL},
+    {"EK1122", LCEC_BECKHOFF_VID, 0x04622C52, 0, NULL, NULL},
+    {"EP1122", LCEC_BECKHOFF_VID, 0x04624052, 0, NULL, NULL},
+    {NULL},
 };
 
 ADD_TYPES(types);

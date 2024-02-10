@@ -26,9 +26,9 @@ static void lcec_el2904_write(struct lcec_slave *slave, long period);
 static int lcec_el2904_preinit(struct lcec_slave *slave);
 static int lcec_el2904_init(int comp_id, struct lcec_slave *slave);
 
-static lcec_typelist_t types[]={
-  { "EL2904", LCEC_BECKHOFF_VID, 0x0B583052, 0, lcec_el2904_preinit, lcec_el2904_init},
-  { NULL },
+static lcec_typelist_t types[] = {
+    {"EL2904", LCEC_BECKHOFF_VID, 0x0B583052, 0, lcec_el2904_preinit, lcec_el2904_init},
+    {NULL},
 };
 ADD_TYPES(types);
 
@@ -79,29 +79,22 @@ typedef struct {
 
 } lcec_el2904_data_t;
 
-static const lcec_pindesc_t slave_pins[] = {
-  { HAL_U32, HAL_OUT, offsetof(lcec_el2904_data_t, fsoe_master_cmd), "%s.%s.%s.fsoe-master-cmd" },
-  { HAL_U32, HAL_OUT, offsetof(lcec_el2904_data_t, fsoe_master_crc), "%s.%s.%s.fsoe-master-crc" },
-  { HAL_U32, HAL_OUT, offsetof(lcec_el2904_data_t, fsoe_master_connid), "%s.%s.%s.fsoe-master-connid" },
-  { HAL_U32, HAL_OUT, offsetof(lcec_el2904_data_t, fsoe_slave_cmd), "%s.%s.%s.fsoe-slave-cmd" },
-  { HAL_U32, HAL_OUT, offsetof(lcec_el2904_data_t, fsoe_slave_crc), "%s.%s.%s.fsoe-slave-crc" },
-  { HAL_U32, HAL_OUT, offsetof(lcec_el2904_data_t, fsoe_slave_connid), "%s.%s.%s.fsoe-slave-connid" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el2904_data_t, fsoe_out_0), "%s.%s.%s.fsoe-out-0" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el2904_data_t, fsoe_out_1), "%s.%s.%s.fsoe-out-1" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el2904_data_t, fsoe_out_2), "%s.%s.%s.fsoe-out-2" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el2904_data_t, fsoe_out_3), "%s.%s.%s.fsoe-out-3" },
-  { HAL_BIT, HAL_IN, offsetof(lcec_el2904_data_t, out_0), "%s.%s.%s.out-0" },
-  { HAL_BIT, HAL_IN, offsetof(lcec_el2904_data_t, out_1), "%s.%s.%s.out-1" },
-  { HAL_BIT, HAL_IN, offsetof(lcec_el2904_data_t, out_2), "%s.%s.%s.out-2" },
-  { HAL_BIT, HAL_IN, offsetof(lcec_el2904_data_t, out_3), "%s.%s.%s.out-3" },
-  { HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL }
-};
+static const lcec_pindesc_t slave_pins[] = {{HAL_U32, HAL_OUT, offsetof(lcec_el2904_data_t, fsoe_master_cmd), "%s.%s.%s.fsoe-master-cmd"},
+    {HAL_U32, HAL_OUT, offsetof(lcec_el2904_data_t, fsoe_master_crc), "%s.%s.%s.fsoe-master-crc"},
+    {HAL_U32, HAL_OUT, offsetof(lcec_el2904_data_t, fsoe_master_connid), "%s.%s.%s.fsoe-master-connid"},
+    {HAL_U32, HAL_OUT, offsetof(lcec_el2904_data_t, fsoe_slave_cmd), "%s.%s.%s.fsoe-slave-cmd"},
+    {HAL_U32, HAL_OUT, offsetof(lcec_el2904_data_t, fsoe_slave_crc), "%s.%s.%s.fsoe-slave-crc"},
+    {HAL_U32, HAL_OUT, offsetof(lcec_el2904_data_t, fsoe_slave_connid), "%s.%s.%s.fsoe-slave-connid"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_el2904_data_t, fsoe_out_0), "%s.%s.%s.fsoe-out-0"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_el2904_data_t, fsoe_out_1), "%s.%s.%s.fsoe-out-1"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_el2904_data_t, fsoe_out_2), "%s.%s.%s.fsoe-out-2"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_el2904_data_t, fsoe_out_3), "%s.%s.%s.fsoe-out-3"},
+    {HAL_BIT, HAL_IN, offsetof(lcec_el2904_data_t, out_0), "%s.%s.%s.out-0"},
+    {HAL_BIT, HAL_IN, offsetof(lcec_el2904_data_t, out_1), "%s.%s.%s.out-1"},
+    {HAL_BIT, HAL_IN, offsetof(lcec_el2904_data_t, out_2), "%s.%s.%s.out-2"},
+    {HAL_BIT, HAL_IN, offsetof(lcec_el2904_data_t, out_3), "%s.%s.%s.out-3"}, {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL}};
 
-static const LCEC_CONF_FSOE_T fsoe_conf = {
-  .slave_data_len = 1,
-  .master_data_len = 1,
-  .data_channels = 1
-};
+static const LCEC_CONF_FSOE_T fsoe_conf = {.slave_data_len = 1, .master_data_len = 1, .data_channels = 1};
 
 static int lcec_el2904_preinit(struct lcec_slave *slave) {
   // set fsoe config
@@ -128,20 +121,20 @@ static int lcec_el2904_init(int comp_id, struct lcec_slave *slave) {
   slave->hal_data = hal_data;
 
   // initialize POD entries
-  lcec_pdo_init(slave,  0x7000, 0x01, &hal_data->fsoe_master_cmd_os, NULL);
-  lcec_pdo_init(slave,  0x7001, 0x01, &hal_data->fsoe_out_0_os, &hal_data->fsoe_out_0_bp);
-  lcec_pdo_init(slave,  0x7001, 0x02, &hal_data->fsoe_out_1_os, &hal_data->fsoe_out_1_bp);
-  lcec_pdo_init(slave,  0x7001, 0x03, &hal_data->fsoe_out_2_os, &hal_data->fsoe_out_2_bp);
-  lcec_pdo_init(slave,  0x7001, 0x04, &hal_data->fsoe_out_3_os, &hal_data->fsoe_out_3_bp);
-  lcec_pdo_init(slave,  0x7000, 0x02, &hal_data->fsoe_master_crc_os, NULL);
-  lcec_pdo_init(slave,  0x7000, 0x03, &hal_data->fsoe_master_connid_os, NULL);
-  lcec_pdo_init(slave,  0x7010, 0x01, &hal_data->out_0_os, &hal_data->out_0_bp);
-  lcec_pdo_init(slave,  0x7010, 0x02, &hal_data->out_1_os, &hal_data->out_1_bp);
-  lcec_pdo_init(slave,  0x7010, 0x03, &hal_data->out_2_os, &hal_data->out_2_bp);
-  lcec_pdo_init(slave,  0x7010, 0x04, &hal_data->out_3_os, &hal_data->out_3_bp);
-  lcec_pdo_init(slave,  0x6000, 0x01, &hal_data->fsoe_slave_cmd_os, NULL);
-  lcec_pdo_init(slave,  0x6000, 0x03, &hal_data->fsoe_slave_crc_os, NULL);
-  lcec_pdo_init(slave,  0x6000, 0x04, &hal_data->fsoe_slave_connid_os, NULL);
+  lcec_pdo_init(slave, 0x7000, 0x01, &hal_data->fsoe_master_cmd_os, NULL);
+  lcec_pdo_init(slave, 0x7001, 0x01, &hal_data->fsoe_out_0_os, &hal_data->fsoe_out_0_bp);
+  lcec_pdo_init(slave, 0x7001, 0x02, &hal_data->fsoe_out_1_os, &hal_data->fsoe_out_1_bp);
+  lcec_pdo_init(slave, 0x7001, 0x03, &hal_data->fsoe_out_2_os, &hal_data->fsoe_out_2_bp);
+  lcec_pdo_init(slave, 0x7001, 0x04, &hal_data->fsoe_out_3_os, &hal_data->fsoe_out_3_bp);
+  lcec_pdo_init(slave, 0x7000, 0x02, &hal_data->fsoe_master_crc_os, NULL);
+  lcec_pdo_init(slave, 0x7000, 0x03, &hal_data->fsoe_master_connid_os, NULL);
+  lcec_pdo_init(slave, 0x7010, 0x01, &hal_data->out_0_os, &hal_data->out_0_bp);
+  lcec_pdo_init(slave, 0x7010, 0x02, &hal_data->out_1_os, &hal_data->out_1_bp);
+  lcec_pdo_init(slave, 0x7010, 0x03, &hal_data->out_2_os, &hal_data->out_2_bp);
+  lcec_pdo_init(slave, 0x7010, 0x04, &hal_data->out_3_os, &hal_data->out_3_bp);
+  lcec_pdo_init(slave, 0x6000, 0x01, &hal_data->fsoe_slave_cmd_os, NULL);
+  lcec_pdo_init(slave, 0x6000, 0x03, &hal_data->fsoe_slave_crc_os, NULL);
+  lcec_pdo_init(slave, 0x6000, 0x04, &hal_data->fsoe_slave_connid_os, NULL);
 
   // export pins
   if ((err = lcec_pin_newf_list(hal_data, slave_pins, LCEC_MODULE_NAME, master->name, slave->name)) != 0) {
@@ -153,7 +146,7 @@ static int lcec_el2904_init(int comp_id, struct lcec_slave *slave) {
 
 static void lcec_el2904_read(struct lcec_slave *slave, long period) {
   lcec_master_t *master = slave->master;
-  lcec_el2904_data_t *hal_data = (lcec_el2904_data_t *) slave->hal_data;
+  lcec_el2904_data_t *hal_data = (lcec_el2904_data_t *)slave->hal_data;
   uint8_t *pd = master->process_data;
 
   copy_fsoe_data(slave, hal_data->fsoe_slave_cmd_os, hal_data->fsoe_master_cmd_os);
@@ -174,7 +167,7 @@ static void lcec_el2904_read(struct lcec_slave *slave, long period) {
 
 static void lcec_el2904_write(struct lcec_slave *slave, long period) {
   lcec_master_t *master = slave->master;
-  lcec_el2904_data_t *hal_data = (lcec_el2904_data_t *) slave->hal_data;
+  lcec_el2904_data_t *hal_data = (lcec_el2904_data_t *)slave->hal_data;
   uint8_t *pd = master->process_data;
 
   EC_WRITE_BIT(&pd[hal_data->out_0_os], hal_data->out_0_bp, *(hal_data->out_0));
@@ -182,4 +175,3 @@ static void lcec_el2904_write(struct lcec_slave *slave, long period) {
   EC_WRITE_BIT(&pd[hal_data->out_2_os], hal_data->out_2_bp, *(hal_data->out_2));
   EC_WRITE_BIT(&pd[hal_data->out_3_os], hal_data->out_3_bp, *(hal_data->out_3));
 }
-

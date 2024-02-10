@@ -19,16 +19,17 @@
 /// @file
 /// @brief Driver for Beckhoff EM7004 4-axis interface units
 
-#include "../lcec.h"
 #include "lcec_em7004.h"
+
+#include "../lcec.h"
 
 static void lcec_em7004_read(struct lcec_slave *slave, long period);
 static void lcec_em7004_write(struct lcec_slave *slave, long period);
 static int lcec_em7004_init(int comp_id, struct lcec_slave *slave);
 
-static lcec_typelist_t types[]={
-  { "EM7004", LCEC_BECKHOFF_VID, 0x1B5C3452, 0, NULL, lcec_em7004_init},
-  { NULL },
+static lcec_typelist_t types[] = {
+    {"EM7004", LCEC_BECKHOFF_VID, 0x1B5C3452, 0, NULL, lcec_em7004_init},
+    {NULL},
 };
 ADD_TYPES(types);
 
@@ -117,53 +118,53 @@ typedef struct {
 } lcec_em7004_data_t;
 
 static const lcec_pindesc_t slave_din_pins[] = {
-  { HAL_BIT, HAL_OUT, offsetof(lcec_em7004_din_t, in), "%s.%s.%s.din-%d" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_em7004_din_t, in_not), "%s.%s.%s.din-%d-not" },
-  { HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL }
+    {HAL_BIT, HAL_OUT, offsetof(lcec_em7004_din_t, in), "%s.%s.%s.din-%d"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_em7004_din_t, in_not), "%s.%s.%s.din-%d-not"},
+    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
 static const lcec_pindesc_t slave_dout_pins[] = {
-  { HAL_BIT, HAL_IN, offsetof(lcec_em7004_dout_t, out), "%s.%s.%s.dout-%d" },
-  { HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL }
+    {HAL_BIT, HAL_IN, offsetof(lcec_em7004_dout_t, out), "%s.%s.%s.dout-%d"},
+    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
 static const lcec_pindesc_t slave_dout_params[] = {
-  { HAL_BIT, HAL_RW, offsetof(lcec_em7004_dout_t, invert), "%s.%s.%s.dout-%d-invert" },
-  { HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL }
+    {HAL_BIT, HAL_RW, offsetof(lcec_em7004_dout_t, invert), "%s.%s.%s.dout-%d-invert"},
+    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
 static const lcec_pindesc_t slave_aout_pins[] = {
-  { HAL_FLOAT, HAL_IO, offsetof(lcec_em7004_aout_t, scale), "%s.%s.%s.aout-%d-scale" },
-  { HAL_FLOAT, HAL_IO, offsetof(lcec_em7004_aout_t, offset), "%s.%s.%s.aout-%d-offset" },
-  { HAL_FLOAT, HAL_IO, offsetof(lcec_em7004_aout_t, min_dc), "%s.%s.%s.aout-%d-min-dc" },
-  { HAL_FLOAT, HAL_IO, offsetof(lcec_em7004_aout_t, max_dc), "%s.%s.%s.aout-%d-max-dc" },
-  { HAL_FLOAT, HAL_OUT, offsetof(lcec_em7004_aout_t, curr_dc), "%s.%s.%s.aout-%d-curr-dc" },
-  { HAL_BIT, HAL_IN, offsetof(lcec_em7004_aout_t, enable), "%s.%s.%s.aout-%d-enable" },
-  { HAL_BIT, HAL_IN, offsetof(lcec_em7004_aout_t, absmode), "%s.%s.%s.aout-%d-absmode" },
-  { HAL_FLOAT, HAL_IN, offsetof(lcec_em7004_aout_t, value), "%s.%s.%s.aout-%d-value" },
-  { HAL_S32, HAL_OUT, offsetof(lcec_em7004_aout_t, raw_val), "%s.%s.%s.aout-%d-raw" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_em7004_aout_t, pos), "%s.%s.%s.aout-%d-pos" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_em7004_aout_t, neg), "%s.%s.%s.aout-%d-neg" },
-  { HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL }
+    {HAL_FLOAT, HAL_IO, offsetof(lcec_em7004_aout_t, scale), "%s.%s.%s.aout-%d-scale"},
+    {HAL_FLOAT, HAL_IO, offsetof(lcec_em7004_aout_t, offset), "%s.%s.%s.aout-%d-offset"},
+    {HAL_FLOAT, HAL_IO, offsetof(lcec_em7004_aout_t, min_dc), "%s.%s.%s.aout-%d-min-dc"},
+    {HAL_FLOAT, HAL_IO, offsetof(lcec_em7004_aout_t, max_dc), "%s.%s.%s.aout-%d-max-dc"},
+    {HAL_FLOAT, HAL_OUT, offsetof(lcec_em7004_aout_t, curr_dc), "%s.%s.%s.aout-%d-curr-dc"},
+    {HAL_BIT, HAL_IN, offsetof(lcec_em7004_aout_t, enable), "%s.%s.%s.aout-%d-enable"},
+    {HAL_BIT, HAL_IN, offsetof(lcec_em7004_aout_t, absmode), "%s.%s.%s.aout-%d-absmode"},
+    {HAL_FLOAT, HAL_IN, offsetof(lcec_em7004_aout_t, value), "%s.%s.%s.aout-%d-value"},
+    {HAL_S32, HAL_OUT, offsetof(lcec_em7004_aout_t, raw_val), "%s.%s.%s.aout-%d-raw"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_em7004_aout_t, pos), "%s.%s.%s.aout-%d-pos"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_em7004_aout_t, neg), "%s.%s.%s.aout-%d-neg"},
+    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
 static const lcec_pindesc_t slave_enc_pins[] = {
-  { HAL_BIT, HAL_IO, offsetof(lcec_em7004_enc_t, ena_latch_ext_pos), "%s.%s.%s.enc-%d-index-ext-pos-enable" },
-  { HAL_BIT, HAL_IO, offsetof(lcec_em7004_enc_t, ena_latch_ext_neg), "%s.%s.%s.enc-%d-index-ext-neg-enable" },
-  { HAL_BIT, HAL_IN, offsetof(lcec_em7004_enc_t, reset), "%s.%s.%s.enc-%d-reset" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_em7004_enc_t, ina), "%s.%s.%s.enc-%d-ina" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_em7004_enc_t, inb), "%s.%s.%s.enc-%d-inb" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_em7004_enc_t, ingate), "%s.%s.%s.enc-%d-ingate" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_em7004_enc_t, inext), "%s.%s.%s.enc-%d-inext" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_em7004_enc_t, latch_ext_valid), "%s.%s.%s.enc-%d-latch-ext-valid" },
-  { HAL_BIT, HAL_IO, offsetof(lcec_em7004_enc_t, set_raw_count), "%s.%s.%s.enc-%d-set-raw-count" },
-  { HAL_S32, HAL_IN, offsetof(lcec_em7004_enc_t, set_raw_count_val), "%s.%s.%s.enc-%d-set-raw-count-val" },
-  { HAL_S32, HAL_OUT, offsetof(lcec_em7004_enc_t, raw_count), "%s.%s.%s.enc-%d-raw-count" },
-  { HAL_S32, HAL_OUT, offsetof(lcec_em7004_enc_t, count), "%s.%s.%s.enc-%d-count" },
-  { HAL_S32, HAL_OUT, offsetof(lcec_em7004_enc_t, raw_latch), "%s.%s.%s.enc-%d-raw-latch" },
-  { HAL_FLOAT, HAL_OUT, offsetof(lcec_em7004_enc_t, pos), "%s.%s.%s.enc-%d-pos" },
-  { HAL_FLOAT, HAL_IO, offsetof(lcec_em7004_enc_t, pos_scale), "%s.%s.%s.enc-%d-pos-scale" },
-  { HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL }
+    {HAL_BIT, HAL_IO, offsetof(lcec_em7004_enc_t, ena_latch_ext_pos), "%s.%s.%s.enc-%d-index-ext-pos-enable"},
+    {HAL_BIT, HAL_IO, offsetof(lcec_em7004_enc_t, ena_latch_ext_neg), "%s.%s.%s.enc-%d-index-ext-neg-enable"},
+    {HAL_BIT, HAL_IN, offsetof(lcec_em7004_enc_t, reset), "%s.%s.%s.enc-%d-reset"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_em7004_enc_t, ina), "%s.%s.%s.enc-%d-ina"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_em7004_enc_t, inb), "%s.%s.%s.enc-%d-inb"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_em7004_enc_t, ingate), "%s.%s.%s.enc-%d-ingate"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_em7004_enc_t, inext), "%s.%s.%s.enc-%d-inext"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_em7004_enc_t, latch_ext_valid), "%s.%s.%s.enc-%d-latch-ext-valid"},
+    {HAL_BIT, HAL_IO, offsetof(lcec_em7004_enc_t, set_raw_count), "%s.%s.%s.enc-%d-set-raw-count"},
+    {HAL_S32, HAL_IN, offsetof(lcec_em7004_enc_t, set_raw_count_val), "%s.%s.%s.enc-%d-set-raw-count-val"},
+    {HAL_S32, HAL_OUT, offsetof(lcec_em7004_enc_t, raw_count), "%s.%s.%s.enc-%d-raw-count"},
+    {HAL_S32, HAL_OUT, offsetof(lcec_em7004_enc_t, count), "%s.%s.%s.enc-%d-count"},
+    {HAL_S32, HAL_OUT, offsetof(lcec_em7004_enc_t, raw_latch), "%s.%s.%s.enc-%d-raw-latch"},
+    {HAL_FLOAT, HAL_OUT, offsetof(lcec_em7004_enc_t, pos), "%s.%s.%s.enc-%d-pos"},
+    {HAL_FLOAT, HAL_IO, offsetof(lcec_em7004_enc_t, pos_scale), "%s.%s.%s.enc-%d-pos-scale"},
+    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
 static int lcec_em7004_init(int comp_id, struct lcec_slave *slave) {
@@ -192,9 +193,9 @@ static int lcec_em7004_init(int comp_id, struct lcec_slave *slave) {
   hal_data->last_operational = 0;
 
   // initialize digital input pins
-  for (i=0, din=hal_data->dins; i<LCEC_EM7004_DIN_COUNT; i++, din++) {
+  for (i = 0, din = hal_data->dins; i < LCEC_EM7004_DIN_COUNT; i++, din++) {
     // initialize POD entry
-    lcec_pdo_init(slave,  0x6000, i + 1, &din->pdo_os, &din->pdo_bp);
+    lcec_pdo_init(slave, 0x6000, i + 1, &din->pdo_os, &din->pdo_bp);
 
     // export pins
     if ((err = lcec_pin_newf_list(din, slave_din_pins, LCEC_MODULE_NAME, master->name, slave->name, i)) != 0) {
@@ -203,9 +204,9 @@ static int lcec_em7004_init(int comp_id, struct lcec_slave *slave) {
   }
 
   // initialize digital output pins
-  for (i=0, dout=hal_data->douts; i<LCEC_EM7004_DOUT_COUNT; i++, dout++) {
+  for (i = 0, dout = hal_data->douts; i < LCEC_EM7004_DOUT_COUNT; i++, dout++) {
     // initialize POD entry
-    lcec_pdo_init(slave,  0x7010, i + 1, &dout->pdo_os, &dout->pdo_bp);
+    lcec_pdo_init(slave, 0x7010, i + 1, &dout->pdo_os, &dout->pdo_bp);
 
     // export pins
     if ((err = lcec_pin_newf_list(dout, slave_dout_pins, LCEC_MODULE_NAME, master->name, slave->name, i)) != 0) {
@@ -217,9 +218,9 @@ static int lcec_em7004_init(int comp_id, struct lcec_slave *slave) {
   }
 
   // initialize analog output pins
-  for (i=0, aout=hal_data->aouts; i<LCEC_EM7004_AOUT_COUNT; i++, aout++) {
+  for (i = 0, aout = hal_data->aouts; i < LCEC_EM7004_AOUT_COUNT; i++, aout++) {
     // initialize POD entries
-    lcec_pdo_init(slave,  0x7020 + (i << 4), 0x11, &aout->val_pdo_os, NULL);
+    lcec_pdo_init(slave, 0x7020 + (i << 4), 0x11, &aout->val_pdo_os, NULL);
 
     // export pins
     if ((err = lcec_pin_newf_list(aout, slave_aout_pins, LCEC_MODULE_NAME, master->name, slave->name, i)) != 0) {
@@ -237,20 +238,20 @@ static int lcec_em7004_init(int comp_id, struct lcec_slave *slave) {
   }
 
   // initialize encoder pins
-  for (i=0, enc=hal_data->encs; i<LCEC_EM7004_ENC_COUNT; i++, enc++) {
+  for (i = 0, enc = hal_data->encs; i < LCEC_EM7004_ENC_COUNT; i++, enc++) {
     // initialize POD entries
-    lcec_pdo_init(slave,  0x6060 + (i << 4), 0x02, &enc->latch_ext_valid_pdo_os, &enc->latch_ext_valid_pdo_bp);
-    lcec_pdo_init(slave,  0x6060 + (i << 4), 0x03, &enc->set_count_done_pdo_os, &enc->set_count_done_pdo_bp);
-    lcec_pdo_init(slave,  0x6060 + (i << 4), 0x09, &enc->ina_pdo_os, &enc->ina_pdo_bp);
-    lcec_pdo_init(slave,  0x6060 + (i << 4), 0x0a, &enc->inb_pdo_os, &enc->inb_pdo_bp);
-    lcec_pdo_init(slave,  0x6060 + (i << 4), 0x0c, &enc->ingate_pdo_os, &enc->ingate_pdo_bp);
-    lcec_pdo_init(slave,  0x6060 + (i << 4), 0x0d, &enc->inext_pdo_os, &enc->inext_pdo_bp);
-    lcec_pdo_init(slave,  0x6060 + (i << 4), 0x11, &enc->count_pdo_os, NULL);
-    lcec_pdo_init(slave,  0x6060 + (i << 4), 0x12, &enc->latch_pdo_os, NULL);
-    lcec_pdo_init(slave,  0x7060 + (i << 4), 0x02, &enc->ena_latch_ext_pos_pdo_os, &enc->ena_latch_ext_pos_pdo_bp);
-    lcec_pdo_init(slave,  0x7060 + (i << 4), 0x03, &enc->set_count_pdo_os, &enc->set_count_pdo_bp);
-    lcec_pdo_init(slave,  0x7060 + (i << 4), 0x04, &enc->ena_latch_ext_neg_pdo_os, &enc->ena_latch_ext_neg_pdo_bp);
-    lcec_pdo_init(slave,  0x7060 + (i << 4), 0x11, &enc->set_count_val_pdo_os, NULL);
+    lcec_pdo_init(slave, 0x6060 + (i << 4), 0x02, &enc->latch_ext_valid_pdo_os, &enc->latch_ext_valid_pdo_bp);
+    lcec_pdo_init(slave, 0x6060 + (i << 4), 0x03, &enc->set_count_done_pdo_os, &enc->set_count_done_pdo_bp);
+    lcec_pdo_init(slave, 0x6060 + (i << 4), 0x09, &enc->ina_pdo_os, &enc->ina_pdo_bp);
+    lcec_pdo_init(slave, 0x6060 + (i << 4), 0x0a, &enc->inb_pdo_os, &enc->inb_pdo_bp);
+    lcec_pdo_init(slave, 0x6060 + (i << 4), 0x0c, &enc->ingate_pdo_os, &enc->ingate_pdo_bp);
+    lcec_pdo_init(slave, 0x6060 + (i << 4), 0x0d, &enc->inext_pdo_os, &enc->inext_pdo_bp);
+    lcec_pdo_init(slave, 0x6060 + (i << 4), 0x11, &enc->count_pdo_os, NULL);
+    lcec_pdo_init(slave, 0x6060 + (i << 4), 0x12, &enc->latch_pdo_os, NULL);
+    lcec_pdo_init(slave, 0x7060 + (i << 4), 0x02, &enc->ena_latch_ext_pos_pdo_os, &enc->ena_latch_ext_pos_pdo_bp);
+    lcec_pdo_init(slave, 0x7060 + (i << 4), 0x03, &enc->set_count_pdo_os, &enc->set_count_pdo_bp);
+    lcec_pdo_init(slave, 0x7060 + (i << 4), 0x04, &enc->ena_latch_ext_neg_pdo_os, &enc->ena_latch_ext_neg_pdo_bp);
+    lcec_pdo_init(slave, 0x7060 + (i << 4), 0x11, &enc->set_count_val_pdo_os, NULL);
 
     // export pins
     if ((err = lcec_pin_newf_list(enc, slave_enc_pins, LCEC_MODULE_NAME, master->name, slave->name, i)) != 0) {
@@ -272,7 +273,7 @@ static int lcec_em7004_init(int comp_id, struct lcec_slave *slave) {
 
 static void lcec_em7004_read(struct lcec_slave *slave, long period) {
   lcec_master_t *master = slave->master;
-  lcec_em7004_data_t *hal_data = (lcec_em7004_data_t *) slave->hal_data;
+  lcec_em7004_data_t *hal_data = (lcec_em7004_data_t *)slave->hal_data;
   uint8_t *pd = master->process_data;
   lcec_em7004_din_t *din;
   lcec_em7004_enc_t *enc;
@@ -286,14 +287,14 @@ static void lcec_em7004_read(struct lcec_slave *slave, long period) {
   }
 
   // check digital inputs
-  for (i=0, din=hal_data->dins; i<LCEC_EM7004_DIN_COUNT; i++, din++) {
+  for (i = 0, din = hal_data->dins; i < LCEC_EM7004_DIN_COUNT; i++, din++) {
     s = EC_READ_BIT(&pd[din->pdo_os], din->pdo_bp);
     *(din->in) = s;
     *(din->in_not) = !s;
   }
 
   // read encoder data
-  for (i=0, enc=hal_data->encs; i<LCEC_EM7004_ENC_COUNT; i++, enc++) {
+  for (i = 0, enc = hal_data->encs; i < LCEC_EM7004_ENC_COUNT; i++, enc++) {
     // check for change in scale value
     if (*(enc->pos_scale) != enc->old_scale) {
       // scale value has changed, test and update it
@@ -330,7 +331,7 @@ static void lcec_em7004_read(struct lcec_slave *slave, long period) {
     }
 
     // update raw values
-    if (! *(enc->set_raw_count)) {
+    if (!*(enc->set_raw_count)) {
       *(enc->raw_count) = raw_count;
     }
 
@@ -364,7 +365,7 @@ static void lcec_em7004_read(struct lcec_slave *slave, long period) {
 
 static void lcec_em7004_write(struct lcec_slave *slave, long period) {
   lcec_master_t *master = slave->master;
-  lcec_em7004_data_t *hal_data = (lcec_em7004_data_t *) slave->hal_data;
+  lcec_em7004_data_t *hal_data = (lcec_em7004_data_t *)slave->hal_data;
   uint8_t *pd = master->process_data;
   lcec_em7004_dout_t *dout;
   lcec_em7004_aout_t *aout;
@@ -373,7 +374,7 @@ static void lcec_em7004_write(struct lcec_slave *slave, long period) {
   double tmpval, tmpdc, raw_val;
 
   // set digital outputs
-  for (i=0, dout=hal_data->douts; i<LCEC_EM7004_DOUT_COUNT; i++, dout++) {
+  for (i = 0, dout = hal_data->douts; i < LCEC_EM7004_DOUT_COUNT; i++, dout++) {
     s = *(dout->out);
     if (dout->invert) {
       s = !s;
@@ -382,7 +383,7 @@ static void lcec_em7004_write(struct lcec_slave *slave, long period) {
   }
 
   // set analog outputs
-  for (i=0, aout=hal_data->aouts; i<LCEC_EM7004_AOUT_COUNT; i++, aout++) {
+  for (i = 0, aout = hal_data->aouts; i < LCEC_EM7004_AOUT_COUNT; i++, aout++) {
     // validate duty cycle limits, both limits must be between
     // 0.0 and 1.0 (inclusive) and max must be greater then min
     if (*(aout->max_dc) > 1.0) {
@@ -451,11 +452,10 @@ static void lcec_em7004_write(struct lcec_slave *slave, long period) {
   }
 
   // write encoder data
-  for (i=0, enc=hal_data->encs; i<LCEC_EM7004_ENC_COUNT; i++, enc++) {
+  for (i = 0, enc = hal_data->encs; i < LCEC_EM7004_ENC_COUNT; i++, enc++) {
     EC_WRITE_BIT(&pd[enc->set_count_pdo_os], enc->set_count_pdo_bp, *(enc->set_raw_count));
     EC_WRITE_BIT(&pd[enc->ena_latch_ext_pos_pdo_os], enc->ena_latch_ext_pos_pdo_bp, *(enc->ena_latch_ext_pos));
     EC_WRITE_BIT(&pd[enc->ena_latch_ext_neg_pdo_os], enc->ena_latch_ext_neg_pdo_bp, *(enc->ena_latch_ext_neg));
     EC_WRITE_S16(&pd[enc->set_count_val_pdo_os], *(enc->set_raw_count_val));
   }
 }
-

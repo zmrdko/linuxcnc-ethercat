@@ -17,13 +17,12 @@
 //    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 //
 
-
 /**   @file
       @brief Linuxcnc and Machinekit HAL driver for Beckhoff EL2202
       2-channel fast digital output terminal with tri-state.
       @details Voltage on Output terminal is controlled by the Output hal pin,
-      if the Tristate hal pin is activated the output value is placed in high 
-      impedence status. 
+      if the Tristate hal pin is activated the output value is placed in high
+      impedence status.
       http://www.beckhoff.com/english.asp?EtherCAT/el2202.htm%20 */
 
 #include "../lcec.h"
@@ -31,9 +30,9 @@
 
 static int lcec_el2202_init(int comp_id, struct lcec_slave *slave);
 
-static lcec_typelist_t types[]={
-  { "EL2202", LCEC_BECKHOFF_VID, 0x089A3052, 0, NULL, lcec_el2202_init}, // 2 fast channels with tristate
-  { NULL },
+static lcec_typelist_t types[] = {
+    {"EL2202", LCEC_BECKHOFF_VID, 0x089A3052, 0, NULL, lcec_el2202_init},  // 2 fast channels with tristate
+    {NULL},
 };
 ADD_TYPES(types);
 
@@ -61,7 +60,7 @@ ec_pdo_info_t lcec_el2202_pdos[] = {
 
 ec_sync_info_t lcec_el2202_syncs[] = {
     {0, EC_DIR_OUTPUT, 2, lcec_el2202_pdos, EC_WD_ENABLE},
-    {0xff}
+    {0xff},
 };
 
 /** \brief data structure of each channel */
@@ -82,12 +81,12 @@ typedef struct {
 } lcec_el2202_data_t;
 
 static const lcec_pindesc_t slave_pins[] = {
-  { HAL_BIT, HAL_IN, offsetof(lcec_el2202_chan_t, out), "%s.%s.%s.dout-%d" },
-  { HAL_BIT, HAL_IN, offsetof(lcec_el2202_chan_t, tristate), "%s.%s.%s.tristate-%d" },
-  { HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL }
+    {HAL_BIT, HAL_IN, offsetof(lcec_el2202_chan_t, out), "%s.%s.%s.dout-%d"},
+    {HAL_BIT, HAL_IN, offsetof(lcec_el2202_chan_t, tristate), "%s.%s.%s.tristate-%d"},
+    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
-/** \brief callback for periodic IO data access*/ 
+/** \brief callback for periodic IO data access*/
 static void lcec_el2202_write(struct lcec_slave *slave, long period);
 
 static int lcec_el2202_init(int comp_id, struct lcec_slave *slave) {
@@ -114,12 +113,12 @@ static int lcec_el2202_init(int comp_id, struct lcec_slave *slave) {
   slave->sync_info = lcec_el2202_syncs;
 
   // initialize pins
-  for (i=0; i<LCEC_EL2202_CHANS; i++) {
+  for (i = 0; i < LCEC_EL2202_CHANS; i++) {
     chan = &hal_data->chans[i];
 
     // initialize PDO entries     position      vend.id     prod.code   index              sindx  offset             bit pos
-    lcec_pdo_init(slave,  0x7000 + (i << 4), 0x01, &chan->out_offs, &chan->out_bitp);
-    lcec_pdo_init(slave,  0x7000 + (i << 4), 0x02, &chan->tristate_offs, &chan->tristate_bitp);
+    lcec_pdo_init(slave, 0x7000 + (i << 4), 0x01, &chan->out_offs, &chan->out_bitp);
+    lcec_pdo_init(slave, 0x7000 + (i << 4), 0x02, &chan->tristate_offs, &chan->tristate_bitp);
 
     // export pins
     if ((err = lcec_pin_newf_list(chan, slave_pins, LCEC_MODULE_NAME, master->name, slave->name, i)) != 0) {
@@ -134,12 +133,12 @@ static void lcec_el2202_write(struct lcec_slave *slave, long period) {
   lcec_master_t *master = slave->master;
   uint8_t *pd = master->process_data;
 
-  lcec_el2202_data_t *hal_data = (lcec_el2202_data_t *) slave->hal_data;
+  lcec_el2202_data_t *hal_data = (lcec_el2202_data_t *)slave->hal_data;
   lcec_el2202_chan_t *chan;
 
   int i;
 
-  for (i=0; i<LCEC_EL2202_CHANS; i++) {
+  for (i = 0; i < LCEC_EL2202_CHANS; i++) {
     chan = &hal_data->chans[i];
 
     // set output
@@ -148,4 +147,3 @@ static void lcec_el2202_write(struct lcec_slave *slave, long period) {
     EC_WRITE_BIT(&pd[chan->tristate_offs], chan->tristate_bitp, *(chan->tristate));
   }
 }
-

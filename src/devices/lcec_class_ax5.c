@@ -19,39 +19,39 @@
 /// @file
 /// @brief Library for Beckhoff AX5xxx controllers
 
-#include "../lcec.h"
-#include "lcec_class_enc.h"
 #include "lcec_class_ax5.h"
 
-static const lcec_pindesc_t slave_pins[] = {
-  { HAL_BIT, HAL_IN, offsetof(lcec_class_ax5_chan_t, enable), "%s.%s.%s.%ssrv-enable" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_class_ax5_chan_t, enabled), "%s.%s.%s.%ssrv-enabled" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_class_ax5_chan_t, halted), "%s.%s.%s.%ssrv-halted" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_class_ax5_chan_t, fault), "%s.%s.%s.%ssrv-fault" },
-  { HAL_BIT, HAL_IN, offsetof(lcec_class_ax5_chan_t, halt), "%s.%s.%s.%ssrv-halt" },
-  { HAL_BIT, HAL_IN, offsetof(lcec_class_ax5_chan_t, drive_off), "%s.%s.%s.%ssrv-drive-off" },
-  { HAL_FLOAT, HAL_IN, offsetof(lcec_class_ax5_chan_t, velo_cmd), "%s.%s.%s.%ssrv-velo-cmd" },
+#include "../lcec.h"
+#include "lcec_class_enc.h"
 
-  { HAL_U32, HAL_IN, offsetof(lcec_class_ax5_chan_t, status), "%s.%s.%s.%ssrv-status" },
-  { HAL_FLOAT, HAL_IN, offsetof(lcec_class_ax5_chan_t, torque_fb_pct), "%s.%s.%s.%ssrv-torque-fb-pct" },
-  { HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL }
+static const lcec_pindesc_t slave_pins[] = {
+    {HAL_BIT, HAL_IN, offsetof(lcec_class_ax5_chan_t, enable), "%s.%s.%s.%ssrv-enable"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_class_ax5_chan_t, enabled), "%s.%s.%s.%ssrv-enabled"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_class_ax5_chan_t, halted), "%s.%s.%s.%ssrv-halted"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_class_ax5_chan_t, fault), "%s.%s.%s.%ssrv-fault"},
+    {HAL_BIT, HAL_IN, offsetof(lcec_class_ax5_chan_t, halt), "%s.%s.%s.%ssrv-halt"},
+    {HAL_BIT, HAL_IN, offsetof(lcec_class_ax5_chan_t, drive_off), "%s.%s.%s.%ssrv-drive-off"},
+    {HAL_FLOAT, HAL_IN, offsetof(lcec_class_ax5_chan_t, velo_cmd), "%s.%s.%s.%ssrv-velo-cmd"},
+    {HAL_U32, HAL_IN, offsetof(lcec_class_ax5_chan_t, status), "%s.%s.%s.%ssrv-status"},
+    {HAL_FLOAT, HAL_IN, offsetof(lcec_class_ax5_chan_t, torque_fb_pct), "%s.%s.%s.%ssrv-torque-fb-pct"},
+    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
 static const lcec_pindesc_t slave_diag_pins[] = {
-  { HAL_U32, HAL_IN, offsetof(lcec_class_ax5_chan_t, diag), "%s.%s.%s.%ssrv-diag" },
-  { HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL }
+    {HAL_U32, HAL_IN, offsetof(lcec_class_ax5_chan_t, diag), "%s.%s.%s.%ssrv-diag"},
+    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
 static const lcec_pindesc_t slave_params[] = {
-  { HAL_FLOAT, HAL_RW, offsetof(lcec_class_ax5_chan_t, scale), "%s.%s.%s.%ssrv-scale" },
-  { HAL_FLOAT, HAL_RO, offsetof(lcec_class_ax5_chan_t, vel_scale), "%s.%s.%s.%ssrv-vel-scale" },
-  { HAL_U32, HAL_RO, offsetof(lcec_class_ax5_chan_t, pos_resolution), "%s.%s.%s.%ssrv-pos-resolution" },
-  { HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL }
+    {HAL_FLOAT, HAL_RW, offsetof(lcec_class_ax5_chan_t, scale), "%s.%s.%s.%ssrv-scale"},
+    {HAL_FLOAT, HAL_RO, offsetof(lcec_class_ax5_chan_t, vel_scale), "%s.%s.%s.%ssrv-vel-scale"},
+    {HAL_U32, HAL_RO, offsetof(lcec_class_ax5_chan_t, pos_resolution), "%s.%s.%s.%ssrv-pos-resolution"},
+    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
 static const lcec_pindesc_t slave_fb2_params[] = {
-  { HAL_FLOAT, HAL_RW, offsetof(lcec_class_ax5_chan_t, scale_fb2), "%s.%s.%s.%ssrv-scale-fb2" },
-  { HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL }
+    {HAL_FLOAT, HAL_RW, offsetof(lcec_class_ax5_chan_t, scale_fb2), "%s.%s.%s.%ssrv-scale-fb2"},
+    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
 static int get_param_flag(struct lcec_slave *slave, int id) {
@@ -104,11 +104,11 @@ int lcec_class_ax5_init(struct lcec_slave *slave, lcec_class_ax5_chan_t *chan, i
   idn_vel_exp = EC_READ_S16(idn_buf);
 
   // initialize POD entries
-  lcec_pdo_init(slave,  0x0087, 0x01 + index, &chan->status_pdo_os, NULL);
-  lcec_pdo_init(slave,  0x0033, 0x01 + index, &chan->pos_fb_pdo_os, NULL);
-  lcec_pdo_init(slave,  0x0054, 0x01 + index, &chan->torque_fb_pdo_os, NULL);
-  lcec_pdo_init(slave,  0x0086, 0x01 + index, &chan->ctrl_pdo_os, NULL);
-  lcec_pdo_init(slave,  0x0018, 0x01 + index, &chan->vel_cmd_pdo_os, NULL);
+  lcec_pdo_init(slave, 0x0087, 0x01 + index, &chan->status_pdo_os, NULL);
+  lcec_pdo_init(slave, 0x0033, 0x01 + index, &chan->pos_fb_pdo_os, NULL);
+  lcec_pdo_init(slave, 0x0054, 0x01 + index, &chan->torque_fb_pdo_os, NULL);
+  lcec_pdo_init(slave, 0x0086, 0x01 + index, &chan->ctrl_pdo_os, NULL);
+  lcec_pdo_init(slave, 0x0018, 0x01 + index, &chan->vel_cmd_pdo_os, NULL);
 
   // export pins
   if ((err = lcec_pin_newf_list(chan, slave_pins, LCEC_MODULE_NAME, master->name, slave->name, pfx)) != 0) {
@@ -128,7 +128,7 @@ int lcec_class_ax5_init(struct lcec_slave *slave, lcec_class_ax5_chan_t *chan, i
 
   chan->fb2_enabled = get_param_flag(slave, LCEC_AX5_PARAM_ENABLE_FB2);
   if (chan->fb2_enabled) {
-    lcec_pdo_init(slave,  0x0035, 0x01 + index, &chan->pos_fb2_pdo_os, NULL);
+    lcec_pdo_init(slave, 0x0035, 0x01 + index, &chan->pos_fb2_pdo_os, NULL);
     if ((err = lcec_param_newf_list(chan, slave_fb2_params, LCEC_MODULE_NAME, master->name, slave->name, pfx)) != 0) {
       return err;
     }
@@ -141,7 +141,7 @@ int lcec_class_ax5_init(struct lcec_slave *slave, lcec_class_ax5_chan_t *chan, i
 
   chan->diag_enabled = get_param_flag(slave, LCEC_AX5_PARAM_ENABLE_DIAG);
   if (chan->diag_enabled) {
-    lcec_pdo_init(slave,  0x0186, 0x01 + index, &chan->diag_pdo_os, NULL);
+    lcec_pdo_init(slave, 0x0186, 0x01 + index, &chan->diag_pdo_os, NULL);
     if ((err = lcec_pin_newf_list(chan, slave_diag_pins, LCEC_MODULE_NAME, master->name, slave->name, pfx)) != 0) {
       return err;
     }
@@ -150,7 +150,7 @@ int lcec_class_ax5_init(struct lcec_slave *slave, lcec_class_ax5_chan_t *chan, i
   // init parameters
   chan->scale = 1.0;
   chan->scale_fb2 = 1.0;
-  chan->vel_scale = ((double) idn_vel_scale) * pow(10.0, (double) idn_vel_exp);
+  chan->vel_scale = ((double)idn_vel_scale) * pow(10.0, (double)idn_vel_exp);
   chan->pos_resolution = idn_pos_resolution;
 
   if (chan->vel_scale > 0.0) {
@@ -238,7 +238,7 @@ void lcec_class_ax5_read(struct lcec_slave *slave, lcec_class_ax5_chan_t *chan) 
     *(chan->diag) = EC_READ_U32(&pd[chan->diag_pdo_os]);
   }
 
-  *(chan->torque_fb_pct) = ((double) EC_READ_S16(&pd[chan->torque_fb_pdo_os])) * 0.1;
+  *(chan->torque_fb_pct) = ((double)EC_READ_S16(&pd[chan->torque_fb_pdo_os])) * 0.1;
 }
 
 void lcec_class_ax5_write(struct lcec_slave *slave, lcec_class_ax5_chan_t *chan) {
@@ -250,15 +250,15 @@ void lcec_class_ax5_write(struct lcec_slave *slave, lcec_class_ax5_chan_t *chan)
   // write outputs
   ctrl = 0;
   if (chan->toggle) {
-    ctrl |= (1 << 10); // sync
+    ctrl |= (1 << 10);  // sync
   }
   if (*(chan->enable)) {
     if (!(*(chan->halt))) {
-      ctrl |= (1 << 13); // halt/restart
+      ctrl |= (1 << 13);  // halt/restart
     }
-    ctrl |= (1 << 14); // enable
+    ctrl |= (1 << 14);  // enable
     if (!(*(chan->drive_off))) {
-      ctrl |= (1 << 15); // drive on
+      ctrl |= (1 << 15);  // drive on
     }
   }
   EC_WRITE_U16(&pd[chan->ctrl_pdo_os], ctrl);
@@ -275,4 +275,3 @@ void lcec_class_ax5_write(struct lcec_slave *slave, lcec_class_ax5_chan_t *chan)
 
   chan->toggle = !chan->toggle;
 }
-

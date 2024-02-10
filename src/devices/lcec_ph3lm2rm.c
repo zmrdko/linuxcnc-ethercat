@@ -26,9 +26,9 @@
 
 static int lcec_ph3lm2rm_init(int comp_id, struct lcec_slave *slave);
 
-static lcec_typelist_t types[]={
-  { "Ph3LM2RM", LCEC_MODUSOFT_VID, 0x10000001, 0, NULL, lcec_ph3lm2rm_init},
-  { NULL },
+static lcec_typelist_t types[] = {
+    {"Ph3LM2RM", LCEC_MODUSOFT_VID, 0x10000001, 0, NULL, lcec_ph3lm2rm_init},
+    {NULL},
 };
 
 ADD_TYPES(types);
@@ -96,44 +96,33 @@ typedef struct {
   unsigned int sync_locked_bp;
 } lcec_ph3lm2rm_data_t;
 
-static const lcec_pindesc_t enc_pins[] = {
-  { HAL_BIT, HAL_IO, offsetof(lcec_ph3lm2rm_enc_data_t, latch_ena_pos), "%s.%s.%s.%s-latch-ena-pos" },
-  { HAL_BIT, HAL_IO, offsetof(lcec_ph3lm2rm_enc_data_t, latch_ena_neg), "%s.%s.%s.%s-latch-ena-neg" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_ph3lm2rm_enc_data_t, error), "%s.%s.%s.%s-error" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_ph3lm2rm_enc_data_t, latch_valid), "%s.%s.%s.%s-latch-valid" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_ph3lm2rm_enc_data_t, latch_state), "%s.%s.%s.%s-latch-state" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_ph3lm2rm_enc_data_t, latch_state_not), "%s.%s.%s.%s-latch-state-not" },
-  { HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL }
-};
+static const lcec_pindesc_t enc_pins[] = {{HAL_BIT, HAL_IO, offsetof(lcec_ph3lm2rm_enc_data_t, latch_ena_pos), "%s.%s.%s.%s-latch-ena-pos"},
+    {HAL_BIT, HAL_IO, offsetof(lcec_ph3lm2rm_enc_data_t, latch_ena_neg), "%s.%s.%s.%s-latch-ena-neg"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_ph3lm2rm_enc_data_t, error), "%s.%s.%s.%s-error"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_ph3lm2rm_enc_data_t, latch_valid), "%s.%s.%s.%s-latch-valid"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_ph3lm2rm_enc_data_t, latch_state), "%s.%s.%s.%s-latch-state"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_ph3lm2rm_enc_data_t, latch_state_not), "%s.%s.%s.%s-latch-state-not"},
+    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL}};
 
-static const lcec_pindesc_t enc_params[] = {
-  { HAL_FLOAT, HAL_RW, offsetof(lcec_ph3lm2rm_enc_data_t, scale), "%s.%s.%s.%s-scale" },
-  { HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL }
-};
+static const lcec_pindesc_t enc_params[] = {{HAL_FLOAT, HAL_RW, offsetof(lcec_ph3lm2rm_enc_data_t, scale), "%s.%s.%s.%s-scale"},
+    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL}};
 
-static const lcec_pindesc_t lm_pins[] = {
-  { HAL_U32, HAL_OUT, offsetof(lcec_ph3lm2rm_lm_data_t, signal_level), "%s.%s.%s.%s-signal-level" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_ph3lm2rm_lm_data_t, signal_level_warn), "%s.%s.%s.%s-signal-level-warn" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_ph3lm2rm_lm_data_t, signal_level_err), "%s.%s.%s.%s-signal-level-err" },
-  { HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL }
-};
+static const lcec_pindesc_t lm_pins[] = {{HAL_U32, HAL_OUT, offsetof(lcec_ph3lm2rm_lm_data_t, signal_level), "%s.%s.%s.%s-signal-level"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_ph3lm2rm_lm_data_t, signal_level_warn), "%s.%s.%s.%s-signal-level-warn"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_ph3lm2rm_lm_data_t, signal_level_err), "%s.%s.%s.%s-signal-level-err"},
+    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL}};
 
 static const lcec_pindesc_t lm_params[] = {
-  { HAL_U32, HAL_RW, offsetof(lcec_ph3lm2rm_lm_data_t, signal_level_warn_val), "%s.%s.%s.%s-signal-level-warn-val" },
-  { HAL_U32, HAL_RW, offsetof(lcec_ph3lm2rm_lm_data_t, signal_level_err_val), "%s.%s.%s.%s-signal-level-err-val" },
-  { HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL }
-};
+    {HAL_U32, HAL_RW, offsetof(lcec_ph3lm2rm_lm_data_t, signal_level_warn_val), "%s.%s.%s.%s-signal-level-warn-val"},
+    {HAL_U32, HAL_RW, offsetof(lcec_ph3lm2rm_lm_data_t, signal_level_err_val), "%s.%s.%s.%s-signal-level-err-val"},
+    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL}};
 
-static const lcec_pindesc_t rm_pins[] = {
-  { HAL_BIT, HAL_IN, offsetof(lcec_ph3lm2rm_rm_data_t, latch_sel_idx), "%s.%s.%s.%s-latch-sel-idx" },
-  { HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL }
-};
+static const lcec_pindesc_t rm_pins[] = {{HAL_BIT, HAL_IN, offsetof(lcec_ph3lm2rm_rm_data_t, latch_sel_idx), "%s.%s.%s.%s-latch-sel-idx"},
+    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL}};
 
-static const lcec_pindesc_t slave_pins[] = {
-  { HAL_BIT, HAL_IN, offsetof(lcec_ph3lm2rm_data_t, err_reset), "%s.%s.%s.err-reset" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_ph3lm2rm_data_t, sync_locked), "%s.%s.%s.sync-locked" },
-  { HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL }
-};
+static const lcec_pindesc_t slave_pins[] = {{HAL_BIT, HAL_IN, offsetof(lcec_ph3lm2rm_data_t, err_reset), "%s.%s.%s.err-reset"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_ph3lm2rm_data_t, sync_locked), "%s.%s.%s.sync-locked"},
+    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL}};
 
 static int lcec_ph3lm2rm_enc_init(struct lcec_slave *slave, lcec_ph3lm2rm_enc_data_t *hal_data, const char *pfx, double scale);
 static int lcec_ph3lm2rm_lm_init(struct lcec_slave *slave, int idx, lcec_ph3lm2rm_lm_data_t *hal_data, const char *pfx);
@@ -167,8 +156,8 @@ static int lcec_ph3lm2rm_init(int comp_id, struct lcec_slave *slave) {
   slave->hal_data = hal_data;
 
   // initialize POD entries
-  lcec_pdo_init(slave,  0x7000, 0x01, &hal_data->err_reset_os, &hal_data->err_reset_bp);
-  lcec_pdo_init(slave,  0x6000, 0x01, &hal_data->sync_locked_os, &hal_data->sync_locked_bp);
+  lcec_pdo_init(slave, 0x7000, 0x01, &hal_data->err_reset_os, &hal_data->err_reset_bp);
+  lcec_pdo_init(slave, 0x6000, 0x01, &hal_data->sync_locked_os, &hal_data->sync_locked_bp);
 
   // export pins
   if ((err = lcec_pin_newf_list(hal_data, slave_pins, LCEC_MODULE_NAME, master->name, slave->name)) != 0) {
@@ -176,13 +165,13 @@ static int lcec_ph3lm2rm_init(int comp_id, struct lcec_slave *slave) {
   }
 
   // init subclasses
-  for (i=0, lm = hal_data->lms; i<LCEC_PH3LM2RM_LM_COUNT; i++, lm++) {
+  for (i = 0, lm = hal_data->lms; i < LCEC_PH3LM2RM_LM_COUNT; i++, lm++) {
     rtapi_snprintf(pfx, HAL_NAME_LEN, "lm%d", i);
     if ((err = lcec_ph3lm2rm_lm_init(slave, 0x10 + i, lm, pfx)) != 0) {
       return err;
     }
   }
-  for (i=0, rm = hal_data->rms; i<LCEC_PH3LM2RM_RM_COUNT; i++, rm++) {
+  for (i = 0, rm = hal_data->rms; i < LCEC_PH3LM2RM_RM_COUNT; i++, rm++) {
     rtapi_snprintf(pfx, HAL_NAME_LEN, "rm%d", i);
     if ((err = lcec_ph3lm2rm_rm_init(slave, 0x20 + i, rm, pfx)) != 0) {
       return err;
@@ -222,14 +211,14 @@ int lcec_ph3lm2rm_lm_init(struct lcec_slave *slave, int ios, lcec_ph3lm2rm_lm_da
   int err;
 
   // initialize POD entries
-  lcec_pdo_init(slave,  0x7000 + ios, 0x01, &hal_data->ch.latch_ena_pos_os, &hal_data->ch.latch_ena_pos_bp);
-  lcec_pdo_init(slave,  0x7000 + ios, 0x02, &hal_data->ch.latch_ena_neg_os, &hal_data->ch.latch_ena_neg_bp);
-  lcec_pdo_init(slave,  0x6000 + ios, 0x01, &hal_data->ch.error_os, &hal_data->ch.error_bp);
-  lcec_pdo_init(slave,  0x6000 + ios, 0x02, &hal_data->ch.latch_valid_os, &hal_data->ch.latch_valid_bp);
-  lcec_pdo_init(slave,  0x6000 + ios, 0x03, &hal_data->ch.latch_state_os, &hal_data->ch.latch_state_bp);
-  lcec_pdo_init(slave,  0x6000 + ios, 0x04, &hal_data->signal_level_os, NULL);
-  lcec_pdo_init(slave,  0x6000 + ios, 0x05, &hal_data->ch.counter_os, NULL);
-  lcec_pdo_init(slave,  0x6000 + ios, 0x06, &hal_data->ch.latch_os, NULL);
+  lcec_pdo_init(slave, 0x7000 + ios, 0x01, &hal_data->ch.latch_ena_pos_os, &hal_data->ch.latch_ena_pos_bp);
+  lcec_pdo_init(slave, 0x7000 + ios, 0x02, &hal_data->ch.latch_ena_neg_os, &hal_data->ch.latch_ena_neg_bp);
+  lcec_pdo_init(slave, 0x6000 + ios, 0x01, &hal_data->ch.error_os, &hal_data->ch.error_bp);
+  lcec_pdo_init(slave, 0x6000 + ios, 0x02, &hal_data->ch.latch_valid_os, &hal_data->ch.latch_valid_bp);
+  lcec_pdo_init(slave, 0x6000 + ios, 0x03, &hal_data->ch.latch_state_os, &hal_data->ch.latch_state_bp);
+  lcec_pdo_init(slave, 0x6000 + ios, 0x04, &hal_data->signal_level_os, NULL);
+  lcec_pdo_init(slave, 0x6000 + ios, 0x05, &hal_data->ch.counter_os, NULL);
+  lcec_pdo_init(slave, 0x6000 + ios, 0x06, &hal_data->ch.latch_os, NULL);
 
   // init channel
   if ((err = lcec_ph3lm2rm_enc_init(slave, &hal_data->ch, pfx, 0.0005)) != 0) {
@@ -254,14 +243,14 @@ static int lcec_ph3lm2rm_rm_init(struct lcec_slave *slave, int ios, lcec_ph3lm2r
   int err;
 
   // initialize POD entries
-  lcec_pdo_init(slave,  0x7000 + ios, 0x01, &hal_data->latch_sel_idx_os, &hal_data->latch_sel_idx_bp);
-  lcec_pdo_init(slave,  0x7000 + ios, 0x02, &hal_data->ch.latch_ena_pos_os, &hal_data->ch.latch_ena_pos_bp);
-  lcec_pdo_init(slave,  0x7000 + ios, 0x03, &hal_data->ch.latch_ena_neg_os, &hal_data->ch.latch_ena_neg_bp);
-  lcec_pdo_init(slave,  0x6000 + ios, 0x01, &hal_data->ch.error_os, &hal_data->ch.error_bp);
-  lcec_pdo_init(slave,  0x6000 + ios, 0x02, &hal_data->ch.latch_valid_os, &hal_data->ch.latch_valid_bp);
-  lcec_pdo_init(slave,  0x6000 + ios, 0x03, &hal_data->ch.latch_state_os, &hal_data->ch.latch_state_bp);
-  lcec_pdo_init(slave,  0x6000 + ios, 0x04, &hal_data->ch.counter_os, NULL);
-  lcec_pdo_init(slave,  0x6000 + ios, 0x05, &hal_data->ch.latch_os, NULL);
+  lcec_pdo_init(slave, 0x7000 + ios, 0x01, &hal_data->latch_sel_idx_os, &hal_data->latch_sel_idx_bp);
+  lcec_pdo_init(slave, 0x7000 + ios, 0x02, &hal_data->ch.latch_ena_pos_os, &hal_data->ch.latch_ena_pos_bp);
+  lcec_pdo_init(slave, 0x7000 + ios, 0x03, &hal_data->ch.latch_ena_neg_os, &hal_data->ch.latch_ena_neg_bp);
+  lcec_pdo_init(slave, 0x6000 + ios, 0x01, &hal_data->ch.error_os, &hal_data->ch.error_bp);
+  lcec_pdo_init(slave, 0x6000 + ios, 0x02, &hal_data->ch.latch_valid_os, &hal_data->ch.latch_valid_bp);
+  lcec_pdo_init(slave, 0x6000 + ios, 0x03, &hal_data->ch.latch_state_os, &hal_data->ch.latch_state_bp);
+  lcec_pdo_init(slave, 0x6000 + ios, 0x04, &hal_data->ch.counter_os, NULL);
+  lcec_pdo_init(slave, 0x6000 + ios, 0x05, &hal_data->ch.latch_os, NULL);
 
   // init channel
   if ((err = lcec_ph3lm2rm_enc_init(slave, &hal_data->ch, pfx, 1.0)) != 0) {
@@ -278,7 +267,7 @@ static int lcec_ph3lm2rm_rm_init(struct lcec_slave *slave, int ios, lcec_ph3lm2r
 
 static void lcec_ph3lm2rm_read(struct lcec_slave *slave, long period) {
   lcec_master_t *master = slave->master;
-  lcec_ph3lm2rm_data_t *hal_data = (lcec_ph3lm2rm_data_t *) slave->hal_data;
+  lcec_ph3lm2rm_data_t *hal_data = (lcec_ph3lm2rm_data_t *)slave->hal_data;
   uint8_t *pd = master->process_data;
   int i;
   lcec_ph3lm2rm_rm_data_t *rm;
@@ -286,20 +275,20 @@ static void lcec_ph3lm2rm_read(struct lcec_slave *slave, long period) {
 
   *(hal_data->sync_locked) = EC_READ_BIT(&pd[hal_data->sync_locked_os], hal_data->sync_locked_bp);
 
-  for (i=0, lm = hal_data->lms; i<LCEC_PH3LM2RM_LM_COUNT; i++, lm++) {
+  for (i = 0, lm = hal_data->lms; i < LCEC_PH3LM2RM_LM_COUNT; i++, lm++) {
     lcec_ph3lm2rm_enc_read(pd, &lm->ch);
     *(lm->signal_level) = EC_READ_U32(&pd[lm->signal_level_os]);
     *(lm->signal_level_warn) = lm->signal_level_warn_val > 0 && *(lm->signal_level) < lm->signal_level_warn_val;
     *(lm->signal_level_err) = lm->signal_level_err_val > 0 && *(lm->signal_level) < lm->signal_level_err_val;
   }
 
-  for (i=0, rm = hal_data->rms; i<LCEC_PH3LM2RM_RM_COUNT; i++, rm++) {
+  for (i = 0, rm = hal_data->rms; i < LCEC_PH3LM2RM_RM_COUNT; i++, rm++) {
     lcec_ph3lm2rm_enc_read(pd, &rm->ch);
   }
 }
 
 static void lcec_ph3lm2rm_enc_read(uint8_t *pd, lcec_ph3lm2rm_enc_data_t *ch) {
-  uint32_t counter, latch; 
+  uint32_t counter, latch;
 
   // read bit values
   *(ch->error) = EC_READ_BIT(&pd[ch->error_os], ch->error_bp);
@@ -323,7 +312,7 @@ static void lcec_ph3lm2rm_enc_read(uint8_t *pd, lcec_ph3lm2rm_enc_data_t *ch) {
 
 static void lcec_ph3lm2rm_write(struct lcec_slave *slave, long period) {
   lcec_master_t *master = slave->master;
-  lcec_ph3lm2rm_data_t *hal_data = (lcec_ph3lm2rm_data_t *) slave->hal_data;
+  lcec_ph3lm2rm_data_t *hal_data = (lcec_ph3lm2rm_data_t *)slave->hal_data;
   uint8_t *pd = master->process_data;
   int i;
   lcec_ph3lm2rm_rm_data_t *rm;
@@ -331,11 +320,11 @@ static void lcec_ph3lm2rm_write(struct lcec_slave *slave, long period) {
 
   EC_WRITE_BIT(&pd[hal_data->err_reset_os], hal_data->err_reset_bp, *(hal_data->err_reset));
 
-  for (i=0, lm = hal_data->lms; i<LCEC_PH3LM2RM_LM_COUNT; i++, lm++) {
+  for (i = 0, lm = hal_data->lms; i < LCEC_PH3LM2RM_LM_COUNT; i++, lm++) {
     lcec_ph3lm2rm_enc_write(pd, &lm->ch);
   }
 
-  for (i=0, rm = hal_data->rms; i<LCEC_PH3LM2RM_RM_COUNT; i++, rm++) {
+  for (i = 0, rm = hal_data->rms; i < LCEC_PH3LM2RM_RM_COUNT; i++, rm++) {
     lcec_ph3lm2rm_enc_write(pd, &rm->ch);
     EC_WRITE_BIT(&pd[rm->latch_sel_idx_os], rm->latch_sel_idx_bp, *(rm->latch_sel_idx));
   }
@@ -346,4 +335,3 @@ static void lcec_ph3lm2rm_enc_write(uint8_t *pd, lcec_ph3lm2rm_enc_data_t *ch) {
   EC_WRITE_BIT(&pd[ch->latch_ena_pos_os], ch->latch_ena_pos_bp, *(ch->latch_ena_pos));
   EC_WRITE_BIT(&pd[ch->latch_ena_neg_os], ch->latch_ena_neg_bp, *(ch->latch_ena_neg));
 }
-
