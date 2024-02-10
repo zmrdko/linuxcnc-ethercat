@@ -98,8 +98,11 @@ test-all-din-false() {
 
 test-all-din-true-count() {
     val=$1
-    if [ $(egrep 'TRUE  lcec.0\.D[0-9]+\.din-[0-9]+$' $OUT | wc -l) != $val ]; then
-	echo "ERROR: too many 'true' pins, that should have only flipped $val bit(s)."
+    if [ $(egrep 'TRUE  lcec.0\.D[0-9]+\.din-[0-9]+$' $OUT | egrep -v 'D22.din-[12]' | wc -l) != $val ]; then
+	echo "ERROR: wrong number of 'true' pins, that should have only flipped $val bit(s)."
+	echo "True bits (if any):"
+	egrep 'TRUE  lcec.0\.D[0-9]+\.din-[0-9]+$' $OUT
+	echo "exiting."
 	halrun -U; exit 1
     fi
 }

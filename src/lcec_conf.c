@@ -360,20 +360,20 @@ static void parseSlaveAttrs(LCEC_CONF_XML_INST_T *inst, int next, const char **a
       continue;
     }
 
+    if (strcmp(name, "vid") == 0) {
+      p->vid = strtol(val, NULL, 16);
+      continue;
+    }
+
+    // parse pid (hex value)
+    if (strcmp(name, "pid") == 0) {
+      p->pid = strtol(val, NULL, 16);
+      continue;
+    }
+
     // generic only attributes
     if (!strcmp(p->typename, "generic")) {
       // parse vid (hex value)
-      if (strcmp(name, "vid") == 0) {
-        p->vid = strtol(val, NULL, 16);
-        continue;
-      }
-
-      // parse pid (hex value)
-      if (strcmp(name, "pid") == 0) {
-        p->pid = strtol(val, NULL, 16);
-        continue;
-      }
-
       // parse configPdos
       if (strcmp(name, "configPdos") == 0) {
         p->configPdos = (strcasecmp(val, "true") == 0);

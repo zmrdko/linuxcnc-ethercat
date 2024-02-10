@@ -1,0 +1,11 @@
+---
+Device: ECT60
+VendorID: "0x00000a88"
+VendorName: "RTelligent"
+PID: "0x0a880002"
+Description: ECT60 closed-loop stepper drive
+DocumentationURL: "http://www.rtelligent.net/ECT60.html"
+DeviceType: "Stepper Drive"
+Notes: ""
+SrcFile: devices/lcec_rtec.c
+TestingStatus: "Actively tested"

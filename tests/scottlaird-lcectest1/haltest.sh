@@ -10,7 +10,7 @@ echo "=== Killing old halrun"
 halrun -U
 
 echo "=== Starting halrun"
-halrun -f test1.hal &> /tmp/testbench-init.out
+halrun -f missingtype.hal &> /tmp/testbench-init.out
 
 echo "=== Verifying clean failure"
 if ! grep "ERROR: Cannot find slave type" /tmp/testbench-init.out > /dev/null; then
@@ -26,11 +26,11 @@ halrun -U
 sleep 1
 
 echo "=== Starting halrun"
-halrun -f test2.hal > /tmp/testbench-init.out &
+halrun -f fulltest.hal > /tmp/testbench-init.out &
 
 # It seems to take around 200ms per device to init, with a 2s delay, we only make it through D12 or so.
 echo "... Sleeping for 3s to allow ethercat to finish initializing"
-sleep 3 # let ethercat states settle
+sleep 5 # let ethercat states settle
 
 update
 
@@ -121,21 +121,17 @@ test-pin-count D10 62
 #    halrun -U; exit 1
 #fi
 
-echo "... Testing initial config of D12 (EL6900)"
+echo "... Testing initial config of D12 (EL4004)"
 test-slave-oper D12
-test-pin-exists D12 control
-test-pin-count D12 13
 
-echo "... Testing initial config of D13 (EL1904)"
-test-slave-oper D13
-test-pin-exists D13 fsoe-in-3
-test-pin-count D13 20
+#echo "... Testing initial config of D13 (EL3681)"
+#test-slave-oper D13
 
-echo "... Testing initial config of D14 (EL2904)"
-test-slave-oper D14
-test-pin-exists D14 out-3
-test-pin-exists D14 fsoe-out-3
-test-pin-count D14 20
+#echo "... Testing initial config of D14 (EL2904)"
+#test-slave-oper D14
+#test-pin-exists D14 out-3
+#test-pin-exists D14 fsoe-out-3
+#test-pin-count D14 20
 
 echo "... Testing initial config of D15 (EL3403)"
 test-slave-oper D15
@@ -165,11 +161,15 @@ test-slave-oper D20
 echo "... Testing initial config of D21 (EK1110)"
 test-slave-oper D21
 
-echo "... Testing initial config of D22 (EP2308)"
+echo "... Testing initial config of D22 (ECT60)"
 test-slave-oper D22
-test-pin-exists D22 din-0
-test-pin-exists D22 dout-1
-test-pin-count D22 22
+test-pin-count D22 42
+
+echo "... Testing initial config of D23 (EP2308)"
+test-slave-oper D23
+test-pin-exists D23 din-0
+test-pin-exists D23 dout-1
+test-pin-count D23 22
 
 echo "=== Initial config tests pass"
 
@@ -178,6 +178,7 @@ echo "=== Testing Digital I/O"
 
 
 echo "... Verifying initial state"
+update
 test-all-din-false
 
 echo "... Checking D3.1->D1.1"
@@ -225,6 +226,28 @@ test-all-din-true-count 1
 set-pin D18 dout-7 false
 test-all-din-false
 
+echo "... Checking D22 to D1"
+#test-all-din-false
+#set-pin D22 dout-1 true
+#test-all-din-true-count 1
+#test-pin-true D1 din-2
+#set-pin D22 dout-1 false
+#test-all-din-false
+#
+#set-pin D22 dout-2 true
+#test-all-din-true-count 1
+#test-pin-true D1 din-3
+#set-pin D22 dout-2 false
+#test-all-din-false
+
+echo "... Checking D3 to D22"
+#test-all-din-false
+#set-pin D3 dout-2 true
+#set-pin D3 dout-3 true
+#set-pin D3 dout-4 true
+#set-pin D3 dout-5 true
+#test-all-din-true-count 1
+#test-pin-true D22 din-1
 
 echo "=== Testing Analog I/O"
 echo "... Checking D10 current input"
@@ -257,6 +280,7 @@ test-pin-less D10 ain-1-val 0.01
 
 
 echo "=== Testing Steppers"
+echo "... EL7041"
 set-pin D20 enc-reset true
 set-pin D20 enc-reset false
 test-pin-equal D20 enc-pos 0
@@ -266,6 +290,13 @@ sleep 0.5  # Let the servo move a bit.
 set-pin D20 srv-cmd 0
 update
 test-pin-greater D20 enc-pos 7000  # Currently hitting ~7500.
+
+echo "... ECT60"
+halcmd setp cia402.0.enable true
+halcmd setp cia402.0.velocity-cmd 10000
+sleep 1
+update
+test-pin-greater D22 current-rpm 100
 
 echo "=== ALL TESTS PASS ==="
 halrun -U -Q

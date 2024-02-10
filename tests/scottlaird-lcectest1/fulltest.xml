@@ -74,15 +74,12 @@
     <slave idx="8" type="EL2034" name="D8"/>
     <slave idx="9" type="EL2798" name="D9"/>
     <slave idx="10" type="EL3068" name="D10"/>
-<!--    <slave idx="11" type="EL6001" name="D11"/> -->
-    <slave idx="12" type="EL6900" name="D12">
-        <modParam name="stdInName" value="run"/>
-        <modParam name="stdInName" value="reset"/>
-    </slave>
-    <slave idx="13" type="EL1904" name="D13"/>
-    <slave idx="14" type="EL2904" name="D14"/>
-    <slave idx="15" type="EL3403" name="D15"/>
-    <slave idx="16" type="EL3204" name="D16">
+    <!--    <slave idx="11" type="EL6001" name="D11"/> -->
+    <slave idx="12" type="EL4004" name="D12"/>
+    <!-- <slave idx="13" type="EL3681" name="D13"/> -->
+
+    <slave idx="14" type="EL3403" name="D15"/>
+    <slave idx="15" type="EL3204" name="D16">
       <modParam name="ch0Sensor" value="Pt100"/>
       <modParam name="ch0Resolution" value="High"/>
       <modParam name="ch0Wires" value="2"/>
@@ -90,10 +87,10 @@
       <modParam name="ch2Sensor" value="Pt1000"/>
       <modParam name="ch3Sensor" value="Ohm/64"/>
     </slave>
-<!--    <slave idx="17" type="EL9410" name="D17"/> -->
-    <slave idx="18" type="EL1859" name="D18"/>
-    <slave idx="19" type="EL4032" name="D19"/>
-    <slave idx="20" type="EL7041" name="D20">
+<!--    <slave idx="16" type="EL9410" name="D17"/> -->
+    <slave idx="17" type="EL1859" name="D18"/>
+    <slave idx="18" type="EL4032" name="D19"/>
+    <slave idx="19" type="EL7041" name="D20">
       <modParam name="maxCurrent" value="1.0"/>
       <!--<modParam name="reducedCurrent" value="0.8"/>-->
       <modParam name="nominalVoltage" value="24"/>
@@ -107,8 +104,25 @@
       <!-- <modParam name="maxSpeed" value="4000"/> -->
       <modParam name="microsteps" value="16"/>
     </slave>
-    <slave idx="21" type="EK1110" name="D21"/>
-    <slave idx="23" type="EP2308" name="D22"/>
+    <slave idx="20" type="EK1110" name="D21"/>
+    <slave idx="21" type="ECT60" name="D22">
+      <dcConf assignActivate="300" sync0Cycle="*1" sync0Shift="0"/>
+      <modParam name="peakCurrent_amps" value="2.0"/>
+      <!-- <modParam name="input3Func" value="general"/> -->
+      <!-- <modParam name="input4Func" value="general"/> -->
+      <!-- <modParam name="input5Func" value="general"/> -->
+      <!-- <modParam name="input6Func" value="general"/> -->
+      <!-- <modParam name="input3Polarity" value="nc"/> -->
+      <!-- <modParam name="input4Polarity" value="no"/> -->
+      <!-- <modParam name="input5Polarity" value="nc"/> -->
+      <!-- <modParam name="input6Polarity" value="no"/> -->
+      <!-- <modParam name="output1Func" value="general"/> -->
+      <!-- <modParam name="output2Func" value="general"/> -->
+      <modParam name="controlMode" value="closedloop"/>
+      <modParam name="homeOffset" value="1"/>
+    </slave>
+    <slave idx="22" type="EP2308" name="D23"/>
+    <slave idx="23" type="EP2338" name="D24"/>
   </master>
 </masters>
     

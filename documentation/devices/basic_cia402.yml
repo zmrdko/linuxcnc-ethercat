@@ -1,0 +1,11 @@
+---
+Device: basic_cia402
+VendorID: "0xffffffff"
+VendorName: "None"
+PID: "0xffffffff"
+Description: Driver for generic CiA 402 hardware without a dedicated driver
+DocumentationURL: "TBD"
+DeviceType: "Motion Controller"
+Notes: ""
+SrcFile: devices/lcec_basic_cia402.c
+TestingStatus: ""

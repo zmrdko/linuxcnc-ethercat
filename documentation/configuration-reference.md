@@ -81,9 +81,9 @@ device:
 - `name="<name>"`: (optional but strongly recommended, defaults to the
   value of `idx`): The name of the device.  This is used in naming HAL
   pins in LinuxCNC.
--  `vid="<vid>"`: (generic-only, required): the Vendor ID for the
+-  `vid="<vid>"`: (required for generic, usable but not recommended for others): the Vendor ID for the
    device.  You can determine this via `ethercat slaves -v`.
-- `pid="<pid>"`: (generic-only, required): the product ID for the
+- `pid="<pid>"`: (required for generic, usable but not recommended for others): the product ID for the
   device.  You can also get this from `ethercat slaves -v`.
 - `configPdos="true|false"`: (generic-only, optional): allow
   LinuxCNC-Ethercat to configure PDOs for the generic device.
@@ -92,6 +92,10 @@ Non-generic devices cannot use the generic-only options, but they have
 an additional configuration mechanism available to them.  You can add
 additional `<modParam name="<name>" value="<value>"/>` tags.  The
 exact meaning of these is driver-defined.
+
+It is possible to specify `vid` and `pid` for non-generic devices.
+This overrides the built-in VID and PID that each `type` provides;
+it's really only useful with the `basic-cia402` driver.
   
 Generic devices generally have `configPdos="true"`, and then define a
 set of `<syncManager>`, `<pdo>`, `<pdoEntry>`, and possibly

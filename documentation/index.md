@@ -21,4 +21,5 @@
 - [EL3xxx: Beckhoff analog input devices](el3xxx.md)
 - [EL4xxx: Beckhoff analog output devices](el4xxx.md)
 - [EL7041: Beckhoff EL7041 Stepper drivers](el7041.md)
-- [Delta ASDA Servo drivers](deasda.md)
+- [Delta ASDA Servo drives](deasda.md)
+- [RTelligent ECR and ECT stepper drives](rtec.md)
