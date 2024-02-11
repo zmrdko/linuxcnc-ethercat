@@ -189,8 +189,8 @@ static int handle_modparams(struct lcec_slave *slave) {
   int v;
 
   // Read current polarity values, so we don't overwrite them all.
-  lcec_read_sdo(slave, 0x2006, 0, (uint8_t *)&output_polarity, 2);
-  lcec_read_sdo(slave, 0x2008, 0, (uint8_t *)&input_polarity, 2);
+  lcec_read_sdo16(slave, 0x2006, 0, &output_polarity);
+  lcec_read_sdo16(slave, 0x2008, 0, &input_polarity);
 
   // We'll need to byte-swap here, for big-endian systems.
 
