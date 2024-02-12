@@ -163,7 +163,7 @@ test-slave-oper D21
 
 echo "... Testing initial config of D22 (ECT60)"
 test-slave-oper D22
-test-pin-count D22 53
+test-pin-count D22 60
 
 echo "... Testing initial config of D23 (EP2308)"
 test-slave-oper D23

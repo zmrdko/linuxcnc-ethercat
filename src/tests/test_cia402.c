@@ -28,12 +28,12 @@ TESTFUNC(test_modparm_len) {
   channelized_mps = lcec_cia402_channelized_modparams(per_channel_mps);
   TESTNOTNULL(channelized_mps);
 
-  TESTINT(lcec_modparam_desc_len(channelized_mps), 15);
+  TESTINT(lcec_modparam_desc_len(channelized_mps), 27);
 
   lcec_modparam_desc_t *all_mps = lcec_modparam_desc_concat(channelized_mps, device_mps);
   TESTNOTNULL(all_mps);
 
-  TESTINT(lcec_modparam_desc_len(all_mps), 16);
+  TESTINT(lcec_modparam_desc_len(all_mps), 28);
 
   TESTRESULTS;
 }
