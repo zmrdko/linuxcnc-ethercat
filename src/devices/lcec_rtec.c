@@ -283,7 +283,7 @@ static int handle_modparams(struct lcec_slave *slave) {
               RTAPI_MSG_ERR, LCEC_MSG_PFX "invalid value for <modparam name=\"input6Func\"> for slave %s.%s\n", master->name, slave->name);
           return -1;
         }
-        if (lcec_write_sdo16_modparam(slave, 0x2007, 6, uval, p->name) < 1) return -1;
+        if (lcec_write_sdo16_modparam(slave, 0x2007, 6, uval, p->name) < 0)  return -1;
         break;
       case M_INPUT3POLARITY:
         uval = lcec_lookupint_i(rtec_polarity, p->value.str, -1);
@@ -371,6 +371,7 @@ static int handle_modparams(struct lcec_slave *slave) {
         }
 
         if (v < 0) {
+          rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "unknown error %d from lcec_cia402_handle_modparam for slave %s.%s\n", v, master->name, slave->name);
           return v;
         }
         break;
@@ -451,6 +452,7 @@ static int lcec_rtec_init(int comp_id, struct lcec_slave *slave) {
   slave->sync_info = &syncs->syncs[0];
 
   if (handle_modparams(slave) != 0) {
+    rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "modparam handling failure for slave %s.%s\n", master->name, slave->name);
     return -EIO;
   }
 
@@ -498,6 +500,7 @@ static int lcec_rtec_init(int comp_id, struct lcec_slave *slave) {
 
   // export rtec-specific pins
   if ((err = lcec_pin_newf_list(hal_data, slave_pins, LCEC_MODULE_NAME, slave->master->name, slave->name)) != 0) {
+    rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "pin registration failure for slave %s.%s\n", master->name, slave->name);
     return err;
   }
 
