@@ -80,7 +80,7 @@ static const lcec_pindesc_t slave_pins[] = {
     {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
-static int handle_modparams(struct lcec_slave *slave) {
+static int handle_modparams(struct lcec_slave *slave, lcec_class_cia402_options_t *options) {
   lcec_master_t *master = slave->master;
   lcec_slave_modparam_t *p;
   int v;
@@ -94,7 +94,7 @@ static int handle_modparams(struct lcec_slave *slave) {
       //        break;
       default:
         // Handle cia402 generic modparams
-        v = lcec_cia402_handle_modparam(slave, p);
+        v = lcec_cia402_handle_modparam(slave, p, options);
 
         // If an error occured, then return the error.
         if (v < 0) {
@@ -152,6 +152,11 @@ static int lcec_basic_cia402_init(int comp_id, struct lcec_slave *slave) {
   options->enable_digital_input = 0;
   options->enable_digital_output = 0;
 
+  // Handle modparams
+  if (handle_modparams(slave, options) != 0) {
+    return -EIO;
+  }
+
   // XXXX: set up syncs.  This is generally needed because CiA 402
   // covers a lot of area and few (if any) devices have all of the
   // useful pins pre-mapped.  If you try to use a PDO that hasn't been
@@ -178,11 +183,6 @@ static int lcec_basic_cia402_init(int comp_id, struct lcec_slave *slave) {
   // lcec_syncs_add_pdo_entry(syncs, 0x2048, 0x00, 16);  // current voltage
 
   slave->sync_info = &syncs->syncs[0];
-
-  // Handle modparams
-  if (handle_modparams(slave) != 0) {
-    return -EIO;
-  }
 
   // XXXX: This example is for a single-axis CiA 402 device.
   // Multi-axis devices exist, and should mostly be supported,
