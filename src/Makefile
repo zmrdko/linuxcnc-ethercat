@@ -80,7 +80,7 @@ install: install-user install-realtime
 	true  # override 'install' from $(MODINC)
 
 realtime: lcec.so
-user: lcec_conf lcec_devices
+user: lcec_conf lcec_devices lcec_configgen
 
 # Run all tests (auto-generated above from tests/test_*.c).
 test: $(all-tests)
@@ -89,6 +89,7 @@ test: $(all-tests)
 install-user: user
 	mkdir -p $(DESTDIR)$(EMC2_HOME)/bin
 	cp lcec_conf $(DESTDIR)$(EMC2_HOME)/bin/
+	cp lcec_configgen $(DESTDIR)/usr/bin/
 
 install-realtime: realtime
 	mkdir -p $(DESTDIR)$(RTLIBDIR)/
@@ -108,6 +109,16 @@ lcec_conf: $(lcec-conf-objs) $(lcec-common-objs) liblcecdevices.a
 
 lcec_devices: lcec_devices.o $(lcec-common-objs) liblcecdevices.a
 	$(CC) -o $@ lcec_devices.o $(lcec-common-objs) -Wl,-rpath,$(LIBDIR) -L$(LIBDIR) -llinuxcnchal -lexpat -Wl,--whole-archive liblcecdevices.a -Wl,--no-whole-archive -lethercat -lm
+
+lcec_configgen: configgen/*.go configgen/*/*.go
+	(cd configgen ; go build lcec_configgen.go)
+	cp configgen/lcec_configgen .
+
+configgen/devicelist: configgen/devicelist.go
+	(cd configgen ; go build devicelist.go)
+
+configgen/drivers/drivers.go: configgen/devicelist ../documentation/devices/*.yml
+	(cd configgen ; go generate)
 
 # Rule for compiling tests/*.bin files.  We're naming test excutables *.bin so we can use wildcards in .gitignore and `make clean` to match them.
 tests/%.bin: tests/%.o $(lcec-common-objs) liblcecdevices.a
