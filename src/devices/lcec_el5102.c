@@ -49,19 +49,19 @@ typedef struct {
   hal_s32_t *raw_count;
   hal_s32_t *raw_latch;
   hal_s32_t *raw_latch2;
-  hal_u32_t *raw_frequency;
-  hal_u32_t *raw_period;
+  //hal_u32_t *raw_frequency;
+  //hal_u32_t *raw_period;
   hal_s32_t *count;
   hal_float_t *pos_scale;
   hal_float_t *pos;
-  hal_float_t *period;
-  hal_float_t *frequency;
+  //hal_float_t *period;
+  //hal_float_t *frequency;
 
   unsigned int count_pdo_os;
   unsigned int latch_pdo_os;
   unsigned int latch2_pdo_os;
-  unsigned int frequency_pdo_os;
-  unsigned int period_pdo_os;
+  //unsigned int frequency_pdo_os;
+  //unsigned int period_pdo_os;
 
 #define PDO_ADDRESSES_BOOL(name) unsigned int name##_os, name##_bp
   PDO_ADDRESSES_BOOL(status_latch_c);
@@ -102,7 +102,7 @@ typedef struct {
 typedef struct {
   lcec_el5102_channel_data_t channel[2];
 } lcec_el5102_data_t;
-
+ 
 static const lcec_pindesc_t slave_pins[] = {
     {HAL_BIT, HAL_IO, offsetof(lcec_el5102_channel_data_t, ena_latch_c), "%s.%s.%s.%s-index-c-enable"},
     {HAL_BIT, HAL_IO, offsetof(lcec_el5102_channel_data_t, ena_latch_ext_pos), "%s.%s.%s.%s-index-ext-pos-enable"},
@@ -118,11 +118,11 @@ static const lcec_pindesc_t slave_pins[] = {
     {HAL_S32, HAL_OUT, offsetof(lcec_el5102_channel_data_t, raw_count), "%s.%s.%s.%s-raw-count"},
     {HAL_S32, HAL_OUT, offsetof(lcec_el5102_channel_data_t, count), "%s.%s.%s.%s-count"},
     {HAL_S32, HAL_OUT, offsetof(lcec_el5102_channel_data_t, raw_latch), "%s.%s.%s.%s-raw-latch"},
-    {HAL_U32, HAL_OUT, offsetof(lcec_el5102_channel_data_t, raw_frequency), "%s.%s.%s.%s-raw-freq"},
-    {HAL_U32, HAL_OUT, offsetof(lcec_el5102_channel_data_t, raw_period), "%s.%s.%s.%s-raw-period"},
+    //{HAL_U32, HAL_OUT, offsetof(lcec_el5102_channel_data_t, raw_frequency), "%s.%s.%s.%s-raw-freq"},
+    //{HAL_U32, HAL_OUT, offsetof(lcec_el5102_channel_data_t, raw_period), "%s.%s.%s.%s-raw-period"},
     {HAL_FLOAT, HAL_OUT, offsetof(lcec_el5102_channel_data_t, pos), "%s.%s.%s.%s-pos"},
-    {HAL_FLOAT, HAL_OUT, offsetof(lcec_el5102_channel_data_t, period), "%s.%s.%s.%s-period"},
-    {HAL_FLOAT, HAL_OUT, offsetof(lcec_el5102_channel_data_t, frequency), "%s.%s.%s.%s-frequency"},
+    //{HAL_FLOAT, HAL_OUT, offsetof(lcec_el5102_channel_data_t, period), "%s.%s.%s.%s-period"},
+    //{HAL_FLOAT, HAL_OUT, offsetof(lcec_el5102_channel_data_t, frequency), "%s.%s.%s.%s-frequency"},
     {HAL_FLOAT, HAL_IO, offsetof(lcec_el5102_channel_data_t, pos_scale), "%s.%s.%s.%s-pos-scale"},
     {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
@@ -159,8 +159,8 @@ static int lcec_el5102_init(int comp_id, struct lcec_slave *slave) {
     lcec_pdo_init(slave, 0x6000 + (channel * 1 << 4), 0x11, &data->count_pdo_os, NULL);
     lcec_pdo_init(slave, 0x6000 + (channel * 1 << 4), 0x12, &data->latch_pdo_os, NULL);
     lcec_pdo_init(slave, 0x6000 + (channel * 1 << 4), 0x22, &data->latch2_pdo_os, NULL);
-    lcec_pdo_init(slave, 0x6000 + (channel * 1 << 4), 0x13, &data->frequency_pdo_os, NULL);
-    lcec_pdo_init(slave, 0x6000 + (channel * 1 << 4), 0x15, &data->period_pdo_os, NULL);
+    //lcec_pdo_init(slave, 0x6000 + (channel * 1 << 4), 0x13, &data->frequency_pdo_os, NULL);
+    //lcec_pdo_init(slave, 0x6000 + (channel * 1 << 4), 0x14, &data->period_pdo_os, NULL);
 
     PDO_INIT_BOOL(slave, 0x6000 + (channel * 1 << 4), 0x1, status_latch_c);
     PDO_INIT_BOOL(slave, 0x6000 + (channel * 1 << 4), 0x2, status_latch_extern);
@@ -220,8 +220,8 @@ static void lcec_el5102_read_channel(struct lcec_slave *slave, long period, int 
   lcec_el5102_channel_data_t *data = &((lcec_el5102_data_t *)slave->hal_data)->channel[channel];
   uint8_t *pd = master->process_data;
   int16_t raw_count, raw_latch, raw_delta;
-  uint16_t raw_period;
-  uint32_t raw_frequency;
+  //uint16_t raw_period;
+  //uint32_t raw_frequency;
 
   // wait for slave to be operational
   if (!slave->state.operational) {
@@ -245,8 +245,8 @@ static void lcec_el5102_read_channel(struct lcec_slave *slave, long period, int 
   // read raw values
   raw_count = EC_READ_S16(&pd[data->count_pdo_os]);
   raw_latch = EC_READ_S16(&pd[data->latch_pdo_os]);
-  raw_frequency = EC_READ_U32(&pd[data->frequency_pdo_os]);
-  raw_period = EC_READ_U16(&pd[data->period_pdo_os]);
+  //raw_frequency = EC_READ_U32(&pd[data->frequency_pdo_os]);
+  //raw_period = EC_READ_U16(&pd[data->period_pdo_os]);
 
   // Note that there are 13 status bits read above, and we're only
   // using 6 of them here (including "counter set done", below).
@@ -271,8 +271,8 @@ static void lcec_el5102_read_channel(struct lcec_slave *slave, long period, int 
   // update raw values
   if (!*(data->set_raw_count)) {
     *(data->raw_count) = raw_count;
-    *(data->raw_frequency) = raw_frequency;
-    *(data->raw_period) = raw_period;
+    //*(data->raw_frequency) = raw_frequency;
+    //*(data->raw_period) = raw_period;
   }
 
   // handle initialization
@@ -306,8 +306,8 @@ static void lcec_el5102_read_channel(struct lcec_slave *slave, long period, int 
   *(data->pos) = *(data->count) * data->scale;
 
   // scale period
-  *(data->frequency) = ((double)(*(data->raw_frequency))) * LCEC_EL5102_FREQUENCY_SCALE;
-  *(data->period) = ((double)(*(data->raw_period))) * LCEC_EL5102_PERIOD_SCALE;
+  //*(data->frequency) = ((double)(*(data->raw_frequency))) * LCEC_EL5102_FREQUENCY_SCALE;
+  //*(data->period) = ((double)(*(data->raw_period))) * LCEC_EL5102_PERIOD_SCALE;
 
   data->last_operational = 1;
 }
