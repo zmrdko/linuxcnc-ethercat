@@ -35,11 +35,12 @@
 #include "lcec_class_din.h"
 #include "lcec_class_dout.h"
 
-// Constants for modparams.  The basic_cia402 driver doesn't have any.
-// #define M_PEAKCURRENT        0
+// Constants for modparams.  The basic_cia402 driver only has one:
+#define M_CHANNELS 0
 
 /// @brief Device-specific modparam settings available via XML.
 static const lcec_modparam_desc_t modparams_lcec_basic_cia402[] = {
+    {"ciaChannels", M_CHANNELS, MODPARAM_TYPE_U32},
     // XXXX, add device-specific modparams here.
     {NULL},
 };
@@ -87,11 +88,10 @@ static int handle_modparams(struct lcec_slave *slave, lcec_class_cia402_options_
 
   for (p = slave->modparams; p != NULL && p->id >= 0; p++) {
     switch (p->id) {
-      // XXXX: add device-specific modparam handlers here.  Here's an example from lcec_rtec.c:
-      //      case M_PEAKCURRENT:
-      //        uval = p->value.flt * 1000.0 + 0.5;
-      //        if (lcec_write_sdo16_modparam(slave, 0x2000, 0, uval, p->name) < 0) return -1;
-      //        break;
+        // XXXX: add device-specific modparam handlers here.
+      case M_CHANNELS:
+        options->channels = p->value.u32;
+        break;
       default:
         // Handle cia402 generic modparams
         v = lcec_cia402_handle_modparam(slave, p, options);
@@ -138,23 +138,28 @@ static int lcec_basic_cia402_init(int comp_id, struct lcec_slave *slave) {
   slave->proc_read = lcec_basic_cia402_read;
   slave->proc_write = lcec_basic_cia402_write;
 
-  lcec_class_cia402_options_t *options = lcec_cia402_options_single_axis();
+  lcec_class_cia402_options_t *options = lcec_cia402_options();
   // XXXX: set which options this device supports.  This controls
   // which pins are registered and which PDOs are mapped.  See
   // lcec_class_cia402.h for the full list of what is currently
   // available, and instructions on how to add additional CiA 402
   // features.
-  options->enable_pv = 1;
-  options->enable_pp = 1;
-  options->enable_csv = 0;
-  options->enable_csp = 0;
-  options->enable_actual_torque = 0;
-  options->enable_digital_input = 0;
-  options->enable_digital_output = 0;
+  options->channels = 1;
+  options->channel[0]->enable_pv = 1;
+  options->channel[0]->enable_pp = 1;
+  options->channel[0]->enable_csv = 0;
+  options->channel[0]->enable_csp = 0;
+  options->channel[0]->enable_actual_torque = 0;
+  options->channel[0]->enable_digital_input = 0;
+  options->channel[0]->enable_digital_output = 0;
 
   // Handle modparams
   if (handle_modparams(slave, options) != 0) {
     return -EIO;
+  }
+
+  if (options->channels > 1) {
+    lcec_cia402_rename_multiaxis_channels(options);
   }
 
   // XXXX: set up syncs.  This is generally needed because CiA 402
@@ -184,20 +189,15 @@ static int lcec_basic_cia402_init(int comp_id, struct lcec_slave *slave) {
 
   slave->sync_info = &syncs->syncs[0];
 
-  // XXXX: This example is for a single-axis CiA 402 device.
-  // Multi-axis devices exist, and should mostly be supported,
-  // although this is currently untested.  To add more axes, change
-  // the (1) here to (2), (3), or (4).
-  hal_data->cia402 = lcec_cia402_allocate_channels(1);
+  hal_data->cia402 = lcec_cia402_allocate_channels(options->channels);
   if (hal_data->cia402 == NULL) {
     rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "lcec_cia402_allocate_channels() for slave %s.%s failed\n", master->name, slave->name);
     return -EIO;
   }
 
-  // XXXX: For multi-axis devices, you'll need to repeat this line,
-  // changing `channels[0]` and changing the `0x6000` to `0x6800`,
-  // `0x7000`, and `0x7800` for channels 1, 2, and 3, respectively.
-  hal_data->cia402->channels[0] = lcec_cia402_register_channel(slave, 0x6000, options);
+  for (int channel = 0; channel < options->channels; channel++) {
+    hal_data->cia402->channels[channel] = lcec_cia402_register_channel(slave, 0x6000 + 0x800 * channel, options->channel[channel]);
+  }
 
   // XXXX: The CiA 402 spec specifies how to use digital in and out ports,
   // but there doesn't seem to be a way to figure out how many ports

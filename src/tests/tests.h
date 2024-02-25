@@ -26,6 +26,17 @@
     }                                                                                                \
   } while (0)
 
+#define TESTSTRING(call, want)                                                                          \
+  do {                                                                                               \
+    const char *got;                                                                                         \
+    if (got = call, strcmp(got, want)) {				\
+      fprintf(stderr, "fail at %s:%d: %s, got \"%s\", want \"%s\"\n", __FILE__, __LINE__, #call, got, want); \
+      fail++;                                                                                        \
+    } else {                                                                                         \
+      pass++;                                                                                        \
+    }                                                                                                \
+  } while (0)
+
 #define TESTNOTNULL(call)                                                                   \
   do {                                                                                      \
     void *got;                                                                              \
