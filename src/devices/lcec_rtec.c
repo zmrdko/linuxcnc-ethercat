@@ -421,9 +421,15 @@ static int lcec_rtec_init(int comp_id, struct lcec_slave *slave) {
   options->enable_pv = 1;
   options->enable_pp = 1;
   options->enable_csp = 1;
+  options->enable_csv = 1;
+  options->enable_hm = 1;
   options->enable_actual_torque = 1;
   options->enable_digital_input = 1;
   options->enable_digital_output = 1;
+  options->enable_profile_velocity = 1;
+  options->enable_profile_accel = 1;
+  options->enable_profile_decel = 1;
+  options->enable_home_accel = 1;
 
   // Set up syncs.  This is needed because the ECT60 (at least)
   // doesn't map all of the PDOs that we need, so we need to set up
