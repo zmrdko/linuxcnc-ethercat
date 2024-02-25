@@ -199,6 +199,12 @@ func readSlaves() ([]EthercatSlave, error) {
 		line := scanner.Text()
 
 		if slaveMasterRE.MatchString(line) {
+			if slave.Slave != "" {
+				// The previous device didn't have a "Device Name" field (hi, Rovix ESD-A6!), so we'll have to catch it here.
+				
+				slaves = append(slaves, slave)
+				slave = EthercatSlave{}
+			}
 			results := slaveMasterRE.FindStringSubmatch(line)
 			slave.Master = string(results[1])
 			slave.Slave = string(results[2])
@@ -285,53 +291,66 @@ func (s *EthercatSlave) CiAChannels() int {
 func (s *EthercatSlave) CiAEnableModParams() []ConfigModParam {
 	mp := []ConfigModParam{}
 
-	// Just doing channel 1 for now.
-	// First, we need the value of 0x6502:00
-	out, err := exec.Command("ethercat", "-m", s.Master, "upload", "-p", s.Slave, "0x6502", "0").Output()
+	channels := s.CiAChannels()
 
-	if err != nil {
-		panic(err)
+	if channels > 1 {
+		mp = append(mp, ConfigModParam{Name: "ciaChannels", Value: fmt.Sprintf("%d", channels)})
 	}
 
-	split := strings.Split(string(out), " ")
-	abilities, err := strconv.ParseUint(split[0], 0, 32)
-
-	if err != nil {
-		panic(err)
-	}
-
-	if (abilities & (1 << 0)) != 0 {
-		mp = append(mp, ConfigModParam{Name: "enablePP", Value: "true"})
-	}
-	if (abilities & (1 << 1)) != 0 {
-		mp = append(mp, ConfigModParam{Name: "enableVL", Value: "true"})
-	}
-	if (abilities & (1 << 2)) != 0 {
-		mp = append(mp, ConfigModParam{Name: "enablePV", Value: "true"})
-	}
-	if (abilities & (1 << 3)) != 0 {
-		mp = append(mp, ConfigModParam{Name: "enableTQ", Value: "true"})
-	}
-	if (abilities & (1 << 5)) != 0 {
-		mp = append(mp, ConfigModParam{Name: "enableHM", Value: "true"})
-	}
-	if (abilities & (1 << 6)) != 0 {
-		mp = append(mp, ConfigModParam{Name: "enableIP", Value: "true"})
-	}
-	if (abilities & (1 << 7)) != 0 {
-		mp = append(mp, ConfigModParam{Name: "enableCSP", Value: "true"})
-	}
-	if (abilities & (1 << 8)) != 0 {
-		mp = append(mp, ConfigModParam{Name: "enableCSV", Value: "true"})
-	}
-	if (abilities & (1 << 9)) != 0 {
-		mp = append(mp, ConfigModParam{Name: "enableCST", Value: "true"})
-	}
-
-	for _, feature := range EnableSDOs {
-		sdo := fmt.Sprintf("0x%04x:%02x", feature.offset+0x6000, feature.subindex)
-		if s.SDOs[sdo] != "" {
-			mp = append(mp, ConfigModParam{Name: feature.name, Value: "true"})
+	for channel := 0 ; channel < channels; channel++ {
+		prefix := ""
+		if channels>1 {
+			prefix = fmt.Sprintf("ch%d", channel+1)
+		}
+		base := 0x6000 + 0x800*channel
+		
+		// First, we need the value of 0x6502:00
+		out, err := exec.Command("ethercat", "-m", s.Master, "upload", "-p", s.Slave, fmt.Sprintf("0x%04x", base + 0x502), "0").Output()
+		
+		if err != nil {
+			panic(err)
+		}
+		
+		split := strings.Split(string(out), " ")
+		abilities, err := strconv.ParseUint(split[0], 0, 32)
+		
+		if err != nil {
+			panic(err)
+		}
+		
+		if (abilities & (1 << 0)) != 0 {
+			mp = append(mp, ConfigModParam{Name: prefix + "enablePP", Value: "true"})
+		}
+		if (abilities & (1 << 1)) != 0 {
+			mp = append(mp, ConfigModParam{Name: prefix + "enableVL", Value: "true"})
+		}
+		if (abilities & (1 << 2)) != 0 {
+			mp = append(mp, ConfigModParam{Name: prefix + "enablePV", Value: "true"})
+		}
+		if (abilities & (1 << 3)) != 0 {
+			mp = append(mp, ConfigModParam{Name: prefix + "enableTQ", Value: "true"})
+		}
+		if (abilities & (1 << 5)) != 0 {
+			mp = append(mp, ConfigModParam{Name: prefix + "enableHM", Value: "true"})
+		}
+		if (abilities & (1 << 6)) != 0 {
+			mp = append(mp, ConfigModParam{Name: prefix + "enableIP", Value: "true"})
+		}
+		if (abilities & (1 << 7)) != 0 {
+			mp = append(mp, ConfigModParam{Name: prefix + "enableCSP", Value: "true"})
+		}
+		if (abilities & (1 << 8)) != 0 {
+			mp = append(mp, ConfigModParam{Name: prefix + "enableCSV", Value: "true"})
+		}
+		if (abilities & (1 << 9)) != 0 {
+			mp = append(mp, ConfigModParam{Name: prefix + "enableCST", Value: "true"})
+		}
+		
+		for _, feature := range EnableSDOs {
+			sdo := fmt.Sprintf("0x%04x:%02x", feature.offset+base, feature.subindex)
+			if s.SDOs[sdo] != "" {
+				mp = append(mp, ConfigModParam{Name: prefix + feature.name, Value: "true"})
+			}
 		}
 	}
 
