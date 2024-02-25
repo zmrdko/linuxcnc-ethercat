@@ -21,7 +21,10 @@
 config.mk
 src/lcec_conf
 src/lcec_devices
+src/lcec_configgen
 src/Module.symvers
+src/configgen/devicelist
+src/configgen/lcec_configgen
 
 # Test files
 src/tests/*.bin

@@ -116,6 +116,8 @@ jobs:
                   GITHUB_CONTEXT: ${{ toJson(github) }}
               run: echo "$GITHUB_CONTEXT"
 
+            - uses: actions/setup-go@v4
+
             - name: Checkout linuxcnc-ethercat
               uses: actions/checkout@v4
 
@@ -125,7 +127,7 @@ jobs:
                   sudo apt install yapps2
 
             - name: Restore LinuxCNC cache
-              uses: actions/cache/restore@v3
+              uses: actions/cache/restore@v4
               env:
                   cache-name: cache-linuxcnc
               with:
@@ -133,7 +135,7 @@ jobs:
                   path: linuxcnc/
 
             - name: Restore Ethercat Master cache
-              uses: actions/cache/restore@v3
+              uses: actions/cache/restore@v4
               env:
                   cache-name: cache-ethercatmaster2
               with:

@@ -2,7 +2,7 @@ loadusr -W lcec_conf fulltest.xml
 loadrt lcec
 loadrt cia402 count=1
 
-loadrt threads name1=servo-thread period1=2000000
+loadrt threads name1=servo-thread period1=1000000
 addf lcec.read-all servo-thread
 addf cia402.0.read-all servo-thread
 
