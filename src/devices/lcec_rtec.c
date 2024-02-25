@@ -430,6 +430,8 @@ static int lcec_rtec_init(int comp_id, struct lcec_slave *slave) {
   options->enable_profile_accel = 1;
   options->enable_profile_decel = 1;
   options->enable_home_accel = 1;
+  // options->enable_interpolation_time_period = 1;  // Should be supported but doesn't actually work.
+  options->enable_actual_following_error = 1;
 
   // Set up syncs.  This is needed because the ECT60 (at least)
   // doesn't map all of the PDOs that we need, so we need to set up
