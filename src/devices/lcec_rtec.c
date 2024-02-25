@@ -283,7 +283,7 @@ static int handle_modparams(struct lcec_slave *slave, lcec_class_cia402_options_
               RTAPI_MSG_ERR, LCEC_MSG_PFX "invalid value for <modparam name=\"input6Func\"> for slave %s.%s\n", master->name, slave->name);
           return -1;
         }
-        if (lcec_write_sdo16_modparam(slave, 0x2007, 6, uval, p->name) < 0)  return -1;
+        if (lcec_write_sdo16_modparam(slave, 0x2007, 6, uval, p->name) < 0) return -1;
         break;
       case M_INPUT3POLARITY:
         uval = lcec_lookupint_i(rtec_polarity, p->value.str, -1);
@@ -371,7 +371,8 @@ static int handle_modparams(struct lcec_slave *slave, lcec_class_cia402_options_
         }
 
         if (v < 0) {
-          rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "unknown error %d from lcec_cia402_handle_modparam for slave %s.%s\n", v, master->name, slave->name);
+          rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "unknown error %d from lcec_cia402_handle_modparam for slave %s.%s\n", v,
+              master->name, slave->name);
           return v;
         }
         break;
@@ -417,22 +418,22 @@ static int lcec_rtec_init(int comp_id, struct lcec_slave *slave) {
   slave->proc_read = lcec_rtec_read;
   slave->proc_write = lcec_rtec_write;
 
-  lcec_class_cia402_options_t *options = lcec_cia402_options_single_axis();
+  lcec_class_cia402_options_t *options = lcec_cia402_options();
   // The ECT60 should support these CiA 402 features:
-  options->enable_pv = 1;
-  options->enable_pp = 1;
-  options->enable_csp = 1;
-  options->enable_csv = 1;
-  options->enable_hm = 1;
-  options->enable_actual_torque = 1;
-  options->enable_digital_input = 1;
-  options->enable_digital_output = 1;
-  options->enable_profile_velocity = 1;
-  options->enable_profile_accel = 1;
-  options->enable_profile_decel = 1;
-  options->enable_home_accel = 1;
-  // options->enable_interpolation_time_period = 1;  // Should be supported but doesn't actually work.
-  options->enable_actual_following_error = 1;
+  options->channel[0]->enable_pv = 1;
+  options->channel[0]->enable_pp = 1;
+  options->channel[0]->enable_csp = 1;
+  options->channel[0]->enable_csv = 1;
+  options->channel[0]->enable_hm = 1;
+  options->channel[0]->enable_actual_torque = 1;
+  options->channel[0]->enable_digital_input = 1;
+  options->channel[0]->enable_digital_output = 1;
+  options->channel[0]->enable_profile_velocity = 1;
+  options->channel[0]->enable_profile_accel = 1;
+  options->channel[0]->enable_profile_decel = 1;
+  options->channel[0]->enable_home_accel = 1;
+  // options->channel[0]->enable_interpolation_time_period = 1;  // Should be supported but doesn't actually work.
+  options->channel[0]->enable_actual_following_error = 1;
 
   if (handle_modparams(slave, options) != 0) {
     rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "modparam handling failure for slave %s.%s\n", master->name, slave->name);
@@ -462,7 +463,7 @@ static int lcec_rtec_init(int comp_id, struct lcec_slave *slave) {
     return -EIO;
   }
 
-  hal_data->cia402->channels[0] = lcec_cia402_register_channel(slave, 0x6000, options);
+  hal_data->cia402->channels[0] = lcec_cia402_register_channel(slave, 0x6000, options->channel[0]);
 
   hal_data->din = lcec_din_allocate_channels(10);
   if (hal_data->din == NULL) {

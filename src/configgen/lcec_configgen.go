@@ -137,7 +137,7 @@ var (
 		EnableSDO{name: "enableMaximumTorque", offset: 0x72, subindex: 0},
 		EnableSDO{name: "enableMotorRatedCurrent", offset: 0x75, subindex: 0},
 		EnableSDO{name: "enableMotorRatedTorque", offset: 0x76, subindex: 0},
-		EnableSDO{name: "enablePolarity", offset: 0x73, subindex: 0},
+		EnableSDO{name: "enablePolarity", offset: 0x7e, subindex: 0},
 		EnableSDO{name: "enableProfileAccel", offset: 0x83, subindex: 0},
 		EnableSDO{name: "enableProfileDecel", offset: 0x84, subindex: 0},
 		EnableSDO{name: "enableProfileEndVelocity", offset: 0x82, subindex: 0},
@@ -150,7 +150,7 @@ var (
 		EnableSDO{name: "enableVelocityDemand", offset: 0x6b, subindex: 0},
 		EnableSDO{name: "enableVelocityErrorTime", offset: 0x6e, subindex: 0},
 		EnableSDO{name: "enableVelocityErrorWindow", offset: 0x6d, subindex: 0},
-		EnableSDO{name: "enableVelocitySensorSelector", offset: 0x61, subindex: 0},
+		EnableSDO{name: "enableVelocitySensorSelector", offset: 0x6a, subindex: 0},
 		EnableSDO{name: "enableVelocityThresholdTime", offset: 0x70, subindex: 0},
 		EnableSDO{name: "enableVelocityThresholdWindow", offset: 0x6f, subindex: 0},
 	}

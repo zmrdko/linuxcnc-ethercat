@@ -34,6 +34,43 @@ TESTFUNC(test_modparm_len) {
   TESTNOTNULL(all_mps);
 
   TESTINT(lcec_modparam_desc_len(all_mps), 28);
+  TESTSTRING(all_mps[0].name, "aaa");
+  TESTSTRING(all_mps[1].name, "ch1aaa");
+  TESTSTRING(all_mps[2].name, "ch2aaa");
+  TESTSTRING(all_mps[3].name, "ch3aaa");
+  TESTSTRING(all_mps[4].name, "ch4aaa");
+  TESTSTRING(all_mps[5].name, "ch5aaa");
+  TESTSTRING(all_mps[6].name, "ch6aaa");
+  TESTSTRING(all_mps[7].name, "ch7aaa");
+  TESTSTRING(all_mps[8].name, "ch8aaa");
+  TESTSTRING(all_mps[9].name, "bbb");
+  TESTSTRING(all_mps[10].name, "ch1bbb");
+  TESTSTRING(all_mps[11].name, "ch2bbb");
+  TESTSTRING(all_mps[12].name, "ch3bbb");
+  TESTSTRING(all_mps[13].name, "ch4bbb");
+  TESTSTRING(all_mps[14].name, "ch5bbb");
+  TESTSTRING(all_mps[15].name, "ch6bbb");
+  TESTSTRING(all_mps[16].name, "ch7bbb");
+  TESTSTRING(all_mps[17].name, "ch8bbb");
+
+  TESTINT(all_mps[0].id, 0x1000);
+  TESTINT(all_mps[1].id, 0x1000);
+  TESTINT(all_mps[2].id, 0x1001);
+  TESTINT(all_mps[3].id, 0x1002);
+  TESTINT(all_mps[4].id, 0x1003);
+  TESTINT(all_mps[5].id, 0x1004);
+  TESTINT(all_mps[6].id, 0x1005);
+  TESTINT(all_mps[7].id, 0x1006);
+  TESTINT(all_mps[8].id, 0x1007);
+  TESTINT(all_mps[9].id, 0x1010);
+  TESTINT(all_mps[10].id, 0x1010);
+  TESTINT(all_mps[11].id, 0x1011);
+  TESTINT(all_mps[12].id, 0x1012);
+  TESTINT(all_mps[13].id, 0x1013);
+  TESTINT(all_mps[14].id, 0x1014);
+  TESTINT(all_mps[15].id, 0x1015);
+  TESTINT(all_mps[16].id, 0x1016);
+  TESTINT(all_mps[17].id, 0x1017);
 
   TESTRESULTS;
 }

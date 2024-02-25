@@ -9,6 +9,8 @@ addf cia402.0.read-all servo-thread
 addf lcec.write-all servo-thread
 addf cia402.0.write-all servo-thread
 
+show
+
 net rtec-statusword lcec.0.D22.srv-cia-statusword => cia402.0.statusword
 net rtec-opmode-display lcec.0.D22.srv-opmode-display => cia402.0.opmode-display
 net rtec-drv-act-pos lcec.0.D22.srv-actual-position => cia402.0.drv-actual-position
