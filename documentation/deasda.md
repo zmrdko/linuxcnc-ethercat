@@ -41,9 +41,19 @@ All of these settings are case insensitive.
 
 ## Differences of ASDA-A2 and ASDA-A3/B3 series
 
-The stnadard motors that come with either series of drives differ slightly. A2 drives will have a default encoder resolution of 1,280,000 whereas A3 and B3 series (henceforth X3) motors have a resolution of 16,777,216. Note that X3 drives support both x2 and x3 series motors. The default value in the driver is that of ASDA A2 series motors.
+The standard motors that come with either series of drives differ slightly. A2 drives will have a default encoder resolution of 1,280,000 whereas A3 and B3 series (henceforth X3) motors have a resolution of 16,777,216. Note that X3 drives support both x2 and x3 series motors. The default value in the driver is that of ASDA A2 series motors.
 
-To set the resolution use hal pin: %s.%s.%s.srv-pulses-per-rev  (also know as pprev). The following remark for further help on the topic.
+To set the encoder resolution use hal pin: %s.%s.%s.srv-pulses-per-rev (also know as pprev). The following remark for further help on the topic.
+
+### Setting Pulses per Revolution with Scale
+
+To set the correct scaling to account for ball screw pitch or gear reduction use hal pin: %s.%s.%s.pos-scale
+
+For example: Using an A3 servo with 24 bit (16,777,216 count) encoder, directly coupled to a 5mm pitch ball screw:
+```
+lcec.0.A3.srv-pulses-per-rev 16777216
+lcec.0.A3.pos-scale 5
+```
 
 ### Setting Pulses per Rev with Egear 
 
