@@ -166,6 +166,7 @@ Description | Driver | EtherCAT VID:PID | Device Type | Testing Status | Notes
 [Beckhoff EL5002 2Ch. SSI Encoder](http://www.beckhoff.com/EL5002) | [el5002](../src/devices/lcec_el5002.c) | 0x2:0x138a3052 | Encoder Input |  | 
 [Beckhoff EL5032 2Ch. EnDat Encoder](http://www.beckhoff.com/EL5032) | [el5032](../src/devices/lcec_el5032.c) | 0x2:0x13a83052 | Encoder Input |  | 
 [Beckhoff EL5101 1Ch. Encoder 5V](http://www.beckhoff.com/EL5101) | [el5101](../src/devices/lcec_el5101.c) | 0x2:0x13ed3052 | Encoder Input |  | 
+[Beckhoff EL5102 2Ch. Inc. Encoder 5V (RS422,TTL)](http://www.beckhoff.com/EL5102) | [el5102](../devices/lcec_el5102.c) | 0x2:0x13ee3052 | Encoder Input | Developed without hardware, may work | 
 [Beckhoff EL5151 1Ch. Inc. Encoder](http://www.beckhoff.com/EL5151) | [el5151](../src/devices/lcec_el5151.c) | 0x2:0x141f3052 | Encoder Input |  | 
 [Beckhoff EL5152 2Ch. Inc. Encoder](http://www.beckhoff.com/EL5152) | [el5152](../src/devices/lcec_el5152.c) | 0x2:0x14203052 | Encoder Input |  | 
 [Beckhoff EL6090 Display terminal](http://www.beckhoff.com/EL6090) | [el6090](../src/devices/lcec_el6090.c) | 0x2:0x17ca3052 | LCD Display | Uncertain; @scottlaird has one, but the driver was just merged. | 
@@ -213,7 +214,7 @@ Description | Driver | EtherCAT VID:PID | Device Type | Testing Status | Notes
 [Beckhoff EPP2318-0001 4 Ch. Dig. In, 10µs, 4 Ch. Dig. Out 24V, 0,5A, M8](https://www.beckhoff.com/EPP2318-0001) | [digitalcombo](../src/devices/lcec_digitalcombo.c) | 0x2:0x647656e9 | Digital Input/Output |  | 
 [Beckhoff EPP2328-0001 4 CH. Dig. In, 3ms, 4 Ch. Dig. Out 24V, 2A, M8](https://www.beckhoff.com/EPP2328-0001) | [digitalcombo](../src/devices/lcec_digitalcombo.c) | 0x2:0x64765789 | Digital Input/Output |  | 
 [Beckhoff EPP2334-0061 4 Ch. Dig. Input/Output 24V, 0,5A, M8](https://www.beckhoff.com/EPP2334-0061) | [digitalcombo](../src/devices/lcec_digitalcombo.c) | 0x2:0x647657e9 | Digital Input/Output |  | 
-[Beckhoff EP2338-0001 8 Ch. Dig. Input/Output 24V, 0,5A, M8](https://www.beckhoff.com/EP2338-0001) | [digitalcombo](../src/devices/lcec_digitalcombo.c) | 0x2:0x09224052 | Digital Input/Output |  | 
+[Beckhoff EP2338-0001 8 Ch. Dig. Input/Output 24V, 0,5A, M8](https://www.beckhoff.com/EP2338-0001) | [digitalcombo](../src/devices/lcec_digitalcombo.c) | 0x2:0x64765829 | Digital Input/Output |  | 
 [Beckhoff EPP2339-0003 16 Ch. Dig. Input/Output 24V, 0,5A, 10-Pole Plug Connector](https://www.beckhoff.com/EPP2339-0003) | [digitalcombo](../src/devices/lcec_digitalcombo.c) | 0x2:0x64765839 | Digital Input/Output |  | 
 [Beckhoff EPP2349-0021 16 Ch. Dig. Input/Output 24V, 10µs, 0,5A, M8](https://www.beckhoff.com/EPP2349-0021) | [digitalcombo](../src/devices/lcec_digitalcombo.c) | 0x2:0x647658d9 | Digital Input/Output |  | 
 [Beckhoff EPX3158 8Ch. Ana. Input 4-20mA, Ex i](http://www.beckhoff.com/EPX3158) | [el3xxx](../src/devices/lcec_el3xxx.c) | 0x2:0x9809ab69 | Analog Input | New, untested. | 

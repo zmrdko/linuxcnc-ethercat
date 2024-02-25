@@ -2,7 +2,7 @@
 Device: EPP2338
 VendorID: "0x00000002"
 VendorName: Beckhoff Automation GmbH & Co. KG
-PID: "0x09224052"
+PID: "0x64765829"
 Description: Beckhoff EP2338-0001 8 Ch. Dig. Input/Output 24V, 0,5A, M8
 DocumentationURL: https://www.beckhoff.com/EP2338-0001
 Notes: ""
