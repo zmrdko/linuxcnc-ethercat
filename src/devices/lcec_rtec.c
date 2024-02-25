@@ -180,7 +180,7 @@ static const lcec_pindesc_t slave_pins[] = {
     {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
-static int handle_modparams(struct lcec_slave *slave) {
+static int handle_modparams(struct lcec_slave *slave, lcec_class_cia402_options_t *opt) {
   lcec_master_t *master = slave->master;
   lcec_slave_modparam_t *p;
   uint16_t input_polarity = 0, input_polarity_set = 0;
@@ -363,7 +363,7 @@ static int handle_modparams(struct lcec_slave *slave) {
         if (lcec_write_sdo16_modparam(slave, 0x2022, 0, p->value.u32, p->name) < 0) return -1;
         break;
       default:
-        v = lcec_cia402_handle_modparam(slave, p);
+        v = lcec_cia402_handle_modparam(slave, p, opt);
 
         if (v > 0) {
           rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "unknown modparam %s for slave %s.%s\n", p->name, master->name, slave->name);
@@ -434,6 +434,11 @@ static int lcec_rtec_init(int comp_id, struct lcec_slave *slave) {
   // options->enable_interpolation_time_period = 1;  // Should be supported but doesn't actually work.
   options->enable_actual_following_error = 1;
 
+  if (handle_modparams(slave, options) != 0) {
+    rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "modparam handling failure for slave %s.%s\n", master->name, slave->name);
+    return -EIO;
+  }
+
   // Set up syncs.  This is needed because the ECT60 (at least)
   // doesn't map all of the PDOs that we need, so we need to set up
   // our own mappings.
@@ -450,11 +455,6 @@ static int lcec_rtec_init(int comp_id, struct lcec_slave *slave) {
   lcec_syncs_add_pdo_entry(syncs, 0x2048, 0x00, 16);  // Current bus voltage
 
   slave->sync_info = &syncs->syncs[0];
-
-  if (handle_modparams(slave) != 0) {
-    rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "modparam handling failure for slave %s.%s\n", master->name, slave->name);
-    return -EIO;
-  }
 
   hal_data->cia402 = lcec_cia402_allocate_channels(1);
   if (hal_data->cia402 == NULL) {
