@@ -165,7 +165,7 @@ static int lcec_basic_cia402_init(int comp_id, struct lcec_slave *slave) {
   //
   // These need to be done in the correct order, as the `lcec_syncs*`
   // code only adds new entries at the end.
-  lcec_syncs_t *syncs = lcec_cia402_init_sync(options);
+  lcec_syncs_t *syncs = lcec_cia402_init_sync(slave, options);
   lcec_cia402_add_output_sync(syncs, options);
 
   // XXXX: ff this driver needed to set up device-specific output PDO
