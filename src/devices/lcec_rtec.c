@@ -442,7 +442,7 @@ static int lcec_rtec_init(int comp_id, struct lcec_slave *slave) {
   // Set up syncs.  This is needed because the ECT60 (at least)
   // doesn't map all of the PDOs that we need, so we need to set up
   // our own mappings.
-  lcec_syncs_t *syncs = lcec_cia402_init_sync(options);
+  lcec_syncs_t *syncs = lcec_cia402_init_sync(slave, options);
   lcec_cia402_add_output_sync(syncs, options);
   // No output PDOs right now.
 
