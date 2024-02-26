@@ -22,7 +22,13 @@ like this to your `ethercat.xml` file:
     <slave idx="1" type="DeASDA" name="x-axis"/>
 ```
 
-To ensure that a change in operational mode does not occure during the linuxcnc runtime, mode setting is done using modParam in the configuration file. This setting is optional as it defaults to mode CSV.
+Or for A3 series:
+
+```xml
+    <slave idx="1" type="DeASDA3" name="A3"/>
+```
+
+To ensure that a change in operational mode does not occur during the linuxcnc runtime, mode setting is done using modParam in the configuration file. This setting is optional as it defaults to mode CSV.
 
 ```xml
     <slave idx="1" type="DeASDA" name="x-axis">
@@ -32,18 +38,24 @@ To ensure that a change in operational mode does not occure during the linuxcnc 
 
 There is 1 `<modParam>` setting:
 
-- `mode`: controls the operational mode based on Object 6060h: Modes of operation.
+- `opmode`: controls the operational mode based on Object 6060h: Modes of operation.
   Supported modes are:
   - `CSV`: Cyclic Synchronous Velocity mode (Value for 0x6060: 9) DEFAULT when modParam not used.
   - `CSP`: Cyclic Synchronous Position mode (Value for 0x6060: 8)
     
 All of these settings are case insensitive.
 
-## Differences of ASDA-A2 and ASDA-A3/B3 series
+## Encoder count and Axis Movement Scale
 
-The standard motors that come with either series of drives differ slightly. A2 drives will have a default encoder resolution of 1,280,000 whereas A3 and B3 series (henceforth X3) motors have a resolution of 16,777,216. Note that X3 drives support both x2 and x3 series motors. The default value in the driver is that of ASDA A2 series motors.
+### Motor Encoder resolution - Different between ASDA-A2 and ASDA-A3/B3 series - 
 
-To set the encoder resolution use hal pin: %s.%s.%s.srv-pulses-per-rev (also know as pprev). The following remark for further help on the topic.
+The standard motors that come with either series of drives differ slightly. A2 drives will have a default encoder resolution of 1,280,000, whereas A3 and B3 series (henceforth X3) motors have a resolution of 16,777,216. Note that X3 drives support both x2 and x3 series motors. The default value in this deasda driver is that of ASDA A2 series motors.
+
+To set the encoder resolution use hal pin: %s.%s.%s.srv-pulses-per-rev (also know as pprev).
+Example for A3:
+```
+lcec.0.A3.srv-pulses-per-rev 16777216
+```
 
 ### Setting Pulses per Revolution with Scale
 
@@ -55,18 +67,41 @@ lcec.0.A3.srv-pulses-per-rev 16777216
 lcec.0.A3.pos-scale 5
 ```
 
+### External encoder / full-closed loop - A2 and A3
+
+A2 and A3 drives can use a second external encoder. Usually a linear encoder is used. The number of pulses of the external encoder per motor revolution can be set by hal pin %s.%s.%s.extenc-scale
+
+The units are pulses per revolution and depend on:
+1. The resolution of the scale (e.g. 5um, 1um, 0.1um)
+2. the Linear distance moved by the axis per revolution of the motor
+
+Example:
+5mm (=5000um) pitch ball screw. 0.5um linear scale:
+5000/0.5 = 10000
+```
+lcec.0.A3.extenc-scale 10000
+```
+Another example:
+16mm (=16000um) pitch ball screw, 5um linear scale:
+16,000/5 = 3200
+```
+lcec.0.A3.extenc-scale 3200
+```
+
 ### Setting Pulses per Rev with Egear 
 
+TODO:
+```
 ASDA series drive follow the concept of using egear to translate between encoder pulses and external input. This setting relates the encoder's pprev with the pitch of the ballscrew and additional transmission factors of belt drives if these are in place.
 
 For a ball screw pitch of p = 5mm, a gearing ratio of 1:1 the calculcation would be as follows:
-
-TODO()
+```
+TODO/
 
 
 ## Exposed Pins Common
 
-The following pins are exposed in both modes and for all drives
+The following pins are exposed in both modes (CSV and CSP) and for all drives
 
 Encoder values (servo motor and external encoder at CN5)
 
