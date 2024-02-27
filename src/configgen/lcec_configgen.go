@@ -87,6 +87,7 @@ type ConfigSyncManager struct {
 }
 
 type ConfigPDO struct {
+	Comment string   `xml:",comment"`
 	XMLName xml.Name `xml:"pdo"`
 	Idx     string   `xml:"idx,attr"`
 	Entries []*ConfigPDOEntry
@@ -201,7 +202,7 @@ func readSlaves() ([]EthercatSlave, error) {
 		if slaveMasterRE.MatchString(line) {
 			if slave.Slave != "" {
 				// The previous device didn't have a "Device Name" field (hi, Rovix ESD-A6!), so we'll have to catch it here.
-				
+
 				slaves = append(slaves, slave)
 				slave = EthercatSlave{}
 			}
@@ -297,27 +298,27 @@ func (s *EthercatSlave) CiAEnableModParams() []ConfigModParam {
 		mp = append(mp, ConfigModParam{Name: "ciaChannels", Value: fmt.Sprintf("%d", channels)})
 	}
 
-	for channel := 0 ; channel < channels; channel++ {
+	for channel := 0; channel < channels; channel++ {
 		prefix := ""
-		if channels>1 {
+		if channels > 1 {
 			prefix = fmt.Sprintf("ch%d", channel+1)
 		}
 		base := 0x6000 + 0x800*channel
-		
+
 		// First, we need the value of 0x6502:00
-		out, err := exec.Command("ethercat", "-m", s.Master, "upload", "-p", s.Slave, fmt.Sprintf("0x%04x", base + 0x502), "0").Output()
-		
+		out, err := exec.Command("ethercat", "-m", s.Master, "upload", "-p", s.Slave, fmt.Sprintf("0x%04x", base+0x502), "0").Output()
+
 		if err != nil {
 			panic(err)
 		}
-		
+
 		split := strings.Split(string(out), " ")
 		abilities, err := strconv.ParseUint(split[0], 0, 32)
-		
+
 		if err != nil {
 			panic(err)
 		}
-		
+
 		if (abilities & (1 << 0)) != 0 {
 			mp = append(mp, ConfigModParam{Name: prefix + "enablePP", Value: "true"})
 		}
@@ -345,7 +346,7 @@ func (s *EthercatSlave) CiAEnableModParams() []ConfigModParam {
 		if (abilities & (1 << 9)) != 0 {
 			mp = append(mp, ConfigModParam{Name: prefix + "enableCST", Value: "true"})
 		}
-		
+
 		for _, feature := range EnableSDOs {
 			sdo := fmt.Sprintf("0x%04x:%02x", feature.offset+base, feature.subindex)
 			if s.SDOs[sdo] != "" {
@@ -428,7 +429,8 @@ func (s *EthercatSlave) BuildPDOs(c *ConfigSlave) error {
 		} else if pdoPDORE.MatchString(line) {
 			results := pdoPDORE.FindStringSubmatch(line)
 			pdo = &ConfigPDO{
-				Idx: xmlFormatHex(results[2]),
+				Idx:     xmlFormatHex(results[2]),
+				Comment: results[3],
 			}
 			sm.PDOs = append(sm.PDOs, pdo)
 			if results[1] == "RxPDO" {
@@ -445,6 +447,12 @@ func (s *EthercatSlave) BuildPDOs(c *ConfigSlave) error {
 				BitLen:  results[3],
 				Comment: results[4],
 			}
+
+			// There's no point in even bothering to emit "gap" entries here.
+			if entry.Idx == "0000" {
+				continue
+			}
+
 			entry.HalPin = fmt.Sprintf("pin-%s-%s", xmlFormatHex(entry.Idx), entry.SubIdx)
 			if entry.Comment != "" {
 				entry.HalPin = pinFormatComment(entry.Comment)
@@ -463,7 +471,11 @@ func (s *EthercatSlave) BuildPDOs(c *ConfigSlave) error {
 				case "int8", "int16", "int32":
 					entry.HalType = "s32"
 				case "bool":
-					entry.HalType = "bit"
+					if bits == 1 {
+						entry.HalType = "bit"
+					} else {
+						entry.HalType = "u32"
+					}
 				case "uint64": // Some support in LinuxCNC, but not in LCEC today, so it'll throw an error.
 					entry.HalType = "u64"
 				case "int64": // Some support in LinuxCNC, but not in LCEC today, so it'll throw an error.
@@ -474,6 +486,9 @@ func (s *EthercatSlave) BuildPDOs(c *ConfigSlave) error {
 					} else {
 						entry.HalType = "float-double-ieee"
 					}
+				case "":
+					entry.HalType = "BLANK"
+					// should probably just do 'continue' here and skip this pin.
 				default:
 					// Not sure what to do with this...
 					entry.HalType = "!!" + sdotype + "!!"
@@ -484,6 +499,53 @@ func (s *EthercatSlave) BuildPDOs(c *ConfigSlave) error {
 	}
 
 	return nil
+}
+
+func checkSlaveDuplicateNames(slave ConfigSlave) map[string]bool {
+	names := make(map[string]int)
+
+	for _, sm := range slave.SyncManagers {
+		for _, pdo := range sm.PDOs {
+			for _, entry := range pdo.Entries {
+				names[entry.HalPin]++
+			}
+		}
+	}
+
+	result := make(map[string]bool)
+	for k, v := range names {
+		if v > 1 {
+			result[k] = true
+		}
+	}
+
+	return result
+}
+
+func fixupPinNames(slave ConfigSlave) {
+	duplicateNames := checkSlaveDuplicateNames(slave)
+
+	if len(duplicateNames) > 0 {
+		fmt.Printf("*** %d duplicate names found!!!\n", len(duplicateNames))
+	}
+
+	var prefix string
+
+	for _, sm := range slave.SyncManagers {
+		for _, pdo := range sm.PDOs {
+			split := strings.Split(pdo.Comment, " ")
+			if len(split) > 1 {
+				prefix = split[len(split)-1] // get the last component of the PDO name
+			} else {
+				prefix = sm.Dir
+			}
+			for _, entry := range pdo.Entries {
+				if duplicateNames[entry.HalPin] {
+					entry.HalPin = pinFormatComment(prefix + " " + entry.HalPin)
+				}
+			}
+		}
+	}
 }
 
 func main() {
@@ -528,6 +590,7 @@ func main() {
 			slave.BuildPDOs(&slaveconfig)
 		}
 
+		fixupPinNames(slaveconfig)
 		masters[slave.Master].Slaves = append(masters[slave.Master].Slaves, slaveconfig)
 
 	}
