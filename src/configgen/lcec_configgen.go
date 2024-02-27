@@ -524,11 +524,6 @@ func checkSlaveDuplicateNames(slave ConfigSlave) map[string]bool {
 
 func fixupPinNames(slave ConfigSlave) {
 	duplicateNames := checkSlaveDuplicateNames(slave)
-
-	if len(duplicateNames) > 0 {
-		fmt.Printf("*** %d duplicate names found!!!\n", len(duplicateNames))
-	}
-
 	var prefix string
 
 	for _, sm := range slave.SyncManagers {
