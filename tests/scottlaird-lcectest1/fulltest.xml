@@ -161,6 +161,7 @@
       <modParam name="ch1enableCSP" value="true"/>
       <modParam name="ch1enableActualCurrent" value="true"/> 
       <modParam name="ch1enableActualVoltage" value="true"/> 
+      <modParam name="ch1enableErrorCode" value="true"/>
       <modParam name="ch1enableFollowingErrorTimeout" value="true"/>
       <modParam name="ch1enableFollowingErrorWindow" value="true"/>
       <modParam name="ch1enableHomeAccel" value="true"/>
@@ -193,6 +194,7 @@
       <modParam name="ch2enableActualTorque" value="true"/>
       <modParam name="ch2enableActualVelocitySensor" value="true"/>
       <modParam name="ch2enableActualVoltage" value="true"/>
+      <modParam name="ch2enableErrorCode" value="true"/>
       <modParam name="ch2enableFollowingErrorTimeout" value="true"/>
       <modParam name="ch2enableFollowingErrorWindow" value="true"/>
       <modParam name="ch2enableHomeAccel" value="true"/>
