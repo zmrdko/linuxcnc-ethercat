@@ -411,6 +411,126 @@
         </pdo>
       </syncManager>
     </slave>	  
+    <slave idx="27" type="generic" vid="0x00000002" pid="0x11164052" name="D28">
+      <!--EP4374-0002 2K. Ana. Eingang +/-10V, 0-10V, 0/4-20mA konfigurie-->
+      <syncManager idx="0" dir="in"/>
+      <syncManager idx="1" dir="out"/>
+      <syncManager idx="2" dir="out">
+        <pdo idx="1600">
+          <!--AO RxPDO-Map Ch.3-->
+          <pdoEntry idx="7020" subIdx="11" bitLen="16" halPin="ch-3-analog-output" halType="s32"/>
+        </pdo>
+        <pdo idx="1601">
+          <!--AO RxPDO-Map Ch.4-->
+          <pdoEntry idx="7030" subIdx="11" bitLen="16" halPin="ch-4-analog-output" halType="s32"/>
+        </pdo>
+      </syncManager>
+      <syncManager idx="3" dir="in">
+        <pdo idx="1a00">
+          <!--AI TxPDO-Map Standard Ch.1-->
+          <pdoEntry idx="6000" subIdx="01" bitLen="1" halPin="ch-1-underrange" halType="bit"/>
+          <pdoEntry idx="6000" subIdx="02" bitLen="1" halPin="ch-1-overrange" halType="bit"/>
+          <pdoEntry idx="6000" subIdx="03" bitLen="2" halPin="ch-1-limit-1" halType="bit"/>
+          <pdoEntry idx="6000" subIdx="05" bitLen="2" halPin="ch-1-limit-2" halType="bit"/>
+          <pdoEntry idx="6000" subIdx="07" bitLen="1" halPin="ch-1-error" halType="bit"/>
+          <pdoEntry idx="6000" subIdx="0e" bitLen="1" halPin="ch-1-sync-error" halType="bit"/>
+          <pdoEntry idx="6000" subIdx="0f" bitLen="1" halPin="ch-1-txpdo-state" halType="bit"/>
+          <pdoEntry idx="6000" subIdx="10" bitLen="1" halPin="ch-1-txpdo-toggle" halType="bit"/>
+          <pdoEntry idx="6000" subIdx="11" bitLen="16" halPin="ch-1-value" halType="s32"/>
+        </pdo>
+        <pdo idx="1a02">
+          <!--AI TxPDO-Map Standard Ch.2-->
+          <pdoEntry idx="6010" subIdx="01" bitLen="1" halPin="ch-2-underrange" halType="bit"/>
+          <pdoEntry idx="6010" subIdx="02" bitLen="1" halPin="ch-2-overrange" halType="bit"/>
+          <pdoEntry idx="6010" subIdx="03" bitLen="2" halPin="ch-2-limit-1" halType="bit"/>
+          <pdoEntry idx="6010" subIdx="05" bitLen="2" halPin="ch-2-limit-2" halType="bit"/>
+          <pdoEntry idx="6010" subIdx="07" bitLen="1" halPin="ch-2-error" halType="bit"/>
+          <pdoEntry idx="6010" subIdx="0e" bitLen="1" halPin="ch-2-sync-error" halType="bit"/>
+          <pdoEntry idx="6010" subIdx="0f" bitLen="1" halPin="ch-2-txpdo-state" halType="bit"/>
+          <pdoEntry idx="6010" subIdx="10" bitLen="1" halPin="ch-2-txpdo-toggle" halType="bit"/>
+          <pdoEntry idx="6010" subIdx="11" bitLen="16" halPin="ch-2-value" halType="s32"/>
+        </pdo>
+      </syncManager>
+    </slave>
+    <slave idx="28" type="generic" vid="0x00000002" pid="0x0ea04052" name="D29">
+      <!--EP3744-0041 5K. Absolutdruck 6K. Dig. Eingang 10us 2K. Dig. Aus-->
+      <syncManager idx="0" dir="in"/>
+      <syncManager idx="1" dir="out"/>
+      <syncManager idx="2" dir="out">
+        <pdo idx="1600">
+          <!--DIG RxPDO-Map Outputs-->
+          <pdoEntry idx="7010" subIdx="01" bitLen="1" halPin="output-1" halType="bit"/>
+          <pdoEntry idx="7010" subIdx="02" bitLen="1" halPin="output-2" halType="bit"/>
+        </pdo>
+        <pdo idx="1601">
+          <!--DEV RxPDO-Map Outputs Device-->
+          <pdoEntry idx="f700" subIdx="01" bitLen="1" halPin="set-safe-state" halType="bit"/>
+        </pdo>
+      </syncManager>
+      <syncManager idx="3" dir="in">
+        <pdo idx="1a00">
+          <!--DIG TxPDO-Map Inputs-->
+          <pdoEntry idx="6000" subIdx="01" bitLen="1" halPin="input-1" halType="bit"/>
+          <pdoEntry idx="6000" subIdx="02" bitLen="1" halPin="input-2" halType="bit"/>
+          <pdoEntry idx="6000" subIdx="03" bitLen="1" halPin="input-3" halType="bit"/>
+          <pdoEntry idx="6000" subIdx="04" bitLen="1" halPin="input-4" halType="bit"/>
+          <pdoEntry idx="6000" subIdx="05" bitLen="1" halPin="input-5" halType="bit"/>
+          <pdoEntry idx="6000" subIdx="06" bitLen="1" halPin="input-6" halType="bit"/>
+        </pdo>
+        <pdo idx="1a01">
+          <!--AI TxPDO-Map Inputs Ch.1-->
+          <pdoEntry idx="6020" subIdx="01" bitLen="1" halPin="ch-1-underrange" halType="bit"/>
+          <pdoEntry idx="6020" subIdx="02" bitLen="1" halPin="ch-1-overrange" halType="bit"/>
+          <pdoEntry idx="6020" subIdx="03" bitLen="2" halPin="ch-1-limit-1" halType="bit"/>
+          <pdoEntry idx="6020" subIdx="05" bitLen="2" halPin="ch-1-limit-2" halType="bit"/>
+          <pdoEntry idx="6020" subIdx="07" bitLen="1" halPin="ch-1-error" halType="bit"/>
+          <pdoEntry idx="6020" subIdx="0f" bitLen="1" halPin="ch-1-txpdo-state" halType="bit"/>
+          <pdoEntry idx="6020" subIdx="10" bitLen="1" halPin="ch-1-txpdo-toggle" halType="bit"/>
+          <pdoEntry idx="6020" subIdx="11" bitLen="32" halPin="ch-1-value" halType="s32"/>
+        </pdo>
+        <pdo idx="1a02">
+          <!--AI TxPDO-Map Inputs Ch.2-->
+          <pdoEntry idx="6030" subIdx="01" bitLen="1" halPin="ch-2-underrange" halType="bit"/>
+          <pdoEntry idx="6030" subIdx="02" bitLen="1" halPin="ch-2-overrange" halType="bit"/>
+          <pdoEntry idx="6030" subIdx="03" bitLen="2" halPin="ch-2-limit-1" halType="bit"/>
+          <pdoEntry idx="6030" subIdx="05" bitLen="2" halPin="ch-2-limit-2" halType="bit"/>
+          <pdoEntry idx="6030" subIdx="07" bitLen="1" halPin="ch-2-error" halType="bit"/>
+          <pdoEntry idx="6030" subIdx="0f" bitLen="1" halPin="ch-2-txpdo-state" halType="bit"/>
+          <pdoEntry idx="6030" subIdx="10" bitLen="1" halPin="ch-2-txpdo-toggle" halType="bit"/>
+          <pdoEntry idx="6030" subIdx="11" bitLen="32" halPin="ch-2-value" halType="s32"/>
+        </pdo>
+        <pdo idx="1a03">
+          <!--AI TxPDO-Map Inputs Ch.3-->
+          <pdoEntry idx="6040" subIdx="01" bitLen="1" halPin="ch-3-underrange" halType="bit"/>
+          <pdoEntry idx="6040" subIdx="02" bitLen="1" halPin="ch-3-overrange" halType="bit"/>
+          <pdoEntry idx="6040" subIdx="03" bitLen="2" halPin="ch-3-limit-1" halType="bit"/>
+          <pdoEntry idx="6040" subIdx="05" bitLen="2" halPin="ch-3-limit-2" halType="bit"/>
+          <pdoEntry idx="6040" subIdx="07" bitLen="1" halPin="ch-3-error" halType="bit"/>
+          <pdoEntry idx="6040" subIdx="0f" bitLen="1" halPin="ch-3-txpdo-state" halType="bit"/>
+          <pdoEntry idx="6040" subIdx="10" bitLen="1" halPin="ch-3-txpdo-toggle" halType="bit"/>
+          <pdoEntry idx="6040" subIdx="11" bitLen="32" halPin="ch-3-value" halType="s32"/>
+        </pdo>
+        <pdo idx="1a04">
+          <!--AI TxPDO-Map Inputs Ch.4-->
+          <pdoEntry idx="6050" subIdx="01" bitLen="1" halPin="ch-4-underrange" halType="bit"/>
+          <pdoEntry idx="6050" subIdx="02" bitLen="1" halPin="ch-4-overrange" halType="bit"/>
+          <pdoEntry idx="6050" subIdx="03" bitLen="2" halPin="ch-4-limit-1" halType="bit"/>
+          <pdoEntry idx="6050" subIdx="05" bitLen="2" halPin="ch-4-limit-2" halType="bit"/>
+          <pdoEntry idx="6050" subIdx="07" bitLen="1" halPin="ch-4-error" halType="bit"/>
+          <pdoEntry idx="6050" subIdx="0f" bitLen="1" halPin="ch-4-txpdo-state" halType="bit"/>
+          <pdoEntry idx="6050" subIdx="10" bitLen="1" halPin="ch-4-txpdo-toggle" halType="bit"/>
+          <pdoEntry idx="6050" subIdx="11" bitLen="32" halPin="ch-4-value" halType="s32"/>
+        </pdo>
+        <pdo idx="1a05">
+          <!--DEV TxPDO-Map Inputs Device-->
+          <pdoEntry idx="f600" subIdx="01" bitLen="1" halPin="safe-state-active" halType="bit"/>
+          <pdoEntry idx="f600" subIdx="0e" bitLen="1" halPin="sync-error" halType="bit"/>
+          <pdoEntry idx="f611" subIdx="01" bitLen="1" halPin="undervoltage-us-" halType="bit"/>
+          <pdoEntry idx="f611" subIdx="02" bitLen="1" halPin="undervoltage-up" halType="bit"/>
+          <pdoEntry idx="f611" subIdx="10" bitLen="1" halPin="device-txpdo-toggle" halType="bit"/>
+        </pdo>
+      </syncManager>
+    </slave>
   </master>
 </masters>
     
