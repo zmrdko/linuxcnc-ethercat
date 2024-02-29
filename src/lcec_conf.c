@@ -1252,9 +1252,9 @@ static void parseModParamAttrs(LCEC_CONF_XML_INST_T *inst, int next, const char 
   char *s = NULL;
   switch (modparams->type) {
     case MODPARAM_TYPE_BIT:
-      if ((strcmp("1", pval) == 0) || (strcasecmp("TRUE", pval) == 0)) {
+      if (!strcmp("1", pval) || !strcasecmp("TRUE", pval) || !strcasecmp("ENABLED", pval)) {
         p->value.bit = 1;
-      } else if ((strcmp("0", pval) == 0) || (strcasecmp("FALSE", pval)) == 0) {
+      } else if (!strcmp("0", pval) || !strcasecmp("FALSE", pval) || !strcasecmp("DISABLED", pval)) {
         p->value.bit = 0;
       } else {
         fprintf(stderr, "%s: ERROR: Invalid modparam bit value '%s' for param '%s'\n", modname, pval, pname);

@@ -443,10 +443,10 @@ static int lcec_rtec_init(int comp_id, lcec_slave_t *slave) {
   // doesn't map all of the PDOs that we need, so we need to set up
   // our own mappings.
   lcec_syncs_t *syncs = lcec_cia402_init_sync(slave, options);
-  lcec_cia402_add_output_sync(syncs, options);
+  lcec_cia402_add_output_sync(slave, syncs, options);
   // No output PDOs right now.
 
-  lcec_cia402_add_input_sync(syncs, options);
+  lcec_cia402_add_input_sync(slave, syncs, options);
   lcec_syncs_add_pdo_info(syncs, 0x1a02);
   lcec_syncs_add_pdo_entry(syncs, 0x200e, 0x00, 16);  // alarm codes
   lcec_syncs_add_pdo_entry(syncs, 0x200f, 0x00, 16);  // status codes
