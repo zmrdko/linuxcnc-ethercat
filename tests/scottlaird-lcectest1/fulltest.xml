@@ -154,8 +154,8 @@
     <slave idx="21" type="basic_cia402" vid="0x00004321" pid="0x00002100" name="D22">
       <!--2CL3-EC507(COE)-->
       <modParam name="ciaChannels" value="2"/>
-      <modParam name="ch1enablePP" value="true"/>
-      <modParam name="ch1enablePV" value="true"/>
+      <modParam name="ch1enablePP" value="disabled"/>
+      <modParam name="ch1enablePV" value="disabled"/>
       <modParam name="ch1enableCSP" value="true"/>
       <modParam name="ch1enableHM" value="true"/>
       <modParam name="ch1enableCSP" value="true"/>

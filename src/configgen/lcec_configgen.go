@@ -287,6 +287,21 @@ func (s *EthercatSlave) isCiA402() bool {
 	return false
 }
 
+func readSDO(master, slave string, index, subindex int) int64 {
+	out, err := exec.Command("ethercat", "-m", master, "upload", "-p", slave, fmt.Sprintf("0x%04x", index), fmt.Sprintf("0x%02x", subindex)).Output()
+	if err != nil {
+		panic(err)
+	}
+
+	split := strings.Split(string(out), " ")
+	value, err := strconv.ParseInt(split[0], 0, 32)
+	if err != nil {
+		panic(err)
+	}
+
+	return value
+}
+
 // Identifies the number of channels (or axes) supported by the
 // device.  Unlike `isCiA402()`, this only looks for 0x6502.
 func (s *EthercatSlave) CiAChannels() int {
@@ -299,6 +314,26 @@ func (s *EthercatSlave) CiAChannels() int {
 		}
 	}
 	return channels
+}
+
+// Number of RX PDO entries on this device.
+func (s *EthercatSlave) CiARxPDOEntries() int {
+	for entry := 32; entry > 8; entry-- {
+		if s.SDOs[fmt.Sprintf("0x1600:%02d", entry)] != "" {
+			return entry
+		}
+	}
+	return 8
+}
+
+// Number of TX PDO entries on this device.
+func (s *EthercatSlave) CiATxPDOEntries() int {
+	for entry := 32; entry > 8; entry-- {
+		if s.SDOs[fmt.Sprintf("0x1a00:%02d", entry)] != "" {
+			return entry
+		}
+	}
+	return 8
 }
 
 // CiAEnableModParams looks at the SDOs gathered earlier as well as
@@ -315,6 +350,8 @@ func (s *EthercatSlave) CiAEnableModParams() []ConfigModParam {
 	if channels > 1 {
 		mp = append(mp, ConfigModParam{Name: "ciaChannels", Value: fmt.Sprintf("%d", channels)})
 	}
+	mp = append(mp, ConfigModParam{Name: "ciaRxPDOEntryLimit", Value: strconv.Itoa(s.CiARxPDOEntries())})
+	mp = append(mp, ConfigModParam{Name: "ciaTxPDOEntryLimit", Value: strconv.Itoa(s.CiATxPDOEntries())})
 
 	for channel := 0; channel < channels; channel++ {
 		prefix := ""
@@ -323,19 +360,7 @@ func (s *EthercatSlave) CiAEnableModParams() []ConfigModParam {
 		}
 		base := 0x6000 + 0x800*channel
 
-		// First, we need the value of 0x6502:00
-		out, err := exec.Command("ethercat", "-m", s.Master, "upload", "-p", s.Slave, fmt.Sprintf("0x%04x", base+0x502), "0").Output()
-
-		if err != nil {
-			panic(err)
-		}
-
-		split := strings.Split(string(out), " ")
-		abilities, err := strconv.ParseUint(split[0], 0, 32)
-
-		if err != nil {
-			panic(err)
-		}
+		abilities := readSDO(s.Master, s.Slave, base+0x502, 0)
 
 		if (abilities & (1 << 0)) != 0 {
 			mp = append(mp, ConfigModParam{Name: prefix + "enablePP", Value: "true"})
@@ -353,7 +378,7 @@ func (s *EthercatSlave) CiAEnableModParams() []ConfigModParam {
 			mp = append(mp, ConfigModParam{Name: prefix + "enableHM", Value: "true"})
 		}
 		if (abilities & (1 << 6)) != 0 {
-			mp = append(mp, ConfigModParam{Name: prefix + "enableIP", Value: "true"})
+			mp = append(mp, ConfigModParam{Name: prefix + "enableIP", Value: "disabled"})
 		}
 		if (abilities & (1 << 7)) != 0 {
 			mp = append(mp, ConfigModParam{Name: prefix + "enableCSP", Value: "true"})

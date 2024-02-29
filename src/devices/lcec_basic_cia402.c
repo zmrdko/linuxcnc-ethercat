@@ -36,11 +36,15 @@
 #include "lcec_class_dout.h"
 
 // Constants for modparams.  The basic_cia402 driver only has one:
-#define M_CHANNELS 0
+#define M_CHANNELS   0
+#define M_RXPDOLIMIT 1
+#define M_TXPDOLIMIT 2
 
 /// @brief Device-specific modparam settings available via XML.
 static const lcec_modparam_desc_t modparams_lcec_basic_cia402[] = {
     {"ciaChannels", M_CHANNELS, MODPARAM_TYPE_U32},
+    {"ciaRxPDOEntryLimit", M_RXPDOLIMIT, MODPARAM_TYPE_U32},
+    {"ciaTxPDOEntryLimit", M_RXPDOLIMIT, MODPARAM_TYPE_U32},
     // XXXX, add device-specific modparams here.
     {NULL},
 };
@@ -89,6 +93,12 @@ static int handle_modparams(lcec_slave_t *slave, lcec_class_cia402_options_t *op
         // XXXX: add device-specific modparam handlers here.
       case M_CHANNELS:
         options->channels = p->value.u32;
+        break;
+      case M_RXPDOLIMIT:
+        options->rxpdolimit = p->value.u32;
+        break;
+      case M_TXPDOLIMIT:
+        options->txpdolimit = p->value.u32;
         break;
       default:
         // Handle cia402 generic modparams
@@ -143,6 +153,8 @@ static int lcec_basic_cia402_init(int comp_id, lcec_slave_t *slave) {
   // available, and instructions on how to add additional CiA 402
   // features.
   options->channels = 1;
+  options->rxpdolimit = 8;  // See https://github.com/linuxcnc-ethercat/linuxcnc-ethercat/issues/343
+  options->txpdolimit = 8;  // See https://github.com/linuxcnc-ethercat/linuxcnc-ethercat/issues/343
   options->channel[0]->enable_pv = 1;
   options->channel[0]->enable_pp = 1;
   options->channel[0]->enable_csv = 0;
@@ -169,21 +181,21 @@ static int lcec_basic_cia402_init(int comp_id, lcec_slave_t *slave) {
   // These need to be done in the correct order, as the `lcec_syncs*`
   // code only adds new entries at the end.
   lcec_syncs_t *syncs = lcec_cia402_init_sync(slave, options);
-  lcec_cia402_add_output_sync(syncs, options);
+  lcec_cia402_add_output_sync(slave, syncs, options);
 
   // XXXX: ff this driver needed to set up device-specific output PDO
   // entries, then the next 2 lines should be used.  You should be
   // able to duplicate the `lcec_syncs_add_pdo_entry()` line as many
   // times as needed.
   //
-  // lcec_syncs_add_pdo_info(syncs, 0x1602);
-  // lcec_syncs_add_pdo_entry(syncs, 0x200e, 0x00, 16);
+  // lcec_syncs_add_pdo_info(slave, syncs, 0x1602);
+  // lcec_syncs_add_pdo_entry(slave, syncs, 0x200e, 0x00, 16);
 
-  lcec_cia402_add_input_sync(syncs, options);
+  lcec_cia402_add_input_sync(slave, syncs, options);
   // XXXX: Similarly, uncomment these for input PDOs:
   //
-  // lcec_syncs_add_pdo_info(syncs, 0x1a02);
-  // lcec_syncs_add_pdo_entry(syncs, 0x2048, 0x00, 16);  // current voltage
+  // lcec_syncs_add_pdo_info(slave, syncs, 0x1a02);
+  // lcec_syncs_add_pdo_entry(slave, syncs, 0x2048, 0x00, 16);  // current voltage
 
   slave->sync_info = &syncs->syncs[0];
 
