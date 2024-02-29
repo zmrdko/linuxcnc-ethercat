@@ -1,7 +1,7 @@
 #include <stdio.h>
 
-#include "../../src/lcec.h"
 #include "../../src/devices/lcec_class_cia402.h"
+#include "../../src/lcec.h"
 #include "tests.h"
 
 TESTGLOBALSETUP;
@@ -21,10 +21,10 @@ static const lcec_modparam_desc_t device_mps[] = {
 TESTFUNC(test_modparm_len) {
   TESTSETUP;
   lcec_modparam_desc_t *channelized_mps;
-  
+
   TESTINT(lcec_modparam_desc_len(per_channel_mps), 3);
   TESTINT(lcec_modparam_desc_len(device_mps), 1);
-  
+
   channelized_mps = lcec_cia402_channelized_modparams(per_channel_mps);
   TESTNOTNULL(channelized_mps);
 
@@ -71,6 +71,40 @@ TESTFUNC(test_modparm_len) {
   TESTINT(all_mps[15].id, 0x1015);
   TESTINT(all_mps[16].id, 0x1016);
   TESTINT(all_mps[17].id, 0x1017);
+
+  TESTRESULTS;
+}
+
+TESTFUNC(test_modparam_ratio) {
+  TESTSETUP;
+
+  int max_denom = 1<<15;
+
+  lcec_ratio ratio;
+  ratio = lcec_cia402_decode_ratio_modparam("1/2", max_denom);
+  TESTINT(ratio.numerator, 1);
+  TESTINT(ratio.denominator, 2);
+
+  ratio = lcec_cia402_decode_ratio_modparam("3:4", max_denom);
+  TESTINT(ratio.numerator, 3);
+  TESTINT(ratio.denominator, 4);
+
+  ratio = lcec_cia402_decode_ratio_modparam("86400/3600", max_denom);
+  TESTINT(ratio.numerator, 86400);
+  TESTINT(ratio.denominator, 3600);
+
+  ratio = lcec_cia402_decode_ratio_modparam("3", max_denom);
+  TESTINT(ratio.numerator, 3);
+  TESTINT(ratio.denominator, 1);
+
+  ratio = lcec_cia402_decode_ratio_modparam("5.2", max_denom);
+  TESTINT(ratio.numerator, 26);
+  TESTINT(ratio.denominator, 5);
+
+  ratio = lcec_cia402_decode_ratio_modparam(
+      "3355443.2", max_denom);  // From https://github.com/linuxcnc-ethercat/linuxcnc-ethercat/issues/286#issuecomment-1962819925
+  TESTINT(ratio.numerator, 16777216);
+  TESTINT(ratio.denominator, 5);
 
   TESTRESULTS;
 }
