@@ -121,12 +121,16 @@ type EnableSDO struct {
 }
 
 var (
+	// NOTE: this list does not include everything; I'm
+	// deliberaterly leaving out pins that are mandatory if the
+	// device supports their mode, like `actual_position`.
 	EnableSDOs = []EnableSDO{
 		EnableSDO{name: "enableActualCurrent", offset: 0x78, subindex: 0},
 		EnableSDO{name: "enableActualFollowingError", offset: 0xf4, subindex: 0},
 		EnableSDO{name: "enableActualTorque", offset: 0x77, subindex: 0},
 		EnableSDO{name: "enableActualVelocitySensor", offset: 0x69, subindex: 0},
 		EnableSDO{name: "enableActualVoltage", offset: 0x79, subindex: 0},
+		EnableSDO{name: "enableControlEffort", offset: 0xfa, subindex: 0},
 		EnableSDO{name: "enableDemandVL", offset: 0x43, subindex: 0},
 		EnableSDO{name: "enableDigitalInput", offset: 0xfd, subindex: 0},
 		EnableSDO{name: "enableDigitalOutput", offset: 0xfe, subindex: 1},
@@ -139,10 +143,15 @@ var (
 		EnableSDO{name: "enableMaximumCurrent", offset: 0x73, subindex: 0},
 		EnableSDO{name: "enableMaximumDeceleration", offset: 0xc6, subindex: 0},
 		EnableSDO{name: "enableMaximumMotorRPM", offset: 0x80, subindex: 0},
+		EnableSDO{name: "enableMaximumSlippage", offset: 0xf8, subindex: 0},
 		EnableSDO{name: "enableMaximumTorque", offset: 0x72, subindex: 0},
 		EnableSDO{name: "enableMotorRatedCurrent", offset: 0x75, subindex: 0},
 		EnableSDO{name: "enableMotorRatedTorque", offset: 0x76, subindex: 0},
 		EnableSDO{name: "enablePolarity", offset: 0x7e, subindex: 0},
+		EnableSDO{name: "enablePositionDemand", offset: 0x62, subindex: 0},
+		EnableSDO{name: "enablePositioningTime", offset: 0x68, subindex: 0},
+		EnableSDO{name: "enablePositioningWindow", offset: 0x67, subindex: 0},
+		EnableSDO{name: "enableProbeStatus", offset: 0xb9, subindex: 0},
 		EnableSDO{name: "enableProfileAccel", offset: 0x83, subindex: 0},
 		EnableSDO{name: "enableProfileDecel", offset: 0x84, subindex: 0},
 		EnableSDO{name: "enableProfileEndVelocity", offset: 0x82, subindex: 0},
