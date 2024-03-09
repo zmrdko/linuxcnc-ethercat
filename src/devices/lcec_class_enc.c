@@ -39,11 +39,11 @@ static const lcec_pindesc_t slave_pins[] = {
     {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
-static const lcec_pindesc_t slave_params[] = {
+static const lcec_paramdesc_t slave_params[] = {
     {HAL_U32, HAL_RW, offsetof(lcec_class_enc_data_t, raw_home), "%s.%s.%s.%s-raw-home"},
     {HAL_U32, HAL_RO, offsetof(lcec_class_enc_data_t, raw_bits), "%s.%s.%s.%s-raw-bits"},
     {HAL_FLOAT, HAL_RO, offsetof(lcec_class_enc_data_t, pprev_scale), "%s.%s.%s.%s-pprev-scale"},
-    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
+    {HAL_TYPE_UNSPECIFIED},
 };
 
 static int32_t raw_diff(int shift, uint32_t raw_a, uint32_t raw_b);

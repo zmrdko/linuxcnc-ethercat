@@ -102,20 +102,23 @@ static const lcec_pindesc_t enc_pins[] = {{HAL_BIT, HAL_IO, offsetof(lcec_ph3lm2
     {HAL_BIT, HAL_OUT, offsetof(lcec_ph3lm2rm_enc_data_t, latch_valid), "%s.%s.%s.%s-latch-valid"},
     {HAL_BIT, HAL_OUT, offsetof(lcec_ph3lm2rm_enc_data_t, latch_state), "%s.%s.%s.%s-latch-state"},
     {HAL_BIT, HAL_OUT, offsetof(lcec_ph3lm2rm_enc_data_t, latch_state_not), "%s.%s.%s.%s-latch-state-not"},
-    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL}};
+    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},};
 
-static const lcec_pindesc_t enc_params[] = {{HAL_FLOAT, HAL_RW, offsetof(lcec_ph3lm2rm_enc_data_t, scale), "%s.%s.%s.%s-scale"},
-    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL}};
+static const lcec_paramdesc_t enc_params[] = {
+  {HAL_FLOAT, HAL_RW, offsetof(lcec_ph3lm2rm_enc_data_t, scale), "%s.%s.%s.%s-scale"},
+  {HAL_TYPE_UNSPECIFIED},
+};
 
 static const lcec_pindesc_t lm_pins[] = {{HAL_U32, HAL_OUT, offsetof(lcec_ph3lm2rm_lm_data_t, signal_level), "%s.%s.%s.%s-signal-level"},
     {HAL_BIT, HAL_OUT, offsetof(lcec_ph3lm2rm_lm_data_t, signal_level_warn), "%s.%s.%s.%s-signal-level-warn"},
     {HAL_BIT, HAL_OUT, offsetof(lcec_ph3lm2rm_lm_data_t, signal_level_err), "%s.%s.%s.%s-signal-level-err"},
-    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL}};
+    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},};
 
-static const lcec_pindesc_t lm_params[] = {
+static const lcec_paramdesc_t lm_params[] = {
     {HAL_U32, HAL_RW, offsetof(lcec_ph3lm2rm_lm_data_t, signal_level_warn_val), "%s.%s.%s.%s-signal-level-warn-val"},
     {HAL_U32, HAL_RW, offsetof(lcec_ph3lm2rm_lm_data_t, signal_level_err_val), "%s.%s.%s.%s-signal-level-err-val"},
-    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL}};
+    {HAL_TYPE_UNSPECIFIED},
+};
 
 static const lcec_pindesc_t rm_pins[] = {{HAL_BIT, HAL_IN, offsetof(lcec_ph3lm2rm_rm_data_t, latch_sel_idx), "%s.%s.%s.%s-latch-sel-idx"},
     {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL}};

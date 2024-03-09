@@ -130,7 +130,7 @@ static const lcec_pindesc_t slave_pins_el7201_9014[] = {
     {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
-static const lcec_pindesc_t slave_params[] = {
+static const lcec_paramdesc_t slave_params[] = {
     {HAL_FLOAT, HAL_RW, offsetof(lcec_el7211_data_t, scale), "%s.%s.%s.scale"},
     {HAL_U32, HAL_RO, offsetof(lcec_el7211_data_t, vel_resolution), "%s.%s.%s.vel-resolution"},
     {HAL_U32, HAL_RO, offsetof(lcec_el7211_data_t, pos_resolution), "%s.%s.%s.pos-resolution"},
@@ -138,7 +138,7 @@ static const lcec_pindesc_t slave_params[] = {
     {HAL_FLOAT, HAL_RW, offsetof(lcec_el7211_data_t, max_vel), "%s.%s.%s.max-vel"},
     {HAL_FLOAT, HAL_RW, offsetof(lcec_el7211_data_t, max_accel), "%s.%s.%s.max-accel"},
     {HAL_FLOAT, HAL_RW, offsetof(lcec_el7211_data_t, at_speed_window), "%s.%s.%s.at-speed-window"},
-    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
+    {HAL_TYPE_UNSPECIFIED},
 };
 
 static ec_pdo_entry_info_t lcec_el7211_in_pos[] = {

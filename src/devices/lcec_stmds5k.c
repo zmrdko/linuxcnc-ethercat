@@ -159,12 +159,13 @@ static const lcec_pindesc_t slave_pins[] = {{HAL_FLOAT, HAL_IN, offsetof(lcec_st
     {HAL_BIT, HAL_IN, offsetof(lcec_stmds5k_data_t, fast_ramp), "%s.%s.%s.srv-fast-ramp"},
     {HAL_BIT, HAL_IN, offsetof(lcec_stmds5k_data_t, brake), "%s.%s.%s.srv-brake"}, {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL}};
 
-static const lcec_pindesc_t slave_params[] = {{HAL_FLOAT, HAL_RW, offsetof(lcec_stmds5k_data_t, pos_scale), "%s.%s.%s.srv-pos-scale"},
+static const lcec_paramdesc_t slave_params[] = {{HAL_FLOAT, HAL_RW, offsetof(lcec_stmds5k_data_t, pos_scale), "%s.%s.%s.srv-pos-scale"},
     {HAL_FLOAT, HAL_RO, offsetof(lcec_stmds5k_data_t, torque_reference), "%s.%s.%s.srv-torque-ref"},
     {HAL_FLOAT, HAL_RO, offsetof(lcec_stmds5k_data_t, speed_max_rpm), "%s.%s.%s.srv-max-rpm"},
     {HAL_FLOAT, HAL_RO, offsetof(lcec_stmds5k_data_t, speed_max_rpm_sp), "%s.%s.%s.srv-max-rpm-sp"},
     {HAL_FLOAT, HAL_RW, offsetof(lcec_stmds5k_data_t, extenc_scale), "%s.%s.%s.extenc-scale"},
-    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL}};
+    {HAL_TYPE_UNSPECIFIED},
+};
 
 static const lcec_stmds5k_syncs_t lcec_stmds5k_syncs_tmpl = {.out_ch1 =
                                                                  {

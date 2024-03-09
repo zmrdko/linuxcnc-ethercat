@@ -193,13 +193,13 @@ static const lcec_pindesc_t slave_pins_csp[] = {
 };
 
 // Exposed parameters are identical for both drives and modes
-static const lcec_pindesc_t slave_params[] = {
+static const lcec_paramdesc_t slave_params[] = {
     {HAL_FLOAT, HAL_RW, offsetof(lcec_deasda_data_t, pos_scale), "%s.%s.%s.pos-scale"},
     {HAL_FLOAT, HAL_RW, offsetof(lcec_deasda_data_t, extenc_scale), "%s.%s.%s.extenc-scale"},
     {HAL_U32, HAL_RW, offsetof(lcec_deasda_data_t, pprev), "%s.%s.%s.srv-pulses-per-rev"},
     {HAL_U32, HAL_RW, offsetof(lcec_deasda_data_t, fault_autoreset_cycles), "%s.%s.%s.srv-fault-autoreset-cycles"},
     {HAL_U32, HAL_RW, offsetof(lcec_deasda_data_t, fault_autoreset_retries), "%s.%s.%s.srv-fault-autoreset-retries"},
-    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
+    {HAL_TYPE_UNSPECIFIED},
 };
 
 static ec_pdo_entry_info_t lcec_deasda_in[] = {

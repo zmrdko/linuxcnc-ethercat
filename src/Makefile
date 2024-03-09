@@ -5,11 +5,14 @@ all: all-deps realtime user
 -include $(MODINC)
 include Makefile.clean
 
+#CC=g++
+#EXTRA_CFLAGS += -fpermissive
+
 RTLDFLAGS += -Wl,-rpath,$(LIBDIR)
 RTEXTRA_LDFLAGS += -Wl,--whole-archive liblcecdevices.a -Wl,--no-whole-archive -L$(LIBDIR) -llinuxcnchal -lethercat -lrt
 
 #EXTRA_CFLAGS += --std=c2x
-EXTRA_CFLAGS += -Wall  # Increase debugging level
+EXTRA_CFLAGS += -Wall # Increase debugging level
 #EXTRA_CFLAGS += -fanalyzer # Use GCC's static analyzer tool, doubles compile time
 
 ## targets

@@ -95,13 +95,13 @@ static const lcec_pindesc_t slave_pins[] = {
     {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
-static const lcec_pindesc_t slave_params[] = {
+static const lcec_paramdesc_t slave_params[] = {
     {HAL_FLOAT, HAL_RO, offsetof(lcec_el2521_data_t, freq), "%s.%s.%s.stp-freq"},
     {HAL_FLOAT, HAL_RO, offsetof(lcec_el2521_data_t, maxvel), "%s.%s.%s.stp-maxvel"},
     {HAL_FLOAT, HAL_RO, offsetof(lcec_el2521_data_t, maxaccel_fall), "%s.%s.%s.stp-maxaccel-fall"},
     {HAL_FLOAT, HAL_RO, offsetof(lcec_el2521_data_t, maxaccel_rise), "%s.%s.%s.stp-maxaccel-rise"},
     {HAL_FLOAT, HAL_RW, offsetof(lcec_el2521_data_t, pos_scale), "%s.%s.%s.stp-pos-scale"},
-    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
+    {HAL_TYPE_UNSPECIFIED},
 };
 
 static ec_pdo_entry_info_t lcec_el2521_in[] = {
