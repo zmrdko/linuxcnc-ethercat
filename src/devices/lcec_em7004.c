@@ -128,9 +128,9 @@ static const lcec_pindesc_t slave_dout_pins[] = {
     {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
-static const lcec_pindesc_t slave_dout_params[] = {
+static const lcec_paramdesc_t slave_dout_params[] = {
     {HAL_BIT, HAL_RW, offsetof(lcec_em7004_dout_t, invert), "%s.%s.%s.dout-%d-invert"},
-    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
+    {HAL_TYPE_UNSPECIFIED},
 };
 
 static const lcec_pindesc_t slave_aout_pins[] = {

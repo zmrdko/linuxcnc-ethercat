@@ -30,9 +30,9 @@ static const lcec_pindesc_t slave_pins[] = {
     {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
-static const lcec_pindesc_t slave_params[] = {
+static const lcec_paramdesc_t slave_params[] = {
     {HAL_BIT, HAL_RW, offsetof(lcec_class_dout_channel_t, invert), "%s.%s.%s.%s-invert"},
-    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
+    {HAL_TYPE_UNSPECIFIED},
 };
 
 /// @brief Allocates a block of memory for holding the result of `count`

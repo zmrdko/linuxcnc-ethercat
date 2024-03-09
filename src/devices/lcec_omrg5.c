@@ -161,10 +161,10 @@ static const lcec_pindesc_t slave_pins[] = {
     {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
-static const lcec_pindesc_t slave_params[] = {
+static const lcec_paramdesc_t slave_params[] = {
     {HAL_FLOAT, HAL_RW, offsetof(lcec_omrg5_data_t, pos_scale), "%s.%s.%s.pos-scale"},
     {HAL_BIT, HAL_RW, offsetof(lcec_omrg5_data_t, auto_fault_reset), "%s.%s.%s.auto-fault-reset"},
-    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
+    {HAL_TYPE_UNSPECIFIED},
 };
 
 static ec_pdo_entry_info_t lcec_omrg5_in[] = {
