@@ -31,7 +31,7 @@ Example for A3 series:
     <slave idx="1" type="DeASDA3" name="A3"/>
 ```
 
-To ensure that a change in operational mode does not occur during the linuxcnc runtime, mode setting is done using modParam in the configuration file. This setting is optional. The defaults mode is CSV (Cyclic Synchronous Velocity).
+To ensure that a change in operational mode does not occur during the linuxcnc runtime, mode setting is done using modParam in the configuration file. This setting is optional. The default mode is CSV (Cyclic Synchronous Velocity).
 
 ```xml
     <slave idx="1" type="DeASDA" name="x-axis">
