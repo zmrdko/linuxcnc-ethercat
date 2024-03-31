@@ -21,14 +21,17 @@ like this to your `ethercat.xml` file:
 ```xml
     <slave idx="1" type="DeASDA" name="x-axis"/>
 ```
+type: specifies which device this is: A2 (type="DeASDA"), A3 (type="DeASDA3"), B3 (type="DeASDB3")
 
-Or for A3 series:
+name: whatever you want to call this ethercat slave, e.g. "x-axis"
+
+Example for A3 series:
 
 ```xml
     <slave idx="1" type="DeASDA3" name="A3"/>
 ```
 
-To ensure that a change in operational mode does not occur during the linuxcnc runtime, mode setting is done using modParam in the configuration file. This setting is optional as it defaults to mode CSV.
+To ensure that a change in operational mode does not occur during the linuxcnc runtime, mode setting is done using modParam in the configuration file. This setting is optional. The default mode is CSV (Cyclic Synchronous Velocity).
 
 ```xml
     <slave idx="1" type="DeASDA" name="x-axis">
@@ -101,7 +104,7 @@ TODO/
 
 ## Exposed Pins Common
 
-The following pins are exposed in both modes (CSV and CSP) and for all drives
+The following pins are exposed in both modes (CSV and CSP) and for all drives. The pin names below contain "0.A3" - this will depend on the naming in your xml file.
 
 Encoder values (servo motor and external encoder at CN5)
 
@@ -169,7 +172,7 @@ bit   OUT lcec.0.A3.srv-volt-enabled
 bit   OUT lcec.0.A3.srv-warning
 bit   OUT lcec.0.A3.srv-zero-speed
 ```
-_Digital In (RO) at CN1_
+_Digital Inputs and Outputs at CN1_
 ```
 bit   OUT lcec.0.A3.din-1
 bit   OUT lcec.0.A3.din-2
@@ -181,6 +184,10 @@ bit   OUT lcec.0.A3.din-7
 bit   OUT lcec.0.A3.din-home
 bit   OUT lcec.0.A3.din-neg-lim
 bit   OUT lcec.0.A3.din-pos-lim
+bit   IN lcec.0.A3.dout-d01
+bit   IN lcec.0.A3.dout-d02
+bit   IN lcec.0.A3.dout-d03
+bit   IN lcec.0.A3.dout-d04
 ```
 
 
