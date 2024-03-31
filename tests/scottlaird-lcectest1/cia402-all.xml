@@ -1,6 +1,7 @@
 <masters>
-  <master idx="0" appTimePeriod="1000000" refClockSyncCycles="1000">
+  <master idx="0" appTimePeriod="1000000" refClockSyncCycles="-1">
     <slave idx="25" type="basic_cia402" vid="0x00004321" pid="0x00002100" name="ls-2cl3">
+      <dcConf assignActivate="700" sync0Cycle="*1" sync0Shift="0"/>
       <!--2CL3-EC507(COE)-->
       <modParam name="ciaChannels" value="2"/>
       <modParam name="ciaRxPDOEntryLimit" value="8"/>
@@ -80,6 +81,7 @@
       <modParam name="ciaChannels" value="2"/>
       <modParam name="ciaRxPDOEntryLimit" value="16"/>
       <modParam name="ciaTxPDOEntryLimit" value="16"/>
+      <modParam name="pdoIncrement" value="16"/>
       <modParam name="ch1enablePP" value="true"/>
       <modParam name="ch1enablePV" value="false"/>
       <modParam name="ch1enableCSP" value="true"/>
@@ -127,8 +129,62 @@
       <modParam name="ch4enableProfileMaxVelocity" value="true"/>
       <modParam name="ch4enableProfileVelocity" value="true"/> -->
     </slave>
+
+    <!--    <slave idx="27" type="generic" vid="00000a88" pid="0a880002" configPdos="true" name="rt-ect60">
+      <dcConf assignActivate="300" sync0Cycle="*1" sync0Shift="0"/>
+      <sdoConfig idx="2000" subIdx="0">
+	<sdoDataRaw data="70 17"/>
+      </sdoConfig>
+      <sdoConfig idx="2007" subIdx="6">
+	<sdoDataRaw data="05"/>
+      </sdoConfig>
+      <sdoConfig idx="2007" subIdx="5">
+	<sdoDataRaw data="00"/>
+      </sdoConfig>
+      <sdoConfig idx="200D" subIdx="O">
+	<sdoDataRaw data="01"/>
+      </sdoConfig>
+      <sdoConfig idx="2011" subIdx="0">
+	<sdoDataRaw data="01 00"/>
+      </sdoConfig>
+      <syncManager idx="2" dir="out">
+	<pdo idx="1600">
+	  <pdoEntry idx="6040" subIdx="00" bitLen="16" halPin="srv-cia-controlword" halType="u32"/>
+	  <pdoEntry idx="6060" subIdx="00" bitLen="8" halPin="srv-opmode" halType="s32"/>
+	  <pdoEntry idx="607A" subIdx="00" bitLen="32" halPin="srv-target-position" halType="s32"/>
+	  <pdoEntry idx="60FF" subIdx="00" bitLen="32" halPin="srv-target-velocity" halType="s32"/>
+	  <pdoEntry idx="204A" subIdx="0" bitLen="16" halType="complex">
+	    <complexEntry bitLen="1" halPin="out-1" halType="bit"/>
+	    <complexEntry bitLen="1" halPin="out-2" halType="bit"/>
+	    <complexEntry bitLen="14"/>
+	  </pdoEntry>
+	  <pdoEntry idx="6077" subIdx="00" bitLen="32" halPin="srv-actual-torque" halType="s32"/>
+	  <pdoEntry idx="60FD" subIdx="0" bitLen="32" halType="complex">
+	    <complexEntry bitLen="1" halPin="CW-limit" halType="bit"/>
+	    <complexEntry bitLen="1" halPin="CCW-limit" halType="bit"/>
+	    <complexEntry bitLen="1" halPin="in-home" halType="bit"/>
+	    <complexEntry bitLen="13"/>
+	    <complexEntry bitLen="1" halPin="in-1" halType="bit"/>
+	    <complexEntry bitLen="1" halPin="in-2" halType="bit"/>
+	    <complexEntry bitLen="1" halPin="in-3" halType="bit"/>
+	    <complexEntry bitLen="1" halPin="in-4" halType="bit"/>
+	    <complexEntry bitLen="1" halPin="in-5" halType="bit"/>
+	    <complexEntry bitLen="1" halPin="in-6" halType="bit"/>
+	    <complexEntry bitLen="10"/>
+	  </pdoEntry>
+	</pdo>
+      </syncManager>
+      <syncManager idx="3" dir="in">
+	<pdo idx="1a00">
+	  <pdoEntry idx="6041" subIdx="00" bitLen="16" halPin="srv-cia-statusword" halType="u32"/>
+	  <pdoEntry idx="6061" subIdx="00" bitLen="8" halPin="srv-opmode-display" halType="s32"/>
+	  <pdoEntry idx="6064" subIdx="00" bitLen="32" halPin="srv-actual-position" halType="s32"/>
+	  <pdoEntry idx="606C" subIdx="00" bitLen="32" halPin="srv-actual-velocity" halType="s32"/>
+	</pdo>
+      </syncManager>
+    </slave> -->
     <slave idx="27" type="basic_cia402" vid="0x00000a88" pid="0x0a880002" name="rt-ect60">
-      <!--ECT60V202(COE)-->
+      <dcConf assignActivate="300" sync0Cycle="*1" sync0Shift="0"/>
       <modParam name="ciaRxPDOEntryLimit" value="16"/>
       <modParam name="ciaTxPDOEntryLimit" value="16"/>
       <modParam name="enablePP" value="true"/>
@@ -149,36 +205,31 @@
       <modParam name="enableProfileVelocity" value="true"/>
     </slave>
     <slave idx="28" type="basic_cia402" vid="0x00000a88" pid="0x0a880005" name="rt-ecr60x2">
-      <modParam name="ciaChannels" value="1"/>
+      <dcConf assignActivate="300" sync0Cycle="*1" sync0Shift="0"/>
+      <modParam name="ciaChannels" value="2"/>
+      <modParam name="pdoIncrement" value="16"/>
       <modParam name="ciaRxPDOEntryLimit" value="16"/>
       <modParam name="ciaTxPDOEntryLimit" value="16"/>
       <modParam name="ch1enablePP" value="true"/>
       <modParam name="ch1enablePV" value="true"/>
       <modParam name="ch1enableCSP" value="true"/>
       <modParam name="ch1enableCSV" value="true"/>
-      <modParam name="ch1enableDigitalInput" value="true"/>
-      <modParam name="ch1digitalInChannels" value="16"/>
-      <modParam name="ch1enableDigitalOutput" value="true"/>
-      <modParam name="ch1digitalOutChannels" value="16"/>
       <modParam name="ch1enableErrorCode" value="true"/>
       <modParam name="ch1enableProfileAccel" value="true"/>
       <modParam name="ch1enableProfileDecel" value="true"/>
       <modParam name="ch1enableProfileVelocity" value="true"/>
-<!--      <modParam name="ch2enablePP" value="true"/>
+      <modParam name="ch2enablePP" value="true"/>
       <modParam name="ch2enablePV" value="true"/>
       <modParam name="ch2enableCSP" value="true"/>
       <modParam name="ch2enableCSV" value="true"/>
-      <modParam name="ch2enableDigitalInput" value="true"/>
-      <modParam name="ch2digitalInChannels" value="16"/>
-      <modParam name="ch2enableDigitalOutput" value="true"/>
-      <modParam name="ch2digitalOutChannels" value="16"/>
       <modParam name="ch2enableErrorCode" value="true"/>
       <modParam name="ch2enableProfileAccel" value="true"/>
       <modParam name="ch2enableProfileDecel" value="true"/>
-      <modParam name="ch2enableProfileVelocity" value="true"/> -->
+      <modParam name="ch2enableProfileVelocity" value="true"/>
     </slave>
     <slave idx="29" type="basic_cia402" vid="0x00000a88" pid="0x0a880042" name="rt-drv400">
       <!--DRV400E(COE)-->
+      <dcConf assignActivate="300" sync0Cycle="*1" sync0Shift="0"/>
       <modParam name="ciaRxPDOEntryLimit" value="16"/>
       <modParam name="ciaTxPDOEntryLimit" value="16"/>
       <modParam name="enablePP" value="true"/>

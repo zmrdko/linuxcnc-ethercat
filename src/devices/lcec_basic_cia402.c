@@ -39,12 +39,14 @@
 #define M_CHANNELS   0
 #define M_RXPDOLIMIT 1
 #define M_TXPDOLIMIT 2
+#define M_PDOINCREMENT 3
 
 /// @brief Device-specific modparam settings available via XML.
 static const lcec_modparam_desc_t modparams_lcec_basic_cia402[] = {
     {"ciaChannels", M_CHANNELS, MODPARAM_TYPE_U32},
     {"ciaRxPDOEntryLimit", M_RXPDOLIMIT, MODPARAM_TYPE_U32},
     {"ciaTxPDOEntryLimit", M_TXPDOLIMIT, MODPARAM_TYPE_U32},
+    {"pdoIncrement", M_PDOINCREMENT, MODPARAM_TYPE_U32},
     // XXXX, add device-specific modparams here.
     {NULL},
 };
@@ -100,6 +102,9 @@ static int handle_modparams(lcec_slave_t *slave, lcec_class_cia402_options_t *op
       case M_TXPDOLIMIT:
         options->txpdolimit = p->value.u32;
         break;
+      case M_PDOINCREMENT:
+	options->pdo_increment = p->value.u32;
+	break;
       default:
         // Handle cia402 generic modparams
         v = lcec_cia402_handle_modparam(slave, p, options);
