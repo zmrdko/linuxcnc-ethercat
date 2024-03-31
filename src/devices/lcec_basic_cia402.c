@@ -36,9 +36,9 @@
 #include "lcec_class_dout.h"
 
 // Constants for modparams.  The basic_cia402 driver only has one:
-#define M_CHANNELS   0
-#define M_RXPDOLIMIT 1
-#define M_TXPDOLIMIT 2
+#define M_CHANNELS     0
+#define M_RXPDOLIMIT   1
+#define M_TXPDOLIMIT   2
 #define M_PDOINCREMENT 3
 
 /// @brief Device-specific modparam settings available via XML.
@@ -67,7 +67,8 @@ static int lcec_basic_cia402_init(int comp_id, lcec_slave_t *slave);
 // PID.  Feel free to add multiple devices here if they can share the
 // same driver.
 static lcec_typelist_t types[] = {
-    {"basic_cia402", /* fake vid */ 0xffffffff, /* fake pid */ 0xffffffff, 0, NULL, lcec_basic_cia402_init, /* modparams implicitly added below */},
+    {"basic_cia402", /* fake vid */ 0xffffffff, /* fake pid */ 0xffffffff, 0, NULL, lcec_basic_cia402_init,
+        /* modparams implicitly added below */},
     {NULL},
 };
 ADD_TYPES_WITH_CIA402_MODPARAMS(types, modparams_lcec_basic_cia402)
@@ -103,8 +104,8 @@ static int handle_modparams(lcec_slave_t *slave, lcec_class_cia402_options_t *op
         options->txpdolimit = p->value.u32;
         break;
       case M_PDOINCREMENT:
-	options->pdo_increment = p->value.u32;
-	break;
+        options->pdo_increment = p->value.u32;
+        break;
       default:
         // Handle cia402 generic modparams
         v = lcec_cia402_handle_modparam(slave, p, options);

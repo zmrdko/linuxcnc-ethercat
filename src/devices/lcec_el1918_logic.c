@@ -204,7 +204,7 @@ int lcec_el1918_logic_init(int comp_id, lcec_slave_t *slave) {
   }
 
   // alloc hal memory
-  hal_data = LCEC_HAL_ALLOCATE_ARRAY(lcec_el1918_logic_data_t, fsoe_idx* sizeof(lcec_el1918_logic_fsoe_t));
+  hal_data = LCEC_HAL_ALLOCATE_ARRAY(lcec_el1918_logic_data_t, fsoe_idx * sizeof(lcec_el1918_logic_fsoe_t));
   hal_data->fsoe_count = fsoe_idx;
   slave->hal_data = hal_data;
 

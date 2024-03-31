@@ -19,19 +19,20 @@
 /// @file
 /// @brief Driver for Beckhoff EL41x2 Analog output modules
 
-#include "../lcec.h"
 #include "lcec_el41x2.h"
+
+#include "../lcec.h"
 
 static int lcec_el41x2_init(int comp_id, lcec_slave_t *slave);
 
-static lcec_typelist_t types[]={
-  // analog out, 2ch, 16 bits
-  { "EL4102", LCEC_BECKHOFF_VID, 0x10063052, 0, NULL, lcec_el41x2_init},
-  { "EL4112", LCEC_BECKHOFF_VID, 0x10103052, 0, NULL, lcec_el41x2_init},
-  { "EL4122", LCEC_BECKHOFF_VID, 0x101A3052, 0, NULL, lcec_el41x2_init},
-  { "EL4132", LCEC_BECKHOFF_VID, 0x10243052, 0, NULL, lcec_el41x2_init},
-  { "EJ4132", LCEC_BECKHOFF_VID, 0x10242852, 0, NULL, lcec_el41x2_init},
-  { NULL },
+static lcec_typelist_t types[] = {
+    // analog out, 2ch, 16 bits
+    {"EL4102", LCEC_BECKHOFF_VID, 0x10063052, 0, NULL, lcec_el41x2_init},
+    {"EL4112", LCEC_BECKHOFF_VID, 0x10103052, 0, NULL, lcec_el41x2_init},
+    {"EL4122", LCEC_BECKHOFF_VID, 0x101A3052, 0, NULL, lcec_el41x2_init},
+    {"EL4132", LCEC_BECKHOFF_VID, 0x10243052, 0, NULL, lcec_el41x2_init},
+    {"EJ4132", LCEC_BECKHOFF_VID, 0x10242852, 0, NULL, lcec_el41x2_init},
+    {NULL},
 };
 ADD_TYPES(types);
 
@@ -56,20 +57,17 @@ typedef struct {
   lcec_el41x2_chan_t chans[LCEC_EL41x2_CHANS];
 } lcec_el41x2_data_t;
 
-static const lcec_pindesc_t slave_pins[] = {
-  { HAL_FLOAT, HAL_IO, offsetof(lcec_el41x2_chan_t, scale), "%s.%s.%s.aout-%d-scale" },
-  { HAL_FLOAT, HAL_IO, offsetof(lcec_el41x2_chan_t, offset), "%s.%s.%s.aout-%d-offset" },
-  { HAL_FLOAT, HAL_IO, offsetof(lcec_el41x2_chan_t, min_dc), "%s.%s.%s.aout-%d-min-dc" },
-  { HAL_FLOAT, HAL_IO, offsetof(lcec_el41x2_chan_t, max_dc), "%s.%s.%s.aout-%d-max-dc" },
-  { HAL_FLOAT, HAL_OUT, offsetof(lcec_el41x2_chan_t, curr_dc), "%s.%s.%s.aout-%d-curr-dc" },
-  { HAL_BIT, HAL_IN, offsetof(lcec_el41x2_chan_t, enable), "%s.%s.%s.aout-%d-enable" },
-  { HAL_BIT, HAL_IN, offsetof(lcec_el41x2_chan_t, absmode), "%s.%s.%s.aout-%d-absmode" },
-  { HAL_FLOAT, HAL_IN, offsetof(lcec_el41x2_chan_t, value), "%s.%s.%s.aout-%d-value" },
-  { HAL_S32, HAL_OUT, offsetof(lcec_el41x2_chan_t, raw_val), "%s.%s.%s.aout-%d-raw" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el41x2_chan_t, pos), "%s.%s.%s.aout-%d-pos" },
-  { HAL_BIT, HAL_OUT, offsetof(lcec_el41x2_chan_t, neg), "%s.%s.%s.aout-%d-neg" },
-  { HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL }
-};
+static const lcec_pindesc_t slave_pins[] = {{HAL_FLOAT, HAL_IO, offsetof(lcec_el41x2_chan_t, scale), "%s.%s.%s.aout-%d-scale"},
+    {HAL_FLOAT, HAL_IO, offsetof(lcec_el41x2_chan_t, offset), "%s.%s.%s.aout-%d-offset"},
+    {HAL_FLOAT, HAL_IO, offsetof(lcec_el41x2_chan_t, min_dc), "%s.%s.%s.aout-%d-min-dc"},
+    {HAL_FLOAT, HAL_IO, offsetof(lcec_el41x2_chan_t, max_dc), "%s.%s.%s.aout-%d-max-dc"},
+    {HAL_FLOAT, HAL_OUT, offsetof(lcec_el41x2_chan_t, curr_dc), "%s.%s.%s.aout-%d-curr-dc"},
+    {HAL_BIT, HAL_IN, offsetof(lcec_el41x2_chan_t, enable), "%s.%s.%s.aout-%d-enable"},
+    {HAL_BIT, HAL_IN, offsetof(lcec_el41x2_chan_t, absmode), "%s.%s.%s.aout-%d-absmode"},
+    {HAL_FLOAT, HAL_IN, offsetof(lcec_el41x2_chan_t, value), "%s.%s.%s.aout-%d-value"},
+    {HAL_S32, HAL_OUT, offsetof(lcec_el41x2_chan_t, raw_val), "%s.%s.%s.aout-%d-raw"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_el41x2_chan_t, pos), "%s.%s.%s.aout-%d-pos"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_el41x2_chan_t, neg), "%s.%s.%s.aout-%d-neg"}, {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL}};
 
 static ec_pdo_entry_info_t lcec_el41x2_channel1[] = {
     {0x3001, 1, 16}  // output
@@ -79,17 +77,10 @@ static ec_pdo_entry_info_t lcec_el41x2_channel2[] = {
     {0x3002, 1, 16}  // output
 };
 
-static ec_pdo_info_t lcec_el41x2_pdos_in[] = {
-    {0x1600, 1, lcec_el41x2_channel1},
-    {0x1601, 1, lcec_el41x2_channel2}
-};
+static ec_pdo_info_t lcec_el41x2_pdos_in[] = {{0x1600, 1, lcec_el41x2_channel1}, {0x1601, 1, lcec_el41x2_channel2}};
 
 static ec_sync_info_t lcec_el41x2_syncs[] = {
-    {0, EC_DIR_OUTPUT, 0, NULL},
-    {1, EC_DIR_INPUT,  0, NULL},
-    {2, EC_DIR_OUTPUT, 2, lcec_el41x2_pdos_in},
-    {0xff}
-};
+    {0, EC_DIR_OUTPUT, 0, NULL}, {1, EC_DIR_INPUT, 0, NULL}, {2, EC_DIR_OUTPUT, 2, lcec_el41x2_pdos_in}, {0xff}};
 
 static void lcec_el41x2_write(lcec_slave_t *slave, long period);
 
@@ -111,7 +102,7 @@ static int lcec_el41x2_init(int comp_id, lcec_slave_t *slave) {
   slave->sync_info = lcec_el41x2_syncs;
 
   // initialize pins
-  for (i=0; i<LCEC_EL41x2_CHANS; i++) {
+  for (i = 0; i < LCEC_EL41x2_CHANS; i++) {
     chan = &hal_data->chans[i];
 
     // initialize POD entries
@@ -137,14 +128,14 @@ static int lcec_el41x2_init(int comp_id, lcec_slave_t *slave) {
 
 static void lcec_el41x2_write(lcec_slave_t *slave, long period) {
   lcec_master_t *master = slave->master;
-  lcec_el41x2_data_t *hal_data = (lcec_el41x2_data_t *) slave->hal_data;
+  lcec_el41x2_data_t *hal_data = (lcec_el41x2_data_t *)slave->hal_data;
   uint8_t *pd = master->process_data;
   int i;
   lcec_el41x2_chan_t *chan;
   double tmpval, tmpdc, raw_val;
 
   // set outputs
-  for (i=0; i<LCEC_EL41x2_CHANS; i++) {
+  for (i = 0; i < LCEC_EL41x2_CHANS; i++) {
     chan = &hal_data->chans[i];
 
     // validate duty cycle limits, both limits must be between
@@ -214,4 +205,3 @@ static void lcec_el41x2_write(lcec_slave_t *slave, long period) {
     *(chan->raw_val) = (int32_t)raw_val;
   }
 }
-

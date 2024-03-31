@@ -85,9 +85,7 @@ lcec_class_ain_channels_t *lcec_ain_allocate_channels(int count) {
 /// Most of the defaults are actually coded in
 /// `lcec_ain_register_channel`, so we can safely just memset
 /// everything to 0 here.
-lcec_class_ain_options_t *lcec_ain_options(void) {
-  return LCEC_HAL_ALLOCATE(lcec_class_ain_options_t);
-}
+lcec_class_ain_options_t *lcec_ain_options(void) { return LCEC_HAL_ALLOCATE(lcec_class_ain_options_t); }
 
 /// @brief registers a single analog-input channel and publishes it as a LinuxCNC HAL pin.
 ///

@@ -40,7 +40,7 @@ lcec_class_din_channels_t *lcec_din_allocate_channels(int count) {
 
   channels = LCEC_HAL_ALLOCATE(lcec_class_din_channels_t);
   channels->count = count;
-  channels->channels = LCEC_HAL_ALLOCATE_ARRAY(lcec_class_din_channel_t *,count);
+  channels->channels = LCEC_HAL_ALLOCATE_ARRAY(lcec_class_din_channel_t *, count);
 
   return channels;
 }
