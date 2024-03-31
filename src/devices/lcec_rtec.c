@@ -78,17 +78,18 @@ static const lcec_modparam_desc_t modparams_rtec[] = {
 
 static int lcec_rtec_init(int comp_id, lcec_slave_t *slave);
 
-#define AXES(flags)             ((flags >> 60) & 0xf)
-#define PDOINCREMENT(flags)     ((flags >> 52) & 0xff)
-#define FLAG_AXES(axes)         ((uint64_t)axes << 60)
-#define FLAG_PDOINCREMENT(incr) ((uint64_t)incr << 52)
+#define AXES(flags)          ((flags >> 60) & 0xf)
+#define PDOINCREMENT(flags)  ((flags >> 52) & 0xff)
+#define F_AXES(axes)         ((uint64_t)axes << 60)
+#define F_PDOINCREMENT(incr) ((uint64_t)incr << 52)
+#define F_NOEXTRAS           1  // Don't map RTelligent-specific PDO entries
 
 static lcec_typelist_t types[] = {
     // note that modparams_rtec is added implicitly in ADD_TYPES_WITH_CIA402_MODPARAMS.
     {"ECR60", LCEC_RTELLIGENT_VID, 0x0a880001, 0, NULL, lcec_rtec_init, NULL, 0},
-    {"ECR60x2", LCEC_RTELLIGENT_VID, 0x0a880005, 0, NULL, lcec_rtec_init, NULL, FLAG_AXES(2) | FLAG_PDOINCREMENT(0x10)},
+    {"ECR60x2", LCEC_RTELLIGENT_VID, 0x0a880005, 0, NULL, lcec_rtec_init, NULL, F_AXES(2) | F_PDOINCREMENT(0x10) | F_NOEXTRAS},
     {"ECT60", LCEC_RTELLIGENT_VID, 0x0a880002, 0, NULL, lcec_rtec_init, NULL, 0},
-    {"ECT60x2", LCEC_RTELLIGENT_VID, 0x0a880006, 0, NULL, lcec_rtec_init, NULL, FLAG_AXES(2)},  // Does this need PDOINCREMENT also?
+    {"ECT60x2", LCEC_RTELLIGENT_VID, 0x0a880006, 0, NULL, lcec_rtec_init, NULL, F_AXES(2)},  // Does this need PDOINCREMENT also?
     {"ECR86", LCEC_RTELLIGENT_VID, 0x0a880003, 0, NULL, lcec_rtec_init, NULL, 0},
     {"ECT86", LCEC_RTELLIGENT_VID, 0x0a880004, 0, NULL, lcec_rtec_init, NULL, 0},
     {NULL},
@@ -148,21 +149,15 @@ typedef struct {
   lcec_class_cia402_channels_t *cia402;
   hal_u32_t *alarm_code;
   hal_u32_t *status_code;
-  hal_u32_t *encoder_position;
-  hal_s32_t *current_rpm;
   hal_float_t *voltage;
-  unsigned int alarm_code_os;        ///<
-  unsigned int status_code_os;       ///<
-  unsigned int encoder_position_os;  ///<
-  unsigned int current_rpm_os;       ///<
-  unsigned int voltage_os;           ///<
+  unsigned int alarm_code_os;   ///<
+  unsigned int status_code_os;  ///<
+  unsigned int voltage_os;      ///<
 } lcec_rtec_data_t;
 
 static const lcec_pindesc_t slave_pins[] = {
     {HAL_U32, HAL_OUT, offsetof(lcec_rtec_data_t, alarm_code), "%s.%s.%s.alarm-code"},
     {HAL_U32, HAL_OUT, offsetof(lcec_rtec_data_t, status_code), "%s.%s.%s.status-code"},
-    {HAL_U32, HAL_OUT, offsetof(lcec_rtec_data_t, encoder_position), "%s.%s.%s.enc-pos"},
-    {HAL_S32, HAL_OUT, offsetof(lcec_rtec_data_t, current_rpm), "%s.%s.%s.current-rpm"},
     {HAL_FLOAT, HAL_OUT, offsetof(lcec_rtec_data_t, voltage), "%s.%s.%s.voltage"},
     {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
@@ -402,6 +397,15 @@ static int lcec_rtec_init(int comp_id, lcec_slave_t *slave) {
   slave->proc_read = lcec_rtec_read;
   slave->proc_write = lcec_rtec_write;
 
+  // Apply default Distributed Clock settings if it's not already set.
+  if (slave->dc_conf == NULL) {
+    lcec_slave_dc_t *dc = LCEC_HAL_ALLOCATE(lcec_slave_dc_t);
+    dc->assignActivate = 0x300; // All known RTelligent steppers use 0x300, according to their ESI.
+    dc->sync0Cycle = slave->master->app_time_period;
+
+    slave->dc_conf = dc;
+  }
+
   lcec_class_cia402_options_t *options = lcec_cia402_options();
   options->rxpdolimit = 12;  // `ethercat sdos` shows 12, it's possible that more will work.
   options->txpdolimit = 12;
@@ -418,6 +422,9 @@ static int lcec_rtec_init(int comp_id, lcec_slave_t *slave) {
     options->pdo_increment = 1;
   }
 
+  if (options->channels > 1) {
+    lcec_cia402_rename_multiaxis_channels(options);
+  }
   // The ECT60 should support these CiA 402 features.
   for (channel = 0; channel < options->channels; channel++) {
     options->channel[channel]->enable_csp = 1;
@@ -450,34 +457,46 @@ static int lcec_rtec_init(int comp_id, lcec_slave_t *slave) {
   // No output PDOs right now.
 
   lcec_cia402_add_input_sync(slave, syncs, options);
-  lcec_syncs_add_pdo_info(syncs, 0x1a02);
-  lcec_syncs_add_pdo_entry(syncs, 0x200e, 0x00, 16);  // alarm codes
-  lcec_syncs_add_pdo_entry(syncs, 0x200f, 0x00, 16);  // status codes
-  lcec_syncs_add_pdo_entry(syncs, 0x2021, 0x00, 16);  // Current encoder position
-  lcec_syncs_add_pdo_entry(syncs, 0x2044, 0x00, 16);  // Current speed in RPM
-  lcec_syncs_add_pdo_entry(syncs, 0x2048, 0x00, 16);  // Current bus voltage
+
+  // Don't add extra PDOs on the ECR60x2, as it only has 2 PDOs
+  // available and needs both for core functionality.
+  if (!slave->flags & F_NOEXTRAS) {
+    // On 2-axis devices, we need to make sure that we don't overwrite
+    // the second axis's PDO here.
+    int address = 0x1a00 + (options->channels * options->pdo_increment);
+    lcec_syncs_add_pdo_info(syncs, address);
+
+    for (channel = 0; channel < options->channels; channel++) {
+      int base = 0x2000 + 0x800 * channel;
+      lcec_syncs_add_pdo_entry(syncs, base + 0x0e, 0x00, 16);  // alarm codes
+      lcec_syncs_add_pdo_entry(syncs, base + 0x0f, 0x00, 16);  // status codes
+      lcec_syncs_add_pdo_entry(syncs, base + 0x48, 0x00, 16);  // Current bus voltage
+    }
+  }
 
   slave->sync_info = &syncs->syncs[0];
 
-  hal_data->cia402 = lcec_cia402_allocate_channels(1);
+  hal_data->cia402 = lcec_cia402_allocate_channels(options->channels);
   if (hal_data->cia402 == NULL) {
     rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "lcec_cia402_allocate_channels() for slave %s.%s failed\n", master->name, slave->name);
     return -EIO;
   }
 
-  hal_data->cia402->channels[0] = lcec_cia402_register_channel(slave, 0x6000, options->channel[0]);
+  for (int channel = 0; channel < options->channels; channel++) {
+    hal_data->cia402->channels[channel] = lcec_cia402_register_channel(slave, 0x6000 + 0x800 * channel, options->channel[channel]);
+  }
 
-  // Register rtec-specific PDOs.
-  lcec_pdo_init(slave, 0x200e, 0, &hal_data->alarm_code_os, NULL);
-  lcec_pdo_init(slave, 0x200f, 0, &hal_data->status_code_os, NULL);
-  lcec_pdo_init(slave, 0x2021, 0, &hal_data->encoder_position_os, NULL);
-  lcec_pdo_init(slave, 0x2044, 0, &hal_data->current_rpm_os, NULL);
-  lcec_pdo_init(slave, 0x2048, 0, &hal_data->voltage_os, NULL);
+  if (!slave->flags & F_NOEXTRAS) {
+    // Register rtec-specific PDOs.
+    lcec_pdo_init(slave, 0x200e, 0, &hal_data->alarm_code_os, NULL);
+    lcec_pdo_init(slave, 0x200f, 0, &hal_data->status_code_os, NULL);
+    lcec_pdo_init(slave, 0x2048, 0, &hal_data->voltage_os, NULL);
 
-  // export rtec-specific pins
-  if ((err = lcec_pin_newf_list(hal_data, slave_pins, LCEC_MODULE_NAME, slave->master->name, slave->name)) != 0) {
-    rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "pin registration failure for slave %s.%s\n", master->name, slave->name);
-    return err;
+    // export rtec-specific pins
+    if ((err = lcec_pin_newf_list(hal_data, slave_pins, LCEC_MODULE_NAME, slave->master->name, slave->name)) != 0) {
+      rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "pin registration failure for slave %s.%s\n", master->name, slave->name);
+      return err;
+    }
   }
 
   return 0;
@@ -492,11 +511,11 @@ static void lcec_rtec_read(lcec_slave_t *slave, long period) {
     return;
   }
 
-  *(hal_data->alarm_code) = EC_READ_U16(&pd[hal_data->alarm_code_os]);
-  *(hal_data->status_code) = EC_READ_U16(&pd[hal_data->status_code_os]);
-  *(hal_data->encoder_position) = EC_READ_U16(&pd[hal_data->encoder_position_os]);
-  *(hal_data->current_rpm) = EC_READ_S16(&pd[hal_data->current_rpm_os]);
-  *(hal_data->voltage) = EC_READ_U16(&pd[hal_data->voltage_os]) / 100.0;
+  if (!slave->flags & F_NOEXTRAS) {
+    *(hal_data->alarm_code) = EC_READ_U16(&pd[hal_data->alarm_code_os]);
+    *(hal_data->status_code) = EC_READ_U16(&pd[hal_data->status_code_os]);
+    *(hal_data->voltage) = EC_READ_U16(&pd[hal_data->voltage_os]) / 100.0;
+  }
   lcec_cia402_read_all(slave, hal_data->cia402);
 }
 
@@ -510,59 +529,3 @@ static void lcec_rtec_write(lcec_slave_t *slave, long period) {
 
   lcec_cia402_write_all(slave, hal_data->cia402);
 }
-
-/*
-  Rod's sample ECT60 XML config looks like this.  I'm not sure why it's using 204a for outputs instead of 60fe.
-
-    <slave idx="0" type="generic" vid="00000a88" pid="0a880004" configPdos="true">
-      <dcConf assignActivate="300" sync0Cycle="*1" sync0Shift="0"/>
-      <sdoConfig idx="2000" subIdx="0"><sdoDataRaw data ="70 17"/></sdoConfig>  <!-- Max motor current (6.0) -->
-      <sdoConfig idx="2007" subIdx="6"><sdoDataRaw data ="05"/></sdoConfig>     <!-- Input 6 - Emergency Stop -->
-      <sdoConfig idx="2007" subIdx="5"><sdoDataRaw data ="05"/></sdoConfig>     <!-- Input 3 - Home Function -->
-      <sdoConfig idx="2011" subIdx="0"><sdoDataRaw data ="01 00"/></sdoConfig>  <!-- Closed loop -->
-      <sdoConfig idx="6098" subIdx="0"><sdoDataRaw data ="11 00"/></sdoConfig>  <!-- Home mode 17 -->
-      <sdoConfig idx="607C" subIdx="0"><sdoDataRaw data ="00 00"/></sdoConfig>  <!-- Home offset 0  -->
-      <sdoConfig idx="609A" subIdx="0"><sdoDataRaw data ="F4 01"/></sdoConfig>  <!-- Home accelleration 500 -->
-      <sdoConfig idx="6099" subIdx="01"><sdoDataRaw data ="C4 09"/></sdoConfig>  <!-- Home fast speed 2500-->
-      <sdoConfig idx="6099" subIdx="02"><sdoDataRaw data ="F4 01"/></sdoConfig>  <!-- Home slow speed 500 -->
-      <syncManager idx="2" dir="out">
-        <pdo idx="1600">
-          <pdoEntry idx="6040" subIdx="00" bitLen="16" halPin="cia-controlword" halType="u32"/>
-          <pdoEntry idx="6060" subIdx="00" bitLen="8" halPin="opmode" halType="s32"/>
-          <!-- Target Position -->
-          <pdoEntry idx="607A" subIdx="00" bitLen="32" halPin="target-position" halType="s32"/>
-          <!-- Target Velocity -->
-          <pdoEntry idx="60FF" subIdx="00" bitLen="32" halPin="target-velocity" halType="s32"/>
-          <!-- Digtial Outputs (manufacturer's extension ECT86/ECT60)-->
-          <pdoEntry idx="204A" subIdx="0" bitLen="16" halType="complex">
-            <complexEntry bitLen="1" halPin="out-1" halType="bit"/>
-            <complexEntry bitLen="1" halPin="out-2" halType="bit"/>
-            <complexEntry bitLen="14"/>
-          </pdoEntry>
-        </pdo>
-      </syncManager>
-      <syncManager idx="3" dir="in">
-        <pdo idx="1a00">
-          <pdoEntry idx="6041" subIdx="00" bitLen="16" halPin="cia-statusword" halType="u32"/>
-          <pdoEntry idx="6061" subIdx="00" bitLen="8" halPin="opmode-display" halType="s32"/>
-          <pdoEntry idx="6064" subIdx="00" bitLen="32" halPin="actual-position" halType="s32"/>
-          <pdoEntry idx="606C" subIdx="00" bitLen="32" halPin="actual-velocity" halType="s32"/>
-          <pdoEntry idx="6077" subIdx="00" bitLen="32" halPin="actual-torque" halType="s32"/>
-          <!-- Digtial_inputs (cia402 compatible) -->
-          <pdoEntry idx="60FD" subIdx="0" bitLen="32" halType="complex">
-            <complexEntry bitLen="1" halPin="CW-limit" halType="bit"/>
-            <complexEntry bitLen="1" halPin="CCW-limit" halType="bit"/>
-            <complexEntry bitLen="1" halPin="in-home" halType="bit"/>
-            <complexEntry bitLen="13"/>
-            <complexEntry bitLen="1" halPin="in-1" halType="bit"/>
-            <complexEntry bitLen="1" halPin="in-2" halType="bit"/>
-            <complexEntry bitLen="1" halPin="in-3" halType="bit"/>
-            <complexEntry bitLen="1" halPin="in-4" halType="bit"/>
-            <complexEntry bitLen="1" halPin="in-5" halType="bit"/>
-            <complexEntry bitLen="1" halPin="in-6" halType="bit"/>
-            <complexEntry bitLen="10"/>
-          </pdoEntry>
-        </pdo>
-      </syncManager>
-    </slave>
-*/
