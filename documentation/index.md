@@ -2,8 +2,12 @@
 
 - [Main README](https://github.com/linuxcnc-ethercat/linuxcnc-ethercat/blob/master/README.md)
 - [Supported Device List](DEVICES.md)
-- [Configuration Reference](configuration-reference.md)
 - [Breaking Changes](changes.md)
+
+## Configuration and Advanced Topics
+
+- [Configuration Reference](configuration-reference.md)
+- [Distributed Clocks](distributed-clocks.md)
 
 ## Development Documentation
 
