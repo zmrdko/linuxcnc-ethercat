@@ -25,7 +25,10 @@
 static int lcec_ax5100_init(int comp_id, lcec_slave_t *slave);
 
 static lcec_modparam_desc_t lcec_ax5100_modparams[] = {
-  {"enableFB2", LCEC_AX5_PARAM_ENABLE_FB2, MODPARAM_TYPE_BIT}, {"enableDiag", LCEC_AX5_PARAM_ENABLE_DIAG, MODPARAM_TYPE_BIT}, {NULL},};
+    {"enableFB2", LCEC_AX5_PARAM_ENABLE_FB2, MODPARAM_TYPE_BIT},
+    {"enableDiag", LCEC_AX5_PARAM_ENABLE_DIAG, MODPARAM_TYPE_BIT},
+    {NULL},
+};
 
 static lcec_typelist_t types[] = {
     // AX5000 servo drives

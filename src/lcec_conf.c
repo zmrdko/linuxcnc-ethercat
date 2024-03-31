@@ -211,7 +211,7 @@ int main(int argc, char **argv) {
   }
 
   // setup header
-  header = (LCEC_CONF_HEADER_T*)shmem_ptr;
+  header = (LCEC_CONF_HEADER_T *)shmem_ptr;
   shmem_ptr += sizeof(LCEC_CONF_HEADER_T);
   header->magic = LCEC_CONF_SHMEM_MAGIC;
   header->length = state.outputBuf.len;

@@ -210,7 +210,8 @@ static const lcec_pindesc_t slave_pins[] = {
     {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
-static const lcec_paramdesc_t slave_params[] = {{HAL_FLOAT, HAL_RW, offsetof(lcec_fr4000_data_t, enc_00_scale), "%s.%s.%s.axis0-enc-scale"},
+static const lcec_paramdesc_t slave_params[] = {
+    {HAL_FLOAT, HAL_RW, offsetof(lcec_fr4000_data_t, enc_00_scale), "%s.%s.%s.axis0-enc-scale"},
     {HAL_FLOAT, HAL_RW, offsetof(lcec_fr4000_data_t, enc_01_scale), "%s.%s.%s.axis1-enc-scale"},
     {HAL_FLOAT, HAL_RW, offsetof(lcec_fr4000_data_t, enc_02_scale), "%s.%s.%s.axis2-enc-scale"},
     {HAL_FLOAT, HAL_RW, offsetof(lcec_fr4000_data_t, enc_03_scale), "%s.%s.%s.axis3-enc-scale"},

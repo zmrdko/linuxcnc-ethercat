@@ -53,8 +53,8 @@ static const lcec_modparam_desc_t lcec_deasda_modparams[] = {
 };
 
 typedef struct {
-  const char *name;      // Mode type name
-  uint16_t value;  // Which value needs to be set in 0x6060:00 to enable this mode
+  const char *name;  // Mode type name
+  uint16_t value;    // Which value needs to be set in 0x6060:00 to enable this mode
 } drive_operationmodes_t;
 
 static const drive_operationmodes_t drive_operationmodes[] = {

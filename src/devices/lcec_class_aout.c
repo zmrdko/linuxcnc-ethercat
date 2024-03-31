@@ -61,9 +61,7 @@ lcec_class_aout_channels_t *lcec_aout_allocate_channels(int count) {
 /// Most of the defaults are actually coded in
 /// `lcec_aout_register_channel`, so we can safely just memset
 /// everything to 0 here.
-lcec_class_aout_options_t *lcec_aout_options(void) {
-  return LCEC_HAL_ALLOCATE(lcec_class_aout_options_t);
-}
+lcec_class_aout_options_t *lcec_aout_options(void) { return LCEC_HAL_ALLOCATE(lcec_class_aout_options_t); }
 
 /// @brief registers a single analog-output channel and publishes it as a set of LinuxCNC HAL pins.
 ///
