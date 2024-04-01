@@ -40,6 +40,7 @@ debian/linuxcnc-ethercat/
 scripts/devicetable/devicetable
 scripts/devicelist/devicelist
 scripts/deviceequivs/deviceequivs
+scripts/zips
 
 # Generated documentation
 documentation/doxygen
