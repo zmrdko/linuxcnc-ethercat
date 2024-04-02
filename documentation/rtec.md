@@ -13,7 +13,6 @@ In your XML file, you should have an entry somewhat like this:
   <master idx="0" appTimePeriod="2000000" refClockSyncCycles="1000">
     ...
     <slave idx="1" type="ECT60" name="x-axis">
-      <dcConf assignActivate="300" sync0Cycle="*1" sync0Shift="0"/>
       <modParam name="peakCurrent_amps" value="1.0"/>
       <modParam name="controlMode" value="closedloop"/>
       <modParam name="homeOffset" value="1"/>
