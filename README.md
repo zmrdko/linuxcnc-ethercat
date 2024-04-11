@@ -43,6 +43,8 @@ sudo apt update
 sudo apt install -y linux-headers-$(uname -r) ethercat-master linuxcnc-ethercat
 ```
 
+**Note:** If using the official linuxcnc 2.9.x ISO, The Ethercat repository is already installed so only the last two lines above are required.
+
 (These directions are for Debian 12.  Debian 11 should be very similar,
 just change `Debian_12` to `Debian_11`.)
 
