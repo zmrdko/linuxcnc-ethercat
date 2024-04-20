@@ -63,15 +63,18 @@ static const lcec_modparam_doc_t overrides[] = {
 
 static int lcec_basic_cia402_init(int comp_id, lcec_slave_t *slave);
 
-// When extending this, you will need to modify the number of PDOs
-// registered (the `8` here).  For now, the easiest way to do this is
-// to set it to a fairly large number, compile the driver, and attempt
-// to use it.  It will fail with an error, but the error message will
-// give the correct value.
+// XXXX: macros like these are helpful if you're planning on
+// supporting devices with varying numbers of axes and I/O ports in
+// your device.  See lcec_leadshine_stepper.c and lece_rtec.c for
+// examples of use.
 //
-// In the future, we'll probably remove the number entirely and handle
-// it dynamically.  Then this comment can go away.
-//
+//#define AXES(flags)  ((flags >> 60) & 0xf)
+//#define DIN(flags) ((flags >> 56) & 0xf)
+//#define DOUT(flags) ((flags >> 52) & 0xf)
+//#define F_AXES(axes) ((uint64_t)axes << 60)
+//#define F_DIN(din) ((uint64_t)din<<56)
+//#define F_DOUT(dout) ((uint64_t)dout<<52)
+
 // XXXX: remove `basic_cia402` and replace it with your device name,
 // then change the next two parameters to match your device's VID and
 // PID.  Feel free to add multiple devices here if they can share the
