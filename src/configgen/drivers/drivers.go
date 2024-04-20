@@ -280,6 +280,8 @@ var Drivers=[]EthercatDriver{
       "<modParam name=\"ch2peakCurrent_amps\" value=\"6.0\"/> ",
       "<!-- Number of stepper pulses per rotation --> ",
       "<modParam name=\"ch1motorResolution_pulses\" value=\"10000\"/> ",
+      "<!-- Number of stepper pulses per rotation --> ",
+      "<modParam name=\"ch2motorResolution_pulses\" value=\"10000\"/> ",
       "<!-- Number of encoder steps per revolution. --> ",
       "<modParam name=\"ch1encoderResolution\" value=\"4000\"/> ",
       "<!-- Number of encoder steps per revolution. --> ",

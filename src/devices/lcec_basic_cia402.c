@@ -56,8 +56,13 @@ static const lcec_modparam_desc_t modparams_base[] = {
     {NULL},
 };
 
-static const lcec_modparam_doc_t overrides[] = {
-    // XXXX, add overrides here
+static const lcec_modparam_doc_t chan_docs[] = {
+    // XXXX, add documentation for per-channel settings here
+    {NULL},
+};
+
+static const lcec_modparam_doc_t base_docs[] = {
+    // XXXX, add documentation for device-specific settings here
     {NULL},
 };
 
@@ -84,7 +89,7 @@ static lcec_typelist_t types[] = {
         /* modparams implicitly added below */},
     {NULL},
 };
-ADD_TYPES_WITH_CIA402_MODPARAMS(types, modparams_perchannel, modparams_base, overrides)
+ADD_TYPES_WITH_CIA402_MODPARAMS(types, CIA402_MAX_CHANNELS, modparams_perchannel, modparams_base, chan_docs, base_docs)
 
 static void lcec_basic_cia402_read(lcec_slave_t *slave, long period);
 static void lcec_basic_cia402_write(lcec_slave_t *slave, long period);
