@@ -1,0 +1,11 @@
+---
+Device: EM3E-522E
+VendorID: "0x00004321"
+VendorName: Leadshine Technology Co.,Ltd.
+PID: "0x00008800"
+Description: Leadshine DM3C-EC522(COE)
+DocumentationURL: http://www.leadshine.com
+DeviceType: Stepper Drive
+Notes: ""
+SrcFile: devices/lcec_leadshine_stepper.c
+TestingStatus: ""

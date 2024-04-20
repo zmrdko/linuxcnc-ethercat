@@ -1,0 +1,11 @@
+---
+Device: 2CS3E-D503
+VendorID: "0x00004321"
+VendorName: Leadshine Technology Co.,Ltd.
+PID: "0x00002200"
+Description: Leadshine 2CL3-EC503(COE)
+DocumentationURL: http://www.leadshine.com
+DeviceType: Stepper Drive
+Notes: ""
+SrcFile: devices/lcec_leadshine_stepper.c
+TestingStatus: ""
