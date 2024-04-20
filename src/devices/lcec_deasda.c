@@ -223,11 +223,7 @@ static int lcec_deasda_init(int comp_id, lcec_slave_t *slave) {
   uint64_t flags;
   flags = slave->flags;
 
-  syncs = hal_malloc(sizeof(lcec_syncs_t));
-  if (syncs == NULL) {
-    rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "hal_malloc() for deasda syncs failed\n");
-    return -1;
-  }
+  syncs = LCEC_HAL_ALLOCATE(lcec_syncs_t);
 
   // Determine Operation Mode (modParam opmode) as this defines everything else
   LCEC_CONF_MODPARAM_VAL_T *pval;
