@@ -3,7 +3,7 @@ module github.com/linuxcnc-ethercat/linuxcnc-ethercat/scripts/esidecoder
 go 1.18
 
 require (
-	golang.org/x/net v0.19.0
+	golang.org/x/net v0.23.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
