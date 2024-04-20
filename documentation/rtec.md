@@ -38,7 +38,7 @@ EtherCAT stepper drives, including:
 - [ECT60x2](https://www.rtelligentglobal.com/fieldbus-open-loop-stepper-drive-ect60x2-product/) (two-axis 6A closed-loop driver)
 - [ECT86](http://www.rtelligent.net/ECT86.html) (one-axis 7A closed-loop driver)
 
-Only the ECT60 and ECR60x2 have been tested.
+Only the ECT60, ECR60x2, and ECT60x2 have been tested.
 
 ### Caveats
 

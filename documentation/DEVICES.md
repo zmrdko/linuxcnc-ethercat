@@ -5,6 +5,11 @@ has code to support today.  Not all of these are well-tested.*
 
 Description | Driver | EtherCAT VID:PID | Device Type | Testing Status | Notes
 ----------- | ------ | ---------------- | ----------- | -------------- | ------
+[Leadshine 2CL3-EC503(COE)](http://www.leadshine.com) | [leadshine_stepper](../devices/lcec_leadshine_stepper.c) | 0x4321:0x00002200 | Stepper Drive |  | 
+[Leadshine 2CL3-EC507(COE)](http://www.leadshine.com) | [leadshine_stepper](../devices/lcec_leadshine_stepper.c) | 0x4321:0x00002100 | Stepper Drive | Part of @scottlaird's test suite | 
+[Leadshine 2DM3-EC522(COE)](http://www.leadshine.com) | [leadshine_stepper](../devices/lcec_leadshine_stepper.c) | 0x4321:0x0000a300 | Stepper Drive |  | 
+[Leadshine 2DM3-EC556(COE)](http://www.leadshine.com) | [leadshine_stepper](../devices/lcec_leadshine_stepper.c) | 0x4321:0x0000a100 | Stepper Drive |  | 
+[Leadshine 2DM3-EC870(COE)](http://www.leadshine.com) | [leadshine_stepper](../devices/lcec_leadshine_stepper.c) | 0x4321:0x0000a200 | Stepper Drive |  | 
 [Beckhoff AX5101-0000-0214 EtherCAT Drive (SoE, 1 Ch.)](http://www.beckhoff.com/ax51xx/) | [ax5100](../src/devices/lcec_ax5100.c) | 0x2:0x13ed6012 | Servo Drive |  | 
 [Beckhoff AX5103-0000-0214 EtherCAT Drive (SoE, 1 Ch.)](http://www.beckhoff.com/ax51xx/) | [ax5100](../src/devices/lcec_ax5100.c) | 0x2:0x13ef6012 | Servo Drive |  | 
 [Beckhoff AX5106-0000-0214 EtherCAT Drive (SoE, 1 Ch.)](http://www.beckhoff.com/ax51xx/) | [ax5100](../src/devices/lcec_ax5100.c) | 0x2:0x13f26012 | Servo Drive |  | 
@@ -13,6 +18,11 @@ Description | Driver | EtherCAT VID:PID | Device Type | Testing Status | Notes
 [Beckhoff AX5203-0000-0214 EtherCAT Drive (SoE, 2 Ch.)](http://www.beckhoff.com/ax52xx/) | [ax5200](../src/devices/lcec_ax5200.c) | 0x2:0x14536012 | Servo Drive |  | 
 [Beckhoff AX5206-0000-0214 EtherCAT Drive (SoE, 2 Ch.)](http://www.beckhoff.com/ax52xx/) | [ax5200](../src/devices/lcec_ax5200.c) | 0x2:0x14566012 | Servo Drive |  | 
 [Beckhoff AX5805 (Safety Drive Option)](http://beckhoff.com/AX5805) | [ax5805](../src/devices/lcec_ax5805.c) | 0x2:0x16ad6012 | Safety Terminals |  | 
+[Leadshine CS3E-D1008](http://www.leadshine.com) | [leadshine_stepper](../devices/lcec_leadshine_stepper.c) | 0x4321:0x00001200 | Stepper Drive |  | 
+[Leadshine CS3E-D503](http://www.leadshine.com) | [leadshine_stepper](../devices/lcec_leadshine_stepper.c) | 0x4321:0x00001300 | Stepper Drive |  | 
+[Leadshine CS3E-D503E](http://www.leadshine.com) | [leadshine_stepper](../devices/lcec_leadshine_stepper.c) | 0x4321:0x00000700 | Stepper Drive |  | 
+[Leadshine CS3E-D507](http://www.leadshine.com) | [leadshine_stepper](../devices/lcec_leadshine_stepper.c) | 0x4321:0x00001100 | Stepper Drive |  | 
+[Leadshine CS3E-D507E](http://www.leadshine.com) | [leadshine_stepper](../devices/lcec_leadshine_stepper.c) | 0x4321:0x00000500 | Stepper Drive |  | 
 [Delta MS-300 AC Motor Drive](https://www.deltaww.com/en-us/products/AC-Motor-Drives/3449) | [dems300](../src/devices/lcec_dems300.c) | 0x1dd:0x10400200 | AC Motor Drive |  | 
 [Delta ASDA-A2-E](https://www.deltaww.com/en-us/products/Servo-Systems-AC-Servo-Motors-and-Drives/23) | [deasda](../src/devices/lcec_deasda.c) | 0x1dd:0x10305070 | Servo Drive |  | 
 [Delta ASDA-A3](https://www.deltaww.com/en-US/products/Servo-Systems-AC-Servo-Motors-and-Drives/4102) | [deasda](../src/devices/lcec_deasda.c) | 0x1dd:0x00006010 | Servo Drive |  | 
@@ -190,6 +200,9 @@ Description | Driver | EtherCAT VID:PID | Device Type | Testing Status | Notes
 [Beckhoff EM3701, 1Ch. differential pressure measuring terminal 100hPa (100mbar)](http://www.beckhoff.com/EM3701) | [el3xxx](../src/devices/lcec_el3xxx.c) | 0x2:0x0e753452 | Analog Input |  | 
 [Beckhoff EM3702  2Ch. relative pressure measuring terminal 7,500 hPa (7.5 bar)](http://www.beckhoff.com/EM3702) | [el3xxx](../src/devices/lcec_el3xxx.c) | 0x2:0x0e763452 | Analog Input | Uncertain; @scottlaird has one | 
 [Beckhoff EM3712  2Ch relative pressure measuring terminal -1,000...+1,000 hPa (-1...+1 bar)](http://www.beckhoff.com/EM3712) | [el3xxx](../src/devices/lcec_el3xxx.c) | 0x2:0x0e803452 | Analog Input |  | 
+[Leadshine DM3C-EC522(COE)](http://www.leadshine.com) | [leadshine_stepper](../devices/lcec_leadshine_stepper.c) | 0x4321:0x00008800 | Stepper Drive |  | 
+[Leadshine DM3C-EC556(COE)](http://www.leadshine.com) | [leadshine_stepper](../devices/lcec_leadshine_stepper.c) | 0x4321:0x00008600 | Stepper Drive |  | 
+[Leadshine DM3C-EC870(COE)](http://www.leadshine.com) | [leadshine_stepper](../devices/lcec_leadshine_stepper.c) | 0x4321:0x00008700 | Stepper Drive |  | 
 [Beckhoff EM7004 4-Axis Interface Unit](http://www.beckhoff.com/EM7004) | [em7004](../src/devices/lcec_em7004.c) | 0x2:0x1b5c3452 | Servo Drive |  | 
 [Beckhoff EP1008-0001 8 Ch. Dig. Input 24V, 3ms, M8](https://www.beckhoff.com/EP1008-0001) | [el1xxx](../src/devices/lcec_el1xxx.c) | 0x2:0x03f04052 | Digital Input | Uncertain; @scottlaird has several | 
 [Beckhoff EP1018-0001 8 Ch. Dig. Input 24V, 10µs, M8](https://www.beckhoff.com/EP1018-0001) | [el1xxx](../src/devices/lcec_el1xxx.c) | 0x2:0x03fa4052 | Digital Input | Uncertain; @scottlaird has several | 

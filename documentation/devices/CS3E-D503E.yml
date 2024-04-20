@@ -1,0 +1,11 @@
+---
+Device: CS3E-D503E
+VendorID: "0x00004321"
+VendorName: ""
+PID: "0x00000700"
+Description: Leadshine CS3E-D503E
+DocumentationURL: http://www.leadshine.com
+DeviceType: Stepper Drive
+Notes: ""
+SrcFile: devices/lcec_leadshine_stepper.c
+TestingStatus: ""

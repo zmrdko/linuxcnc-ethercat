@@ -1,0 +1,11 @@
+---
+Device: 2EM3E-D870
+VendorID: "0x00004321"
+VendorName: Leadshine Technology Co.,Ltd.
+PID: "0x0000a200"
+Description: Leadshine 2DM3-EC870(COE)
+DocumentationURL: http://www.leadshine.com
+DeviceType: Stepper Drive
+Notes: ""
+SrcFile: devices/lcec_leadshine_stepper.c
+TestingStatus: ""
