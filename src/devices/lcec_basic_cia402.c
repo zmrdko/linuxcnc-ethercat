@@ -16,6 +16,7 @@
 //    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 //
 
+// XXXX: Change this description of the driver
 /// @file
 /// @brief Driver for "Basic" CiA 402 devices
 ///
@@ -35,14 +36,20 @@
 #include "lcec_class_din.h"
 #include "lcec_class_dout.h"
 
-// Constants for modparams.  The basic_cia402 driver only has one:
-#define M_CHANNELS      0
-#define M_RXPDOLIMIT    1
-#define M_TXPDOLIMIT    2
-#define M_PDOINCREMENT  3
-#define M_PDOAUTOFLOW   4
-#define M_PDOLIMIT      5
-#define M_PDOENTRYLIMIT 6
+// Constants for modparams.  These should have their last hex digit be
+// a 0, to make handling per-channel modparams easier.  Keep these
+// under 0x1000 to avoid collisions with params from class cia402.
+//
+// XXXX: You can probaably remove most if not ell of these, if you
+// know how many channels, etc your device has and just hard-code
+// their values in the _init function.
+#define M_CHANNELS      0x00
+#define M_RXPDOLIMIT    0x10
+#define M_TXPDOLIMIT    0x20
+#define M_PDOINCREMENT  0x30
+#define M_PDOAUTOFLOW   0x40
+#define M_PDOLIMIT      0x50
+#define M_PDOENTRYLIMIT 0x60
 
 /// @brief Device-specific modparam settings available via XML.
 static const lcec_modparam_desc_t modparams_perchannel[] = {
@@ -116,7 +123,11 @@ static int handle_modparams(lcec_slave_t *slave, lcec_class_cia402_options_t *op
   int v;
 
   for (p = slave->modparams; p != NULL && p->id >= 0; p++) {
-    switch (p->id) {
+    // int channel = p->id & 7;
+    int id = p->id & ~7;
+    // int base = 0x2000 + 0x800 * channel;
+
+    switch (id) {
         // XXXX: add device-specific modparam handlers here.
       case M_CHANNELS:
         options->channels = p->value.u32;
@@ -284,8 +295,6 @@ static void lcec_basic_cia402_read(lcec_slave_t *slave, long period) {
   // *(hal_data->alarm_code) = EC_READ_U16(&pd[hal_data->alarm_code_os]);
 
   lcec_cia402_read_all(slave, hal_data->cia402);
-  // XXXX: If you want digital in pins, then uncomment this:
-  //  lcec_din_read_all(slave, hal_data->din);
 }
 
 static void lcec_basic_cia402_write(lcec_slave_t *slave, long period) {
@@ -300,6 +309,4 @@ static void lcec_basic_cia402_write(lcec_slave_t *slave, long period) {
   // pins, then do that here.
 
   lcec_cia402_write_all(slave, hal_data->cia402);
-  // XXXX: uncomment for digital out pins:
-  //  lcec_dout_write_all(slave, hal_data->dout);
 }

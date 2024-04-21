@@ -17,18 +17,25 @@
 //
 
 /// @file
-/// @brief Driver for "Basic" CiA 402 devices
-///
-/// This driver has two purposes:
-///
-/// 1. It acts as an example of a simple CiA 402 driver, to be used as
-///    a base for creating device-specific CiA 402 drivers.
-/// 2. It can be used as-is with some devices, instead of using the
-///    `generic` XML config in LinuxCNC-Ethercat.
-///
-/// These two purposes can conflict with each other; when this
-/// happens, we'll generally favor the first purpose and try to keep
-/// this simple.
+/// @brief Driver for Leadshine EtherCAT stepper drives
+
+// TODO:
+//
+// Add additional device-specific pins and modParams, as needed to fully
+// support reasonable use cases.
+//
+// - Input settings? (0x2152:0[1-4]?)  Needs restart.  FYI, 0x2155 shows actual values, 0x60fd shows functions.
+//   - "probe1" -> 0x17          (.26)
+//   - "probe2" -> 0x18          (.27)
+//   - "home" -> 0x16            (.2)
+//   - "positive-limit" -> 0x01  (.1)
+//   - "negative-limit" -> 0x02  (.0)
+//   - "quick-stop" -> 0x14      (.23)
+//   - "gpio" -> 0x19  (Makes inputs show up as 60fd:0.[4-7]?  Seems wrong, should be .16+.  .4-.15 are reserved in spec.
+// - Leadshine error code (0x3fff:1)
+// - Virtual homing input (0x225c:00.2=1 + 0x5012:03)?  Allows index Z use for homing, etc.
+
+#include <stdio.h>
 
 #include "../lcec.h"
 #include "lcec_class_cia402.h"
@@ -36,21 +43,23 @@
 #include "lcec_class_dout.h"
 
 // Constants for modparams.  The leadshine_stepper driver only has one:
-#define M_CHANNELS     0
-#define M_RXPDOLIMIT   1
-#define M_TXPDOLIMIT   2
-#define M_PDOINCREMENT 3
+#define M_PEAKCURRENT100MA 0x100
+#define M_PEAKCURRENT1MA   0x110
+#define M_CONTROLMODE      0x120
 
 /// @brief Device-specific modparam settings available via XML.
-static const lcec_modparam_desc_t modparams_perchannel[] = {
-    // XXXX, add per-channel device-specific modparams here.
+static const lcec_modparam_desc_t modparams_perchannel_closed[] = {
+    {"peakCurrent_amps", M_PEAKCURRENT100MA, MODPARAM_TYPE_FLOAT, "6.0", "Peak motor current, in Amps"},
+    {"controlMode", M_CONTROLMODE, MODPARAM_TYPE_STRING, "closedloop", "Operation mode: openloop or closedloop"},
+    {NULL},
+};
+
+static const lcec_modparam_desc_t modparams_perchannel_open[] = {
+    {"peakCurrent_amps", M_PEAKCURRENT1MA, MODPARAM_TYPE_FLOAT, "5.6", "Peak motor current, in Amps"},
     {NULL},
 };
 
 static const lcec_modparam_desc_t modparams_base[] = {
-    {"ciaChannels", M_CHANNELS, MODPARAM_TYPE_U32},
-    {"ciaRxPDOEntryLimit", M_RXPDOLIMIT, MODPARAM_TYPE_U32},
-    {"ciaTxPDOEntryLimit", M_TXPDOLIMIT, MODPARAM_TYPE_U32},
     // XXXX, add device-specific modparams here that aren't duplicated for multi-axis devices
     {NULL},
 };
@@ -58,6 +67,12 @@ static const lcec_modparam_desc_t modparams_base[] = {
 static const lcec_modparam_doc_t docs[] = {
     {"feedRatio", "10000", "Microsteps per rotation"},
     {"encoderRatio", "4000", "Encoder steps per rotation"},
+    {NULL},
+};
+
+static const lcec_lookuptable_int_t controlmode[] = {
+    {"openloop", 0},
+    {"closedloop", 2},
     {NULL},
 };
 
@@ -71,16 +86,7 @@ static int lcec_leadshine_stepper_init(int comp_id, lcec_slave_t *slave);
 #define F_DOUT(dout) ((uint64_t)dout << 52)
 
 #define TYPEDEFAULT .vid = 0x4321, .proc_init = lcec_leadshine_stepper_init
-static lcec_typelist_t types1[] = {
-    // Single axis, closed loop
-    {.name = "CS3E-D503", TYPEDEFAULT, .pid = 0x1300, .flags = F_DIN(7) | F_DOUT(7)},
-    {.name = "CS3E-D507", TYPEDEFAULT, .pid = 0x1100, .flags = F_DIN(7) | F_DOUT(7)},
-    {.name = "CS3E-D1008", TYPEDEFAULT, .pid = 0x1200, .flags = F_DIN(7) | F_DOUT(7)},
-    {.name = "CS3E-D503E", TYPEDEFAULT, .pid = 0x700, .flags = F_DIN(6) | F_DOUT(2)},
-    {.name = "CS3E-D507E", TYPEDEFAULT, .pid = 0x500, .flags = F_DIN(6) | F_DOUT(2)},
-    //{.name="CS3E-D503B", TYPEDEFAULT, .pid=?, .flags=F_DIN(6) | F_DOUT(2)}, // On website, ID unknown
-    //{.name="CS3E-D507B", TYPEDEFAULT, .pid=?, .flags=F_DIN(6) | F_DOUT(2)}, // On website, ID unknown
-
+static lcec_typelist_t types1open[] = {
     // Single axis, open loop
     {.name = "EM3E-522E", TYPEDEFAULT, .pid = 0x8800, .flags = F_DIN(6) | F_DOUT(2)},
     {.name = "EM3E-556E", TYPEDEFAULT, .pid = 0x8600, .flags = F_DIN(6) | F_DOUT(2)},
@@ -94,11 +100,20 @@ static lcec_typelist_t types1[] = {
     {NULL},
 };
 
-static lcec_typelist_t types2[] = {
-    // Dual axis, closed loop
-    {.name = "2CS3E-D503", TYPEDEFAULT, .pid = 0x2200, .flags = F_AXES(2) | F_DIN(4) | F_DOUT(2)},
-    {.name = "2CS3E-D507", TYPEDEFAULT, .pid = 0x2100, .flags = F_AXES(2) | F_DIN(4) | F_DOUT(2)},
+static lcec_typelist_t types1closed[] = {
+    // Single axis, closed loop
+    {.name = "CS3E-D503", TYPEDEFAULT, .pid = 0x1300, .flags = F_DIN(7) | F_DOUT(7)},
+    {.name = "CS3E-D507", TYPEDEFAULT, .pid = 0x1100, .flags = F_DIN(7) | F_DOUT(7)},
+    {.name = "CS3E-D1008", TYPEDEFAULT, .pid = 0x1200, .flags = F_DIN(7) | F_DOUT(7)},
+    {.name = "CS3E-D503E", TYPEDEFAULT, .pid = 0x700, .flags = F_DIN(6) | F_DOUT(2)},
+    {.name = "CS3E-D507E", TYPEDEFAULT, .pid = 0x500, .flags = F_DIN(6) | F_DOUT(2)},
+    //{.name="CS3E-D503B", TYPEDEFAULT, .pid=?, .flags=F_DIN(6) | F_DOUT(2)}, // On website, ID unknown
+    //{.name="CS3E-D507B", TYPEDEFAULT, .pid=?, .flags=F_DIN(6) | F_DOUT(2)}, // On website, ID unknown
 
+    {NULL},
+};
+
+static lcec_typelist_t types2open[] = {
     // Dual axis, open loop
     {.name = "2EM3E-D522", TYPEDEFAULT, .pid = 0xa300, .flags = F_AXES(2) | F_DIN(4) | F_DOUT(2)},
     {.name = "2EM3E-D556", TYPEDEFAULT, .pid = 0xa100, .flags = F_AXES(2) | F_DIN(4) | F_DOUT(2)},
@@ -106,15 +121,25 @@ static lcec_typelist_t types2[] = {
     {NULL},
 };
 
-ADD_TYPES_WITH_CIA402_MODPARAMS(types1, 1, modparams_perchannel, modparams_base, docs, NULL)
-ADD_TYPES_WITH_CIA402_MODPARAMS(types2, 2, modparams_perchannel, modparams_base, docs, NULL)
+static lcec_typelist_t types2closed[] = {
+    // Dual axis, closed loop
+    {.name = "2CS3E-D503", TYPEDEFAULT, .pid = 0x2200, .flags = F_AXES(2) | F_DIN(4) | F_DOUT(2)},
+    {.name = "2CS3E-D507", TYPEDEFAULT, .pid = 0x2100, .flags = F_AXES(2) | F_DIN(4) | F_DOUT(2)},
+    {NULL},
+};
+
+ADD_TYPES_WITH_CIA402_MODPARAMS(types1open, 1, modparams_perchannel_open, modparams_base, docs, NULL)
+ADD_TYPES_WITH_CIA402_MODPARAMS(types1closed, 1, modparams_perchannel_closed, modparams_base, docs, NULL)
+ADD_TYPES_WITH_CIA402_MODPARAMS(types2open, 2, modparams_perchannel_open, modparams_base, docs, NULL)
+ADD_TYPES_WITH_CIA402_MODPARAMS(types2closed, 2, modparams_perchannel_closed, modparams_base, docs, NULL)
 
 static void lcec_leadshine_stepper_read(lcec_slave_t *slave, long period);
 static void lcec_leadshine_stepper_write(lcec_slave_t *slave, long period);
 
 typedef struct {
   lcec_class_cia402_channels_t *cia402;
-  // XXXX: Add pins and vars for PDO offsets here.
+  lcec_class_din_channels_t *din;
+  lcec_class_dout_channels_t *dout;
 } lcec_leadshine_stepper_data_t;
 
 static const lcec_pindesc_t slave_pins[] = {
@@ -125,22 +150,33 @@ static const lcec_pindesc_t slave_pins[] = {
 static int handle_modparams(lcec_slave_t *slave, lcec_class_cia402_options_t *options) {
   lcec_master_t *master = slave->master;
   lcec_slave_modparam_t *p;
-  int v;
+  int v, val;
+  uint32_t uval;
 
   for (p = slave->modparams; p != NULL && p->id >= 0; p++) {
-    switch (p->id) {
-        // XXXX: add device-specific modparam handlers here.
-      case M_CHANNELS:
-        options->channels = p->value.u32;
+    int channel = p->id & 7;
+    int id = p->id & ~7;
+    int base = 0x2000 + 0x800 * channel;
+
+    switch (id) {
+      case M_PEAKCURRENT100MA:
+        // Leadshine's closed-loop steppers want peak current set in units of 100 mA.
+        uval = p->value.flt * 10.0 + 0.5;
+        if (lcec_write_sdo16_modparam(slave, base + 0, 0, uval, p->name) < 0) return -1;
         break;
-      case M_RXPDOLIMIT:
-        options->rxpdolimit = p->value.u32;
+      case M_PEAKCURRENT1MA:
+        // Leadshine's open-loop steppers want peak current set in units of 1 mA.
+        uval = p->value.flt * 1000.0 + 0.5;
+        if (lcec_write_sdo16_modparam(slave, base + 0, 0, uval, p->name) < 0) return -1;
         break;
-      case M_TXPDOLIMIT:
-        options->txpdolimit = p->value.u32;
-        break;
-      case M_PDOINCREMENT:
-        options->pdo_increment = p->value.u32;
+      case M_CONTROLMODE:
+        val = lcec_lookupint_i(controlmode, p->value.str, -1);
+        if (val == -1) {
+          rtapi_print_msg(
+              RTAPI_MSG_ERR, LCEC_MSG_PFX "invalid value for <modparam name=\"controlMode\"> for slave %s.%s\n", master->name, slave->name);
+          return -1;
+        }
+        if (lcec_write_sdo16_modparam(slave, base + 0x24, 0, val, p->name) < 0) return -1;
         break;
       default:
         // Handle cia402 generic modparams
@@ -187,10 +223,12 @@ static int lcec_leadshine_stepper_init(int comp_id, lcec_slave_t *slave) {
 
   for (int channel = 0; channel < options->channels; channel++) {
     options->channel[channel]->enable_csp = 1;
-    options->channel[channel]->enable_digital_input = 1;
-    options->channel[channel]->enable_digital_output = 1;
     options->channel[channel]->digital_in_channels = DIN(slave->flags);
     options->channel[channel]->digital_out_channels = DOUT(slave->flags);
+    options->channel[channel]->enable_digital_output = 1;
+
+    // Leadshine doesn't follow the spec, so we need to do this ourselves
+    options->channel[channel]->enable_digital_input = 0;
   }
 
   // Apply default Distributed Clock settings if it's not already set.
@@ -230,10 +268,11 @@ static int lcec_leadshine_stepper_init(int comp_id, lcec_slave_t *slave) {
   // lcec_syncs_add_pdo_entry(slave, syncs, 0x200e, 0x00, 16);
 
   lcec_cia402_add_input_sync(slave, syncs, options);
-  // XXXX: Similarly, uncomment these for input PDOs:
-  //
-  // lcec_syncs_add_pdo_info(slave, syncs, 0x1a02);
-  // lcec_syncs_add_pdo_entry(slave, syncs, 0x2048, 0x00, 16);  // current voltage
+
+  for (int channel = 0; channel < options->channels; channel++) {
+    int base_idx = 0x6000 + 0x800 * channel;
+    lcec_syncs_add_pdo_entry(syncs, base_idx + 0xfd, 0x00, 32);  // Digital input
+  }
 
   slave->sync_info = &syncs->syncs[0];
 
@@ -241,6 +280,45 @@ static int lcec_leadshine_stepper_init(int comp_id, lcec_slave_t *slave) {
 
   for (int channel = 0; channel < options->channels; channel++) {
     hal_data->cia402->channels[channel] = lcec_cia402_register_channel(slave, 0x6000 + 0x800 * channel, options->channel[channel]);
+  }
+
+  // Set up digital in/out.  Leadshine puts these at the wrong place,
+  // so we need to do this ourselves instead of relying on the base
+  // CiA code.
+  for (int axis = 0; axis < options->channels; axis++) {
+    char *dname;
+    const char *name_prefix = options->channel[axis]->name_prefix;
+    int base_idx = 0x6000 + 0x800 * axis;
+
+    hal_data->din = lcec_din_allocate_channels(options->channel[axis]->digital_in_channels + 4);
+
+    dname = LCEC_HAL_ALLOCATE_STRING(30);
+    snprintf(dname, 30, "%s-din-negative-limit", name_prefix);
+    hal_data->din->channels[0] = lcec_din_register_channel_packed(slave, base_idx + 0xfd, 0, 0, dname);  // negative limit switch
+    dname = LCEC_HAL_ALLOCATE_STRING(30);
+    snprintf(dname, 30, "%s-din-positive-limit", name_prefix);
+    hal_data->din->channels[1] = lcec_din_register_channel_packed(slave, base_idx + 0xfd, 0, 1, dname);  // positive limit switch
+    dname = LCEC_HAL_ALLOCATE_STRING(30);
+    snprintf(dname, 30, "%s-din-home", name_prefix);
+    hal_data->din->channels[2] = lcec_din_register_channel_packed(slave, base_idx + 0xfd, 0, 2, dname);  // home
+    dname = LCEC_HAL_ALLOCATE_STRING(30);
+    snprintf(dname, 30, "%s-din-probe1", name_prefix);
+    hal_data->din->channels[3] = lcec_din_register_channel_packed(slave, base_idx + 0xfd, 0, 26, dname);  // home
+    dname = LCEC_HAL_ALLOCATE_STRING(30);
+    snprintf(dname, 30, "%s-din-probe2", name_prefix);
+    hal_data->din->channels[4] = lcec_din_register_channel_packed(slave, base_idx + 0xfd, 0, 27, dname);  // home
+    dname = LCEC_HAL_ALLOCATE_STRING(30);
+    snprintf(dname, 30, "%s-din-index-z", name_prefix);
+    hal_data->din->channels[5] = lcec_din_register_channel_packed(slave, base_idx + 0xfd, 0, 31, dname);  // home
+    dname = LCEC_HAL_ALLOCATE_STRING(30);
+    snprintf(dname, 30, "%s-din-quick-stop", name_prefix);
+    hal_data->din->channels[6] = lcec_din_register_channel_packed(slave, base_idx + 0xfd, 0, 23, dname);  // home
+
+    for (int channel = 0; channel < options->channel[axis]->digital_in_channels; channel++) {
+      dname = LCEC_HAL_ALLOCATE_STRING(30);
+      snprintf(dname, 30, "%s-din-%d", name_prefix, channel);
+      hal_data->din->channels[6 + channel] = lcec_din_register_channel_packed(slave, base_idx + 0xfd, 0, 4 + channel, dname);
+    }
   }
 
   // XXXX: register device-specific PDOs.
