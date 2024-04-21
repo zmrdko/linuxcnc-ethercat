@@ -70,38 +70,39 @@ static int lcec_leadshine_stepper_init(int comp_id, lcec_slave_t *slave);
 #define F_DIN(din)   ((uint64_t)din << 56)
 #define F_DOUT(dout) ((uint64_t)dout << 52)
 
+#define TYPEDEFAULT .vid = 0x4321, .proc_init = lcec_leadshine_stepper_init
 static lcec_typelist_t types1[] = {
     // Single axis, closed loop
-    {"CS3E-D503", 0x00004321, 0x1300, 0, NULL, lcec_leadshine_stepper_init, NULL, F_DIN(7) | F_DOUT(7)},
-    {"CS3E-D507", 0x00004321, 0x1100, 0, NULL, lcec_leadshine_stepper_init, NULL, F_DIN(7) | F_DOUT(7)},
-    {"CS3E-D1008", 0x00004321, 0x1200, 0, NULL, lcec_leadshine_stepper_init, NULL, F_DIN(7) | F_DOUT(7)},
-    {"CS3E-D503E", 0x00004321, 0x700, 0, NULL, lcec_leadshine_stepper_init, NULL, F_DIN(6) | F_DOUT(2)},
-    {"CS3E-D507E", 0x00004321, 0x500, 0, NULL, lcec_leadshine_stepper_init, NULL, F_DIN(6) | F_DOUT(2)},
-    //{"CS3E-D503B", 0x00004321, ?, 0, NULL, lcec_leadshine_stepper_init, NULL, F_DIN(6) | F_DOUT(2)}, // On website, ID unknown
-    //{"CS3E-D507B", 0x00004321, ?, 0, NULL, lcec_leadshine_stepper_init, NULL, F_DIN(6) | F_DOUT(2)}, // On website, ID unknown
+    {.name = "CS3E-D503", TYPEDEFAULT, .pid = 0x1300, .flags = F_DIN(7) | F_DOUT(7)},
+    {.name = "CS3E-D507", TYPEDEFAULT, .pid = 0x1100, .flags = F_DIN(7) | F_DOUT(7)},
+    {.name = "CS3E-D1008", TYPEDEFAULT, .pid = 0x1200, .flags = F_DIN(7) | F_DOUT(7)},
+    {.name = "CS3E-D503E", TYPEDEFAULT, .pid = 0x700, .flags = F_DIN(6) | F_DOUT(2)},
+    {.name = "CS3E-D507E", TYPEDEFAULT, .pid = 0x500, .flags = F_DIN(6) | F_DOUT(2)},
+    //{.name="CS3E-D503B", TYPEDEFAULT, .pid=?, .flags=F_DIN(6) | F_DOUT(2)}, // On website, ID unknown
+    //{.name="CS3E-D507B", TYPEDEFAULT, .pid=?, .flags=F_DIN(6) | F_DOUT(2)}, // On website, ID unknown
 
     // Single axis, open loop
-    {"EM3E-522E", 0x00004321, 0x8800, 0, NULL, lcec_leadshine_stepper_init, NULL, F_DIN(6) | F_DOUT(2)},
-    {"EM3E-556E", 0x00004321, 0x8600, 0, NULL, lcec_leadshine_stepper_init, NULL, F_DIN(6) | F_DOUT(2)},
-    {"EM3E-870E", 0x00004321, 0x8700, 0, NULL, lcec_leadshine_stepper_init, NULL, F_DIN(6) | F_DOUT(2)},
+    {.name = "EM3E-522E", TYPEDEFAULT, .pid = 0x8800, .flags = F_DIN(6) | F_DOUT(2)},
+    {.name = "EM3E-556E", TYPEDEFAULT, .pid = 0x8600, .flags = F_DIN(6) | F_DOUT(2)},
+    {.name = "EM3E-870E", TYPEDEFAULT, .pid = 0x8700, .flags = F_DIN(6) | F_DOUT(2)},
 
-    //{"EM3E-522B", 0x00004321, ?, 0, NULL, lcec_leadshine_stepper_init, NULL, F_DIN(6) | F_DOUT(2)}, // On website, ID unknown
-    //{"EM3E-556B", 0x00004321, ?, 0, NULL, lcec_leadshine_stepper_init, NULL, F_DIN(6) | F_DOUT(2)}, // On website, ID unknown
-    //{"EM3E-870B", 0x00004321, ?, 0, NULL, lcec_leadshine_stepper_init, NULL, F_DIN(6) | F_DOUT(2)}, // On website, ID unknown
-    //{"DM3C-EC882AC", 0x00004321, 0x00008a00, 0, NULL, lcec_leadshine_stepper_init, NULL, F_DIN(6) | F_DOUT(2)},  // Not on website
+    //{.name="EM3E-522B", TYPEDEFAULT, .pid=?, .flags=F_DIN(6) | F_DOUT(2)}, // On website, ID unknown
+    //{.name="EM3E-556B", TYPEDEFAULT, .pid=?, .flags=F_DIN(6) | F_DOUT(2)}, // On website, ID unknown
+    //{.name="EM3E-870B", TYPEDEFAULT, .pid=?, .flags=F_DIN(6) | F_DOUT(2)}, // On website, ID unknown
+    //{.name="DM3C-EC882AC", TYPEDEFAULT, .pid=0xa00,  flags=F_DIN(6) | F_DOUT(2)},  // Not on website
 
     {NULL},
 };
 
 static lcec_typelist_t types2[] = {
     // Dual axis, closed loop
-    {"2CS3E-D503", 0x00004321, 0x00002200, 0, NULL, lcec_leadshine_stepper_init, NULL, F_AXES(2) | F_DIN(4) | F_DOUT(2)},
-    {"2CS3E-D507", 0x00004321, 0x00002100, 0, NULL, lcec_leadshine_stepper_init, NULL, F_AXES(2) | F_DIN(4) | F_DOUT(2)},
+    {.name = "2CS3E-D503", TYPEDEFAULT, .pid = 0x2200, .flags = F_AXES(2) | F_DIN(4) | F_DOUT(2)},
+    {.name = "2CS3E-D507", TYPEDEFAULT, .pid = 0x2100, .flags = F_AXES(2) | F_DIN(4) | F_DOUT(2)},
 
     // Dual axis, open loop
-    {"2EM3E-D522", 0x00004321, 0x0000a300, 0, NULL, lcec_leadshine_stepper_init, NULL, F_AXES(2) | F_DIN(4) | F_DOUT(2)},
-    {"2EM3E-D556", 0x00004321, 0x0000a100, 0, NULL, lcec_leadshine_stepper_init, NULL, F_AXES(2) | F_DIN(4) | F_DOUT(2)},
-    {"2EM3E-D870", 0x00004321, 0x0000a200, 0, NULL, lcec_leadshine_stepper_init, NULL, F_AXES(2) | F_DIN(4) | F_DOUT(2)},
+    {.name = "2EM3E-D522", TYPEDEFAULT, .pid = 0xa300, .flags = F_AXES(2) | F_DIN(4) | F_DOUT(2)},
+    {.name = "2EM3E-D556", TYPEDEFAULT, .pid = 0xa100, .flags = F_AXES(2) | F_DIN(4) | F_DOUT(2)},
+    {.name = "2EM3E-D870", TYPEDEFAULT, .pid = 0xa200, .flags = F_AXES(2) | F_DIN(4) | F_DOUT(2)},
     {NULL},
 };
 
