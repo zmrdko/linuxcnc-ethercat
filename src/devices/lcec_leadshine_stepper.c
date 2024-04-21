@@ -55,17 +55,9 @@ static const lcec_modparam_desc_t modparams_base[] = {
     {NULL},
 };
 
-static const lcec_modparam_doc_t docs1[] = {
+static const lcec_modparam_doc_t docs[] = {
     {"feedRatio", "10000", "Microsteps per rotation"},
     {"encoderRatio", "4000", "Encoder steps per rotation"},
-    {NULL},
-};
-
-static const lcec_modparam_doc_t docs2[] = {
-    {"ch1feedRatio", "10000", "Microsteps per rotation"},
-    {"ch2feedRatio", "10000", "Microsteps per rotation"},
-    {"ch1encoderRatio", "4000", "Encoder steps per rotation"},
-    {"ch2encoderRatio", "4000", "Encoder steps per rotation"},
     {NULL},
 };
 
@@ -113,8 +105,8 @@ static lcec_typelist_t types2[] = {
     {NULL},
 };
 
-ADD_TYPES_WITH_CIA402_MODPARAMS(types1, modparams_perchannel, modparams_base, docs1)
-ADD_TYPES_WITH_CIA402_MODPARAMS(types2, modparams_perchannel, modparams_base, docs2)
+ADD_TYPES_WITH_CIA402_MODPARAMS(types1, 1, modparams_perchannel, modparams_base, docs, NULL)
+ADD_TYPES_WITH_CIA402_MODPARAMS(types2, 2, modparams_perchannel, modparams_base, docs, NULL)
 
 static void lcec_leadshine_stepper_read(lcec_slave_t *slave, long period);
 static void lcec_leadshine_stepper_write(lcec_slave_t *slave, long period);

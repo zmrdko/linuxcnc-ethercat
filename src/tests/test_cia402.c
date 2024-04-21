@@ -35,7 +35,7 @@ TESTFUNC(test_cia402_modparam_len) {
   TESTINT(lcec_modparam_desc_len(per_channel_mps), 3);
   TESTINT(lcec_modparam_desc_len(device_mps), 1);
 
-  channelized_mps = lcec_cia402_channelized_modparams(per_channel_mps);
+  channelized_mps = lcec_cia402_channelized_modparams(per_channel_mps, CIA402_MAX_CHANNELS);
   TESTNOTNULL(channelized_mps);
 
   TESTINT(lcec_modparam_desc_len(channelized_mps), 27);
@@ -82,17 +82,64 @@ TESTFUNC(test_cia402_modparam_len) {
   TESTINT(all_mps[16].id, 0x1016);
   TESTINT(all_mps[17].id, 0x1017);
 
+
+  // Test with 1 channel
+  channelized_mps = lcec_cia402_channelized_modparams(per_channel_mps, 1);
+  TESTNOTNULL(channelized_mps);
+
+  TESTINT(lcec_modparam_desc_len(channelized_mps), 3);
+
+  all_mps = lcec_modparam_desc_concat(channelized_mps, device_mps);
+  TESTNOTNULL(all_mps);
+
+  TESTINT(lcec_modparam_desc_len(all_mps), 4);
+  TESTSTRING(all_mps[0].name, "aaa");
+  TESTSTRING(all_mps[1].name, "bbb");
+  TESTSTRING(all_mps[2].name, "ccc");
+  TESTSTRING(all_mps[3].name, "ddd");
+
+  TESTINT(all_mps[0].id, 0x1000);
+  TESTINT(all_mps[1].id, 0x1010);
+  TESTINT(all_mps[2].id, 0x1020);
+  TESTINT(all_mps[3].id, 1);
+
+  // Test with 2 channels
+  channelized_mps = lcec_cia402_channelized_modparams(per_channel_mps, 2);
+  TESTNOTNULL(channelized_mps);
+
+  TESTINT(lcec_modparam_desc_len(channelized_mps), 6);
+
+  all_mps = lcec_modparam_desc_concat(channelized_mps, device_mps);
+  TESTNOTNULL(all_mps);
+
+  TESTINT(lcec_modparam_desc_len(all_mps), 7);
+  TESTSTRING(all_mps[0].name, "ch1aaa");
+  TESTSTRING(all_mps[1].name, "ch2aaa");
+  TESTSTRING(all_mps[2].name, "ch1bbb");
+  TESTSTRING(all_mps[3].name, "ch2bbb");
+  TESTSTRING(all_mps[4].name, "ch1ccc");
+  TESTSTRING(all_mps[5].name, "ch2ccc");
+  TESTSTRING(all_mps[6].name, "ddd");
+
+  TESTINT(all_mps[0].id, 0x1000);
+  TESTINT(all_mps[1].id, 0x1001);
+  TESTINT(all_mps[2].id, 0x1010);
+  TESTINT(all_mps[3].id, 0x1011);
+  TESTINT(all_mps[4].id, 0x1020);
+  TESTINT(all_mps[5].id, 0x1021);
+  TESTINT(all_mps[6].id, 1);
+  
   TESTRESULTS;
 }
 
 TESTFUNC(test_cia402_modparam_defaults) {
   TESTSETUP;
 
-  int a = lcec_modparam_desc_len(lcec_cia402_modparams(NULL, NULL, NULL));
+  int a = lcec_modparam_desc_len(lcec_cia402_modparams(8, NULL, NULL, NULL, NULL));
 
-  TESTINT(lcec_modparam_desc_len(lcec_cia402_modparams(per_channel_mps, NULL, NULL)), a + 27);
-  TESTINT(lcec_modparam_desc_len(lcec_cia402_modparams(per_channel_mps, device_mps, NULL)), a + 28);
-  TESTINT(lcec_modparam_desc_len(lcec_cia402_modparams(per_channel_mps, device_mps, docs_mps)), a + 28);
+  TESTINT(lcec_modparam_desc_len(lcec_cia402_modparams(8, per_channel_mps, NULL, NULL, NULL)), a + 27);
+  TESTINT(lcec_modparam_desc_len(lcec_cia402_modparams(8, per_channel_mps, device_mps, NULL, NULL)), a + 28);
+  TESTINT(lcec_modparam_desc_len(lcec_cia402_modparams(8, per_channel_mps, device_mps, NULL, docs_mps)), a + 28);
 
   lcec_modparam_desc_t *all_mps = lcec_modparam_desc_concat(per_channel_mps, device_mps2);
 

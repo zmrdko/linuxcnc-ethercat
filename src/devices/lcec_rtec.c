@@ -85,53 +85,34 @@ static const lcec_modparam_desc_t modparams_base[] = {
 // We don't want to list *everything* here, because that gets
 // overwhelming, but we do want to include the most common things that
 // users will want to change.
-#define PER_CHANNEL_DOCS(ch)                                                                                              \
-  {#ch "enableCSP", "true", "Enable support for Cyclic Synchronous Position mode."},                                      \
-      {#ch "enableCSV", "false", "Enable support for Cyclic Synchronous Velocity mode."},                                 \
-      {#ch "encoderResolution", "4000", "Number of encoder steps per revolution."},                                       \
-      {#ch "peakCurrent_amps", "6.0", "Maximum stepper Amps."},                                                           \
-      {#ch "output1Func", "alarm", "Output 1 use: general, alarm, brake, in-place."},                                     \
-      {#ch "output2Func", "brake", "Output 2 use: general, alarm, brake, in-place."},                                     \
-      {#ch "input3Func", "cw-limit",                                                                                      \
-          "Input 3 use: general, cw-limit, ccw-limit, home, clear-fault, emergency-stop, motor-offline, probe1, probe2"}, \
-      {#ch "input4Func", "ccw-limit",                                                                                     \
-          "Input 4 use: general, cw-limit, ccw-limit, home, clear-fault, emergency-stop, motor-offline, probe1, probe2"}, \
-      {#ch "input5Func", "home",                                                                                          \
-          "Input 5 use: general, cw-limit, ccw-limit, home, clear-fault, emergency-stop, motor-offline, probe1, probe2"}, \
-  {                                                                                                                       \
-#ch "input6Func", "motor-offline",                                                                                    \
-        "Input 6 use: general, cw-limit, ccw-limit, home, clear-fault, emergency-stop, motor-offline, probe1, probe2"     \
+#define PER_CHANNEL_DOCS                                                                                                              \
+  {"enableCSP", "true", "Enable support for Cyclic Synchronous Position mode."},                                                      \
+      {"enableCSV", "false", "Enable support for Cyclic Synchronous Velocity mode."},                                                 \
+      {"encoderResolution", "4000", "Number of encoder steps per revolution."}, {"peakCurrent_amps", "6.0", "Maximum stepper Amps."}, \
+      {"output1Func", "alarm", "Output 1 use: general, alarm, brake, in-place."},                                                     \
+      {"output2Func", "brake", "Output 2 use: general, alarm, brake, in-place."},                                                     \
+      {"input3Func", "cw-limit",                                                                                                      \
+          "Input 3 use: general, cw-limit, ccw-limit, home, clear-fault, emergency-stop, motor-offline, probe1, probe2"},             \
+      {"input4Func", "ccw-limit",                                                                                                     \
+          "Input 4 use: general, cw-limit, ccw-limit, home, clear-fault, emergency-stop, motor-offline, probe1, probe2"},             \
+      {"input5Func", "home",                                                                                                          \
+          "Input 5 use: general, cw-limit, ccw-limit, home, clear-fault, emergency-stop, motor-offline, probe1, probe2"},             \
+  {                                                                                                                                   \
+    "input6Func", "motor-offline",                                                                                                    \
+        "Input 6 use: general, cw-limit, ccw-limit, home, clear-fault, emergency-stop, motor-offline, probe1, probe2"                 \
   }
 
-/// Default values for single-axis open-loop steppers
+/// Default values for open-loop steppers
 static const lcec_modparam_doc_t docs_open[] = {
-    PER_CHANNEL_DOCS(),
+    PER_CHANNEL_DOCS,
     {"motorResolution_pulses", "10000", "Number of stepper pulses per rotation"},
     {NULL},
 };
 
-/// Default values for dual-axis open-loop steppers
-static const lcec_modparam_doc_t docs_open_x2[] = {
-    PER_CHANNEL_DOCS(ch1),
-    PER_CHANNEL_DOCS(ch2),
-    {"ch1motorResolution_pulses", "10000", "Number of stepper pulses per rotation"},
-    {"ch1motorResolution_pulses", "10000", "Number of stepper pulses per rotation"},
-    {NULL},
-};
-
-/// Default values for single-axis closed-loop steppers
+/// Default values for closed-loop steppers
 static const lcec_modparam_doc_t docs_closed[] = {
-    PER_CHANNEL_DOCS(),
+    PER_CHANNEL_DOCS,
     {"controlMode", "closedloop", "Operation mode: openloop, closedloop, or foc."},
-    {NULL},
-};
-
-/// Default values for dual-axis closed-loop steppers
-static const lcec_modparam_doc_t docs_closed_x2[] = {
-    PER_CHANNEL_DOCS(ch1),
-    PER_CHANNEL_DOCS(ch2),
-    {"ch1controlMode", "closedloop", "Operation mode: openloop, closedloop, or foc."},
-    {"ch2controlMode", "closedloop", "Operation mode: openloop, closedloop, or foc."},
     {NULL},
 };
 
@@ -173,10 +154,10 @@ static lcec_typelist_t types_closed_x2[] = {
     {NULL},
 };
 
-ADD_TYPES_WITH_CIA402_MODPARAMS(types_open, modparams_perchannel, modparams_base, docs_open)
-ADD_TYPES_WITH_CIA402_MODPARAMS(types_open_x2, modparams_perchannel, modparams_base, docs_open_x2)
-ADD_TYPES_WITH_CIA402_MODPARAMS(types_closed, modparams_perchannel, modparams_base, docs_closed)
-ADD_TYPES_WITH_CIA402_MODPARAMS(types_closed_x2, modparams_perchannel, modparams_base, docs_closed_x2)
+ADD_TYPES_WITH_CIA402_MODPARAMS(types_open, 1, modparams_perchannel, modparams_base, docs_open, NULL)
+ADD_TYPES_WITH_CIA402_MODPARAMS(types_open_x2, 2, modparams_perchannel, modparams_base, docs_open, NULL)
+ADD_TYPES_WITH_CIA402_MODPARAMS(types_closed, 1, modparams_perchannel, modparams_base, docs_closed, NULL)
+ADD_TYPES_WITH_CIA402_MODPARAMS(types_closed_x2, 2, modparams_perchannel, modparams_base, docs_closed, NULL)
 
 static void lcec_rtec_read(lcec_slave_t *slave, long period);
 static void lcec_rtec_write(lcec_slave_t *slave, long period);
