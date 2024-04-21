@@ -57,13 +57,27 @@ Only the 2CS3E-D507 has been tested at this point.
 ### Caveats
 
 - Only the 2CS3E-D507 has been tested.
-- A number of device-specific settings (both `<modParams>` and HAL
-  pins) aren't directly supported yet.
+- It appears that some Leadshine devices measure peak current in units
+  of 100mA and other in units of 1mA.  Right now, it looks like
+  closed-loop devices use 100mA and open-loop devices use 1mA, but
+  this may not be universally correct.  See object 0x2000:0 in the
+  device manual and file a bug if your device doesn't match this
+  pattern.
+- A number of useful device-specific `<modParams>` aren't directly
+  supported yet.
+- Digital input controls aren't complete yet.  The 2CS3E series, at
+  least, doesn't *quite* seem to follow the CiA 402 spec.  It puts
+  GPIO pins at 0x60fd:0 bits 4-7, while the spec says that bits 4-15
+  are reserved.  Also, the controls for mapping hardware input pins to
+  logical pins seem to require a save followed by a restart of the
+  device in order to take effect, which is awkward in a
+  `<modParam>`. See Leadshine's documentation for details on how to
+  change pin function for now.
 
 ## Configuration
 
 This driver takes a number of `<modParam>` options that control its
-operation.  There are a number of `rtec`-specific parameters, plus a
+operation.  There are a few Leadshine-specific parameters, plus a
 number of additional [`cia402` modParams](cia402.md).
 
 The parameters are listed in their single-axis form; dual-axis devices
@@ -77,6 +91,12 @@ starting with `ch2`.  For example, `ch1peakCurrent_amps` and
 
 <dt>&lt;modParam name="encoderRatio" value="4000"/&gt;</dt>
 <dd>The number of encoder steps per rotation.  Only applicable to closed-loop steppers.  Can be a floating point number or an integer ratio.</dd>
+
+<dt>&lt;modParam name="peakCurrent_amps" value="3.0"/&gt</dt>
+<dd>Set the maximum current for the motor, in amps.</dd>
+
+<dt>&lt;modParam name="controlMode"  value="openloop|closedloop"/&gt</dt>
+<dd>Set the control mode for the motor.  </dd>
 
 </dl>
 
