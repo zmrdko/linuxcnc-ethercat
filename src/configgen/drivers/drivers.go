@@ -2262,6 +2262,13 @@ var Drivers=[]EthercatDriver{
   },
   EthercatDriver{
     VendorID: "0x00000083",
+    ProductID: "0x00000053",
+    Type: "OMMX2",
+    ModParams: []string{
+    },
+  },
+  EthercatDriver{
+    VendorID: "0x00000083",
     ProductID: "0x00000005",
     Type: "OmrG5_KN01H",
     ModParams: []string{

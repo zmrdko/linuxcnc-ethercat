@@ -1,0 +1,11 @@
+---
+Device: OMMX2
+VendorID: "0x00000083"
+VendorName: Omron
+PID: "0x00000053"
+Description: Omron MX2 VFD
+DocumentationURL: "https://www.ia.omron.com/data_pdf/cat/mx2-v1_i920-e1_14_16_csm1010813.pdf?id=3164"
+DeviceType: VFD
+Notes: ""
+SrcFile: devices/lcec_ommx2.c
+TestingStatus: ""
