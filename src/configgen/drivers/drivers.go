@@ -256,6 +256,11 @@ var Drivers=[]EthercatDriver{
     ProductID: "0x10305070",
     Type: "DeASDA",
     ModParams: []string{
+      "<!-- Operation mode, CSV or CSP --> ",
+      "<modParam name=\"opmode\" value=\"CSP\"/> ",
+      "<!-- Enable digital output ports --> ",
+      "<modParam name=\"enableDigitalOutput\" value=\"true\"/> ",
+      "",
     },
   },
   EthercatDriver{
@@ -263,6 +268,11 @@ var Drivers=[]EthercatDriver{
     ProductID: "0x00006010",
     Type: "DeASDA3",
     ModParams: []string{
+      "<!-- Operation mode, CSV or CSP --> ",
+      "<modParam name=\"opmode\" value=\"CSP\"/> ",
+      "<!-- Enable digital output ports --> ",
+      "<modParam name=\"enableDigitalOutput\" value=\"true\"/> ",
+      "",
     },
   },
   EthercatDriver{
@@ -270,6 +280,9 @@ var Drivers=[]EthercatDriver{
     ProductID: "0x00006080",
     Type: "DeASDB3",
     ModParams: []string{
+      "<!-- Operation mode, CSV or CSP --> ",
+      "<modParam name=\"opmode\" value=\"CSP\"/> ",
+      "",
     },
   },
   EthercatDriver{

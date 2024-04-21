@@ -29,7 +29,8 @@
 #define FLAG_HIGHRES_ENC 1 << 1  // Device uses high res encoder as default x3 series
 #define FLAG_DOUT        1 << 2  // Device has digital outputs
 
-#define LCEC_DESDA_MODPARAM_OPERATIONMODE 0
+#define M_OPERATIONMODE 0
+#define M_DIGITALOUT 1
 
 #define DEASDA_PULSES_PER_REV_DEFLT_LOWRES  (1280000)   // this is the default value for A2 (default value)
 #define DEASDA_PULSES_PER_REV_DEFLT_HIGHRES (16777216)  // this is the default value for A3
@@ -48,7 +49,13 @@
 static int lcec_deasda_init(int comp_id, lcec_slave_t *slave);
 
 static const lcec_modparam_desc_t lcec_deasda_modparams[] = {
-    {"opmode", LCEC_DESDA_MODPARAM_OPERATIONMODE, MODPARAM_TYPE_STRING},
+  {"opmode", M_OPERATIONMODE, MODPARAM_TYPE_STRING, "CSP", "Operation mode, CSV or CSP"},
+  {"enableDigitalOutput", M_DIGITALOUT, MODPARAM_TYPE_BIT, "true", "Enable digital output ports"},
+    {NULL},
+};
+
+static const lcec_modparam_desc_t lcec_deasda_modparams_b3[] = {
+  {"opmode", M_OPERATIONMODE, MODPARAM_TYPE_STRING, "CSP", "Operation mode, CSV or CSP"},
     {NULL},
 };
 
@@ -68,7 +75,7 @@ static const drive_operationmodes_t drive_operationmodes[] = {
 static lcec_typelist_t types[] = {
     {"DeASDA", LCEC_DELTA_VID, 0x10305070, 0, NULL, lcec_deasda_init, lcec_deasda_modparams, FLAG_LOWRES_ENC | FLAG_DOUT},
     {"DeASDA3", LCEC_DELTA_VID, 0x00006010, 0, NULL, lcec_deasda_init, lcec_deasda_modparams, FLAG_HIGHRES_ENC | FLAG_DOUT},
-    {"DeASDB3", LCEC_DELTA_VID, 0x00006080, 0, NULL, lcec_deasda_init, lcec_deasda_modparams, FLAG_HIGHRES_ENC},
+    {"DeASDB3", LCEC_DELTA_VID, 0x00006080, 0, NULL, lcec_deasda_init, lcec_deasda_modparams_b3, FLAG_HIGHRES_ENC},
     {NULL},
 };
 
@@ -221,6 +228,7 @@ static int lcec_deasda_init(int comp_id, lcec_slave_t *slave) {
   static uint16_t operationmode;
   lcec_syncs_t *syncs;
   uint64_t flags;
+  int enable_dout = slave->flags & FLAG_DOUT;
   flags = slave->flags;
 
   syncs = LCEC_HAL_ALLOCATE(lcec_syncs_t);
@@ -228,7 +236,7 @@ static int lcec_deasda_init(int comp_id, lcec_slave_t *slave) {
   // Determine Operation Mode (modParam opmode) as this defines everything else
   LCEC_CONF_MODPARAM_VAL_T *pval;
   rtapi_print_msg(RTAPI_MSG_DBG, LCEC_MSG_PFX "  - checking modparam opmode for %s \n", slave->name);
-  pval = lcec_modparam_get(slave, LCEC_DESDA_MODPARAM_OPERATIONMODE);
+  pval = lcec_modparam_get(slave, M_OPERATIONMODE);
   if (pval != NULL) {
     rtapi_print_msg(RTAPI_MSG_DBG, LCEC_MSG_PFX "    - found opmode param for %s \n", slave->name);
 
@@ -245,6 +253,11 @@ static int lcec_deasda_init(int comp_id, lcec_slave_t *slave) {
     // This would be the case when modparam mode has not been set ==> back to CSV
     rtapi_print_msg(RTAPI_MSG_DBG, LCEC_MSG_PFX "    - no opmode param for %s \n found. Defaulting to CSV.", slave->name);
     operationmode = DEASDA_OPMODE_CSV;
+  }
+
+  pval = lcec_modparam_get(slave, M_DIGITALOUT);
+  if (pval) {
+    enable_dout = pval->bit;
   }
 
   // Set up PDO sync configuration
@@ -267,7 +280,7 @@ static int lcec_deasda_init(int comp_id, lcec_slave_t *slave) {
   }
 
   // Only add digital outs on models that actually have the hardware.
-  if (flags & FLAG_DOUT) {
+  if (enable_dout) {
     lcec_syncs_add_pdo_entry(syncs, 0x60fe, 1, 32);  // Digital outputs
   }
 
@@ -299,7 +312,7 @@ static int lcec_deasda_init(int comp_id, lcec_slave_t *slave) {
   // TODO(scottlaird): It appears that various A2 and A3 models have
   // different numbers of digital out (and in?) ports.  We'll probably
   // want to make this configurable, one way or another.
-  if (flags & FLAG_DOUT) {
+  if (enable_dout) {
     hal_data->dout = lcec_dout_allocate_channels(4);
     hal_data->dout->channels[0] = lcec_dout_register_channel_packed(slave, 0x60fe, 0x01, 16, "dout-d01");
     hal_data->dout->channels[1] = lcec_dout_register_channel_packed(slave, 0x60fe, 0x01, 17, "dout-d02");
