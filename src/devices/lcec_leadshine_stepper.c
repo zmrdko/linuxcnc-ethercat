@@ -316,7 +316,7 @@ static int lcec_leadshine_stepper_init(int comp_id, lcec_slave_t *slave) {
 
     for (int channel = 0; channel < options->channel[axis]->digital_in_channels; channel++) {
       dname = LCEC_HAL_ALLOCATE_STRING(30);
-      snprintf(dname, 30, "%s-din-%d", name_prefix, channel);
+      snprintf(dname, 30, "%s-din-%d", name_prefix, channel+1);
       hal_data->din->channels[6 + channel] = lcec_din_register_channel_packed(slave, base_idx + 0xfd, 0, 4 + channel, dname);
     }
   }

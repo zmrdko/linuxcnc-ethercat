@@ -102,7 +102,94 @@ starting with `ch2`.  For example, `ch1peakCurrent_amps` and
 
 ## Inputs
 
-TBD
+To use digital inputs, you will most likely need to manually make
+configuration changes to your stepper drive using `ethercat download`
+on the command line.  Unfortunately, Leadshine only re-reads digital
+input configuration on reboot, so it's not really useful to configure
+this via `<modParam>`, like other drivers currently do.
+
+Also, the exact commands needed depend on the Leadshine model that
+you're using.  Various models have between 4 and 7 inputs with
+somewhat different capabilities.
+
+To start, please find your device's manual.  Leadshine has PDF
+available at
+https://www.leadshine.com/networks/fieldbus/EtherCAT.html.
+
+I'm going to use the 2CS3E-D507, because that's what I have, and it's
+slightly more complex than most devices.  In the manual, in the "I/O
+Configuration Object" section, there are 2 tables that we'll need:
+
+- Input Ports Function Value
+- 0x60FD Corresponding Function Table
+
+The first table shows the defaults for each port, as well as which
+SDOs control each.  Generally, input 1 on a single-axis device is at
+0x2152:01, input 2 is at :02, and so on.  For dual axis devices, use
+0x2952 instead of 0x2152.
+
+For the 2CS3E-D507, the input port function value table says that
+input 1 defaults to "touch probe 1", which is 0x17.  Looking in the
+other table, we can see that 0x17 is, indeed "Probe 1".
+
+For the 2CS3E, there are 7 valid functions listed:
+
+- probe1 (0x17)
+- probe2 (0x18)
+- home (0x16)
+- positive limit (0x01)
+- negative limit (0x02)
+- quick stop (0x14)
+- GPIO (0x19).
+
+All of these *except* GPIO have special meanings in specific contexts.
+For instance, home and the two limit switches can be used in CiA
+402-native homing.
+
+You *should* be able to still read from these inputs if they're in
+their default config, but the hardware reports their status
+differently, so we've given them different HAL pin names.
+
+- probe1 -> `srv-din-probe1`
+- probe2 -> `srv-din-probe2`
+- home -> `srv-din-home`
+- positive limit -> `srv-din-positive-limit`
+- negative limit -> `srv-din-negative-limit`
+- quick stop -> `srv-din-quick-stop`
+
+When pins are configured as GPIO, they get simple numeric names:
+
+- Input 1 -> `srv-din-1`
+- Input 2 -> `srv-din-2`
+
+and so on.
+
+To, to change input 1 from its default (probe1) to GPIO, you'll need
+to run these commands on the command line.  Replace XX and YY with the
+master and slave address for your Leadshine device; see `ethercat
+slaves` for a list.
+
+```
+$ ethercat download -m XX -p YY 0x2152 0x01 0x19
+```
+
+If you want to change more than one port, do those next.  Then run the
+following command to save these settings as the new startup defaults:
+
+```
+$ ethercat download -m XX -p YY 0x1010 0x01 0x65766173
+```
+
+Once this is complete, you'll need to power-cycle the stepper drive for the
+new configs to take effect.  You can verify the new config after
+reboot by running:
+
+```
+$ ethercat upload -m XX -p YY 0x2152 0x01
+```
+
+This should return 0x19, which is what we set above.  If the save
+failed, then we'll probably get 0x17 back instead.
 
 ## Outputs
 
