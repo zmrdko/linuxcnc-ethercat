@@ -140,6 +140,9 @@
     </slave>
     <slave idx="10" type="basic_cia402" vid="0x00000083" pid="0x00000053" name="omron-mx2">
       <!--3G3AX-MX2-ECT EtherCAT Communication Unit for 3G3MX2-->
+      <modParam name="pdoAutoflow" value="true"/>
+      <modParam name="pdoEntryLimit" value="2"/>
+      <modParam name="pdoIncrement" value="1"/>
       <modParam name="ciaRxPDOEntryLimit" value="8"/>
       <modParam name="ciaTxPDOEntryLimit" value="8"/>
       <modParam name="enablePP" value="false"/>
@@ -150,8 +153,8 @@
       <modParam name="enableErrorCode" value="true"/>
       <!-- <modParam name="enableTargetVL" value="true"/> -->
       <!-- <modParam name="enableVLDemand" value="true"/>-->
-      <modParam name="enableVLMaximum" value="true"/>
-      <modParam name="enableVLMinimum" value="true"/>
+      <!-- <modParam name="enableVLMaximum" value="true"/> -->
+      <!-- <modParam name="enableVLMinimum" value="true"/> -->
     </slave>
   </master>
 </masters>

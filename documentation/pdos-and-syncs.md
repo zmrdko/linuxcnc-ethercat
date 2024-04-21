@@ -162,6 +162,18 @@ exist on this specific device.  So we need to manually handle
 mappings, *and* there are a lot of conditionals to control which
 objects get mapped.
 
+In addition to all of this, this style has an extra feature that can
+be useful in very dynamic environments (like CiA 402 devices) --
+`lcec_syncs_enable_autoflow()` can tell LinuxCNC how many PDOs a
+device supports, and how many PDO entries each PDO supports, and it
+will then automatically start a new PDO when needed because the
+current PDO has run out of free entries.  This lets us use the same
+basic code on devices that allow dozens of PDO entries per PDO, as
+well as devices like the Omron MX2 which only allow *2* PDO entries
+per PDO.  By using `autoflow`, we can transparently map a handful of
+PDO entries into a many PDOs as required without needing to modify any
+higher-level code.
+
 ## Performance
 
 If we don't explicitly set `sync_info`, then the Etherlab EtherCAT
