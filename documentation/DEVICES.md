@@ -24,6 +24,9 @@ Description | Driver | EtherCAT VID:PID | Device Type | Testing Status | Notes
 [Leadshine CS3E-D507](http://www.leadshine.com) | [leadshine_stepper](../devices/lcec_leadshine_stepper.c) | 0x4321:0x00001100 | Stepper Drive |  | 
 [Leadshine CS3E-D507E](http://www.leadshine.com) | [leadshine_stepper](../devices/lcec_leadshine_stepper.c) | 0x4321:0x00000500 | Stepper Drive |  | 
 [Delta MS-300 AC Motor Drive](https://www.deltaww.com/en-us/products/AC-Motor-Drives/3449) | [dems300](../src/devices/lcec_dems300.c) | 0x1dd:0x10400200 | AC Motor Drive |  | 
+[RTelligent DRV1500E DC Servo](http://www.rtelligent.net/Low-Voltage-Brushless-Servo-Drive.html) | [rtdrv](../devices/lcec_rtdrv.c) | 0xa88:0x0a880044 | DC Servo Drive |  | 
+[RTelligent DRV400E DC Servo](http://www.rtelligent.net/Low-Voltage-Brushless-Servo-Drive.html) | [rtdrv](../devices/lcec_rtdrv.c) | 0xa88:0x0a880042 | DC Servo Drive | In @scottlaird's test bench | 
+[RTelligent DRV750E DC Servo](http://www.rtelligent.net/Low-Voltage-Brushless-Servo-Drive.html) | [rtdrv](../devices/lcec_rtdrv.c) | 0xa88:0x0a880043 | DC Servo Drive |  | 
 [Delta ASDA-A2-E](https://www.deltaww.com/en-us/products/Servo-Systems-AC-Servo-Motors-and-Drives/23) | [deasda](../src/devices/lcec_deasda.c) | 0x1dd:0x10305070 | Servo Drive |  | 
 [Delta ASDA-A3](https://www.deltaww.com/en-US/products/Servo-Systems-AC-Servo-Motors-and-Drives/4102) | [deasda](../src/devices/lcec_deasda.c) | 0x1dd:0x00006010 | Servo Drive |  | 
 [Delta ASDA-B3](https://www.deltaww.com/en-US/products/Servo-Systems-AC-Servo-Motors-and-Drives/5158) | [deasda](../src/devices/lcec_deasda.c) | 0x1dd:0x00006080 | Servo Drive |  | 

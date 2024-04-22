@@ -1,0 +1,11 @@
+---
+Device: DRV400E
+VendorID: "0x00000a88"
+VendorName: "RTelligent"
+PID: "0x0a880042"
+Description: RTelligent DRV400E DC Servo
+DocumentationURL: "http://www.rtelligent.net/Low-Voltage-Brushless-Servo-Drive.html"
+DeviceType: "DC Servo Drive"
+Notes: ""
+SrcFile: devices/lcec_rtdrv.c
+TestingStatus: "In @scottlaird's test bench"
