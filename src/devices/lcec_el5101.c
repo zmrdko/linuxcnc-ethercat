@@ -19,9 +19,9 @@
 /// @file
 /// @brief Driver for Beckhoff EL5101 Encoder modules
 
-#include "lcec_el5101.h"
-
 #include "../lcec.h"
+
+#define LCEC_EL5101_PERIOD_SCALE 500e-9
 
 static int lcec_el5101_init(int comp_id, lcec_slave_t *slave);
 
@@ -65,6 +65,7 @@ typedef struct {
   hal_float_t *pos;
   hal_float_t *period;
   hal_float_t *frequency;
+  hal_float_t *frequency_scale;
 
   unsigned int status_pdo_os;
   unsigned int value_pdo_os;
@@ -104,6 +105,7 @@ static const lcec_pindesc_t slave_pins[] = {
     {HAL_FLOAT, HAL_OUT, offsetof(lcec_el5101_data_t, pos), "%s.%s.%s.enc-pos"},
     {HAL_FLOAT, HAL_OUT, offsetof(lcec_el5101_data_t, period), "%s.%s.%s.enc-period"},
     {HAL_FLOAT, HAL_OUT, offsetof(lcec_el5101_data_t, frequency), "%s.%s.%s.enc-frequency"},
+    {HAL_FLOAT, HAL_IO, offsetof(lcec_el5101_data_t, frequency_scale), "%s.%s.%s.enc-frequency-scale"},
     {HAL_FLOAT, HAL_IO, offsetof(lcec_el5101_data_t, pos_scale), "%s.%s.%s.enc-pos-scale"},
     {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
@@ -187,6 +189,10 @@ static int lcec_el5101_init(int comp_id, lcec_slave_t *slave) {
   hal_data->last_count = 0;
   hal_data->old_scale = *(hal_data->pos_scale) + 1.0;
   hal_data->scale = 1.0;
+
+  // This should really be 1e-2 (0.001), but this driver has had the wrong value here for years.  It produces incorrect results, but
+  // presumably people are expecting that at this point?
+  *(hal_data->frequency_scale) = 5e-2;
 
   return 0;
 }
@@ -284,7 +290,7 @@ static void lcec_el5101_read(lcec_slave_t *slave, long period) {
   *(hal_data->pos) = *(hal_data->count) * hal_data->scale;
 
   // scale period
-  *(hal_data->frequency) = ((double)(*(hal_data->raw_frequency))) * LCEC_EL5101_FREQUENCY_SCALE;
+  *(hal_data->frequency) = ((double)(*(hal_data->raw_frequency))) * (*hal_data->frequency_scale);
   *(hal_data->period) = ((double)(*(hal_data->raw_period))) * LCEC_EL5101_PERIOD_SCALE;
 
   hal_data->last_operational = 1;
