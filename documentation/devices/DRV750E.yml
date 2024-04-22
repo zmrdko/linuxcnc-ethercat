@@ -1,0 +1,11 @@
+---
+Device: DRV750E
+VendorID: "0x00000a88"
+PID: "0x0a880043"
+VendorName: "RTelligent"
+Description: RTelligent DRV750E DC Servo
+DocumentationURL: "http://www.rtelligent.net/Low-Voltage-Brushless-Servo-Drive.html"
+DeviceType: "DC Servo Drive"
+Notes: ""
+SrcFile: devices/lcec_rtdrv.c
+TestingStatus: ""

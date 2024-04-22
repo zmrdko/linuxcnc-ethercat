@@ -5,39 +5,7 @@
 
     <slave idx="7" type="ECT60" name="rt-ect60"/>
     <slave idx="8" type="ECR60x2" name="rt-ecr60x2"/>
-    <slave idx="9" type="basic_cia402" vid="0x00000a88" pid="0x0a880042" name="rt-drv400">
-      <!--DRV400E(COE)-->
-      <dcConf assignActivate="300" sync0Cycle="*1" sync0Shift="0"/>
-      <modParam name="ciaRxPDOEntryLimit" value="16"/>
-      <modParam name="ciaTxPDOEntryLimit" value="16"/>
-      <modParam name="enablePP" value="true"/>
-      <modParam name="enablePV" value="true"/>
-      <modParam name="enableCSP" value="true"/>
-      <modParam name="enableCSV" value="true"/>
-      <modParam name="enableCST" value="true"/>
-      <modParam name="enableDigitalInput" value="true"/>
-      <modParam name="digitalInChannels" value="16"/>
-      <modParam name="enableDigitalOutput" value="true"/>
-      <modParam name="digitalOutChannels" value="16"/>
-      <modParam name="enableErrorCode" value="true"/>
-      <modParam name="enableFollowingErrorTimeout" value="true"/>
-      <modParam name="enableFollowingErrorWindow" value="true"/>
-      <modParam name="enableHomeAccel" value="true"/>
-      <modParam name="enableMaximumCurrent" value="true"/>
-      <modParam name="enableMaximumTorque" value="true"/>
-      <modParam name="enablePolarity" value="true"/>
-      <modParam name="enablePositioningTime" value="true"/>
-      <modParam name="enablePositioningWindow" value="true"/>
-      <modParam name="enableProbeStatus" value="true"/>
-      <modParam name="enableProfileAccel" value="true"/>
-      <modParam name="enableProfileDecel" value="true"/>
-      <modParam name="enableProfileMaxVelocity" value="true"/>
-      <modParam name="enableProfileVelocity" value="true"/>
-      <modParam name="enableTorqueDemand" value="true"/>
-      <modParam name="enableTorqueSlope" value="true"/>
-      <modParam name="enableVelocityErrorTime" value="true"/>
-      <modParam name="enableVelocityErrorWindow" value="true"/>
-    </slave>
+    <slave idx="9" type="DRV400E" name="rt-drv400"/>
     <slave idx="10" type="OMMX2" name="omron-mx2"/>
   </master>
 </masters>
