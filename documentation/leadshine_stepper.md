@@ -68,11 +68,11 @@ Only the 2CS3E-D507 has been tested at this point.
 - Digital input controls aren't complete yet.  The 2CS3E series, at
   least, doesn't *quite* seem to follow the CiA 402 spec.  It puts
   GPIO pins at 0x60fd:0 bits 4-7, while the spec says that bits 4-15
-  are reserved.  Also, the controls for mapping hardware input pins to
-  logical pins seem to require a save followed by a restart of the
-  device in order to take effect, which is awkward in a
-  `<modParam>`. See Leadshine's documentation for details on how to
-  change pin function for now.
+  are reserved and implies that GPIO pins should start at bit 16.
+  Also, the controls for mapping hardware input pins to logical pins
+  seem to require a save followed by a restart of the device in order
+  to take effect, which is awkward in a `<modParam>`. See Leadshine's
+  documentation for details on how to change pin function for now.
 
 ## Configuration
 
@@ -126,7 +126,7 @@ Configuration Object" section, there are 2 tables that we'll need:
 The first table shows the defaults for each port, as well as which
 SDOs control each.  Generally, input 1 on a single-axis device is at
 0x2152:01, input 2 is at :02, and so on.  For dual axis devices, use
-0x2952 instead of 0x2152.
+0x2952 instead of 0x2152 for the second axis.
 
 For the 2CS3E-D507, the input port function value table says that
 input 1 defaults to "touch probe 1", which is 0x17.  Looking in the
@@ -146,7 +146,7 @@ All of these *except* GPIO have special meanings in specific contexts.
 For instance, home and the two limit switches can be used in CiA
 402-native homing.
 
-You *should* be able to still read from these inputs if they're in
+You *may* be able to still read from these inputs if they're in
 their default config, but the hardware reports their status
 differently, so we've given them different HAL pin names.
 
@@ -193,4 +193,38 @@ failed, then we'll probably get 0x17 back instead.
 
 ## Outputs
 
-TBD
+Digital outputs work similarly to digital inputs, in that they have
+default settings and may need to be overridden before they can be
+used.  And, like digital inputs, you need to power-cycle the device
+before the change takes effect.
+
+Digital output functions are controlled via `0x2156:n`, where `n` is
+the output port number (1, 2, etc).  For the second axis on 2-axis
+drives, use `0x2956` instead.
+
+There are 5 options for configure outputs:
+
+- alarm: `0x2156:n` = 1
+- servo on: `0x2156:n` = 2
+- brake: `0x2156:n` = 3
+- in-position: `0x2156:n` = 4
+- GPIO: `0x2156:n` = 5
+
+By default on 2CS3E-D507, output port 1 is set to "alarm" and port 2
+is set to "brake".  See Leadshine's documentation for the default
+values for other models.
+
+To change these, you'll need to use thed `ethercat` command-line tool.
+For example, to switch port 2 to GPIO (5), you'll need to run:
+
+```
+$ ethercat download -m XX -p YY 0x2156 2 5
+```
+
+After you've finished setting output (and input) ports, you'll need to save the settings via:
+
+```
+$ ethercat download -m XX -p YY 0x1010 0x01 0x65766173
+```
+
+Then power-cycle the drive.
