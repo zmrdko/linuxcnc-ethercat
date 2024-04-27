@@ -285,39 +285,45 @@ static int lcec_leadshine_stepper_init(int comp_id, lcec_slave_t *slave) {
   // Set up digital in/out.  Leadshine puts these at the wrong place,
   // so we need to do this ourselves instead of relying on the base
   // CiA code.
+  int i = 0;
+  hal_data->din = lcec_din_allocate_channels(64);  //(options->channel[0]->digital_in_channels + 8)*options->channels);
   for (int axis = 0; axis < options->channels; axis++) {
     char *dname;
     const char *name_prefix = options->channel[axis]->name_prefix;
     int base_idx = 0x6000 + 0x800 * axis;
 
-    hal_data->din = lcec_din_allocate_channels(options->channel[axis]->digital_in_channels + 4);
-
     dname = LCEC_HAL_ALLOCATE_STRING(30);
     snprintf(dname, 30, "%s-din-negative-limit", name_prefix);
-    hal_data->din->channels[0] = lcec_din_register_channel_packed(slave, base_idx + 0xfd, 0, 0, dname);  // negative limit switch
+    hal_data->din->channels[i++] = lcec_din_register_channel_packed(slave, base_idx + 0xfd, 0, 0, dname);  // negative limit switch
+
     dname = LCEC_HAL_ALLOCATE_STRING(30);
     snprintf(dname, 30, "%s-din-positive-limit", name_prefix);
-    hal_data->din->channels[1] = lcec_din_register_channel_packed(slave, base_idx + 0xfd, 0, 1, dname);  // positive limit switch
+    hal_data->din->channels[i++] = lcec_din_register_channel_packed(slave, base_idx + 0xfd, 0, 1, dname);  // positive limit switch
+
     dname = LCEC_HAL_ALLOCATE_STRING(30);
     snprintf(dname, 30, "%s-din-home", name_prefix);
-    hal_data->din->channels[2] = lcec_din_register_channel_packed(slave, base_idx + 0xfd, 0, 2, dname);  // home
+    hal_data->din->channels[i++] = lcec_din_register_channel_packed(slave, base_idx + 0xfd, 0, 2, dname);  // home
+
     dname = LCEC_HAL_ALLOCATE_STRING(30);
     snprintf(dname, 30, "%s-din-probe1", name_prefix);
-    hal_data->din->channels[3] = lcec_din_register_channel_packed(slave, base_idx + 0xfd, 0, 26, dname);  // home
+    hal_data->din->channels[i++] = lcec_din_register_channel_packed(slave, base_idx + 0xfd, 0, 26, dname);  // home
+
     dname = LCEC_HAL_ALLOCATE_STRING(30);
     snprintf(dname, 30, "%s-din-probe2", name_prefix);
-    hal_data->din->channels[4] = lcec_din_register_channel_packed(slave, base_idx + 0xfd, 0, 27, dname);  // home
+    hal_data->din->channels[i++] = lcec_din_register_channel_packed(slave, base_idx + 0xfd, 0, 27, dname);  // home
+
     dname = LCEC_HAL_ALLOCATE_STRING(30);
     snprintf(dname, 30, "%s-din-index-z", name_prefix);
-    hal_data->din->channels[5] = lcec_din_register_channel_packed(slave, base_idx + 0xfd, 0, 31, dname);  // home
+    hal_data->din->channels[i++] = lcec_din_register_channel_packed(slave, base_idx + 0xfd, 0, 31, dname);  // home
+
     dname = LCEC_HAL_ALLOCATE_STRING(30);
     snprintf(dname, 30, "%s-din-quick-stop", name_prefix);
-    hal_data->din->channels[6] = lcec_din_register_channel_packed(slave, base_idx + 0xfd, 0, 23, dname);  // home
+    hal_data->din->channels[i++] = lcec_din_register_channel_packed(slave, base_idx + 0xfd, 0, 23, dname);  // home
 
     for (int channel = 0; channel < options->channel[axis]->digital_in_channels; channel++) {
       dname = LCEC_HAL_ALLOCATE_STRING(30);
       snprintf(dname, 30, "%s-din-%d", name_prefix, channel + 1);
-      hal_data->din->channels[6 + channel] = lcec_din_register_channel_packed(slave, base_idx + 0xfd, 0, 4 + channel, dname);
+      hal_data->din->channels[i++] = lcec_din_register_channel_packed(slave, base_idx + 0xfd, 0, 4 + channel, dname);
     }
   }
 
@@ -348,8 +354,7 @@ static void lcec_leadshine_stepper_read(lcec_slave_t *slave, long period) {
   // *(hal_data->alarm_code) = EC_READ_U16(&pd[hal_data->alarm_code_os]);
 
   lcec_cia402_read_all(slave, hal_data->cia402);
-  // XXXX: If you want digital in pins, then uncomment this:
-  //  lcec_din_read_all(slave, hal_data->din);
+  lcec_din_read_all(slave, hal_data->din);
 }
 
 static void lcec_leadshine_stepper_write(lcec_slave_t *slave, long period) {
@@ -364,6 +369,4 @@ static void lcec_leadshine_stepper_write(lcec_slave_t *slave, long period) {
   // pins, then do that here.
 
   lcec_cia402_write_all(slave, hal_data->cia402);
-  // XXXX: uncomment for digital out pins:
-  //  lcec_dout_write_all(slave, hal_data->dout);
 }

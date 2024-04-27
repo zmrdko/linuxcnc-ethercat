@@ -165,6 +165,6 @@ void lcec_din_read_all(lcec_slave_t *slave, lcec_class_din_channels_t *channels)
   for (int i = 0; i < channels->count; i++) {
     lcec_class_din_channel_t *channel = channels->channels[i];
 
-    lcec_din_read(slave, channel);
+    if (channel != NULL) lcec_din_read(slave, channel);
   }
 }
