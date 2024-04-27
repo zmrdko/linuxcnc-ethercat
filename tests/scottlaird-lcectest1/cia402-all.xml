@@ -7,5 +7,7 @@
     <slave idx="8" type="ECR60x2" name="rt-ecr60x2"/>
     <slave idx="9" type="DRV400E" name="rt-drv400"/>
     <slave idx="10" type="OMMX2" name="omron-mx2"/>
+    <slave idx="13" type="EP2308" name="D35"/>
+    <slave idx="14" type="EP2338" name="D36"/>
   </master>
 </masters>
