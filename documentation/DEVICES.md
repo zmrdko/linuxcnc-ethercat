@@ -194,6 +194,7 @@ Description | Driver | EtherCAT VID:PID | Device Type | Testing Status | Notes
 [Beckhoff EL7221 1Ch. MDP742 Servo motor output stage (50V, 8A RMS)](http://www.beckhoff.com/EL7211) | [el7211](../src/devices/lcec_el7211.c) | 0x2:0x1c353052 | Servo Drive |  | 
 [Beckhoff EL7342 2Ch. DC motor output stage (50V, 3.5A)](http://www.beckhoff.com/EL7342) | [el7342](../src/devices/lcec_el7342.c) | 0x2:0x1cae3052 | DC Drive |  | 
 [Beckhoff EL7411 BLDC Terminal with incremental encoder/Hall, 50 V DC, 4.5 A](http://www.beckhoff.com/EL7411) | [el7411](../src/devices/lcec_el7411.c) | 0x2:0x1cf33052 | BLDC Drive |  | 
+[Beckhoff EL9410 E-Bus Power Supplier  (Diagnostics)](http://www.beckhoff.com/EL9410) | [el9410](../devices/lcec_el9410.c) | 0x2:0x24c23052 | System Terminals |  | 
 [Beckhoff EL9505 Power supply terminal 5V](http://www.beckhoff.com/EL9505) | [el95xx](../src/devices/lcec_el95xx.c) | 0x2:0x25213052 | System Terminals |  | 
 [Beckhoff EL9508 Power supply terminal 8V](http://www.beckhoff.com/EL9508) | [el95xx](../src/devices/lcec_el95xx.c) | 0x2:0x25243052 | System Terminals |  | 
 [Beckhoff EL9510 Power supply terminal 10V](http://www.beckhoff.com/EL9510) | [el95xx](../src/devices/lcec_el95xx.c) | 0x2:0x25263052 | System Terminals |  | 
