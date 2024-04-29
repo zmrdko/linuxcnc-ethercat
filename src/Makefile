@@ -97,12 +97,12 @@ install-realtime: realtime
 
 lcec.so: lcec_main.o $(lcec-common-objs) liblcecdevices.a
 	$(ECHO) Linking $@
-	$(Q)ld -d -r -o $*.tmp lcec_main.o $(lcec-common-objs)
-	$(Q)objcopy -j .rtapi_export -O binary $*.tmp $*.sym
-	$(Q)(echo '{ global : '; tr -s '\0' < $*.sym | xargs -r0 printf '%s;\n' | grep .; echo 'local : * ; };') > $*.ver
-	$(Q)$(CC) -shared -Bsymbolic $(RTLDFLAGS) -Wl,--version-script,$*.ver -o $@ lcec_main.o $(lcec-comon-objs) -lm
-	$(Q)$(CC) -shared -Bsymbolic $(RTLDFLAGS) -Wl,--version-script,$*.ver -o $@ lcec_main.o $(lcec-common-objs) -lm $(RTEXTRA_LDFLAGS)
-	$(Q)chmod -x $@
+	ld -d -r -o $@.tmp lcec_main.o $(lcec-common-objs)
+	objcopy -j .rtapi_export -O binary $@.tmp $@.sym
+	(echo '{ global : '; tr -s '\0' < $@.sym | xargs -r0 printf '%s;\n' | grep .; echo 'local : * ; };') > $@.ver
+#$(CC) -shared -Bsymbolic $(RTLDFLAGS) -Wl,--version-script,$@.ver -o $@ lcec_main.o $(lcec-comon-objs) -lm
+	$(CC) -shared -Bsymbolic $(RTLDFLAGS) -Wl,--version-script,$@.ver -o $@ lcec_main.o $(lcec-common-objs) -lm $(RTEXTRA_LDFLAGS)
+	chmod -x $@
 
 lcec_conf: $(lcec-conf-objs) $(lcec-common-objs) liblcecdevices.a
 	$(CC) -o $@ $(lcec-conf-objs) $(lcec-common-objs) -Wl,-rpath,$(LIBDIR) -L$(LIBDIR) -llinuxcnchal -lexpat -Wl,--whole-archive liblcecdevices.a -Wl,--no-whole-archive -lethercat -lm
