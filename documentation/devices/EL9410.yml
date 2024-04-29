@@ -1,0 +1,11 @@
+---
+Device: EL9410
+VendorID: "0x00000002"
+VendorName: Beckhoff Automation GmbH & Co. KG
+PID: "0x24c23052"
+Description: Beckhoff EL9410 E-Bus Power Supplier  (Diagnostics)
+DocumentationURL: http://www.beckhoff.com/EL9410
+DeviceType: System Terminals
+Notes: ""
+SrcFile: devices/lcec_el9410.c
+TestingStatus: ""
