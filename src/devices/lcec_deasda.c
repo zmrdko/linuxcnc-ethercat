@@ -45,6 +45,7 @@
 
 #define DEASDA_OPMODE_CSP 8
 #define DEASDA_OPMODE_CSV 9
+#define DEASDA_OPMODE_HOM 6
 
 static int lcec_deasda_init(int comp_id, lcec_slave_t *slave);
 
@@ -56,6 +57,7 @@ static const lcec_modparam_desc_t lcec_deasda_modparams[] = {
 
 static const lcec_modparam_desc_t lcec_deasda_modparams_b3[] = {
   {"opmode", M_OPERATIONMODE, MODPARAM_TYPE_STRING, "CSP", "Operation mode, CSV or CSP"},
+  {"enableDigitalOutput", M_DIGITALOUT, MODPARAM_TYPE_BIT, "true", "Enable digital output ports"},
     {NULL},
 };
 
@@ -67,6 +69,7 @@ typedef struct {
 static const drive_operationmodes_t drive_operationmodes[] = {
     {"CSV", DEASDA_OPMODE_CSV},
     {"CSP", DEASDA_OPMODE_CSP},
+    {"HOM", DEASDA_OPMODE_HOM},
     {NULL},
 };
 
@@ -75,7 +78,7 @@ static const drive_operationmodes_t drive_operationmodes[] = {
 static lcec_typelist_t types[] = {
     {"DeASDA", LCEC_DELTA_VID, 0x10305070, 0, NULL, lcec_deasda_init, lcec_deasda_modparams, FLAG_LOWRES_ENC | FLAG_DOUT},
     {"DeASDA3", LCEC_DELTA_VID, 0x00006010, 0, NULL, lcec_deasda_init, lcec_deasda_modparams, FLAG_HIGHRES_ENC | FLAG_DOUT},
-    {"DeASDB3", LCEC_DELTA_VID, 0x00006080, 0, NULL, lcec_deasda_init, lcec_deasda_modparams_b3, FLAG_HIGHRES_ENC},
+    {"DeASDB3", LCEC_DELTA_VID, 0x00006080, 0, NULL, lcec_deasda_init, lcec_deasda_modparams_b3, FLAG_HIGHRES_ENC | FLAG_DOUT},
     {NULL},
 };
 
@@ -99,6 +102,7 @@ typedef struct {
   hal_bit_t *limit_active;
   hal_bit_t *zero_speed;
   hal_bit_t *switch_on;
+  hal_bit_t *req_homing;
   hal_bit_t *enable_volt;
   hal_bit_t *quick_stop;
   hal_bit_t *enable;
@@ -139,8 +143,10 @@ typedef struct {
   unsigned int cmdvalue_pdo_os;
   unsigned int divalue_pdo_os;
   unsigned int torque_pdo_os;
+  unsigned int operation_mode_pdo_os;
 
   hal_bit_t last_switch_on;
+  hal_bit_t last_req_homing;
   hal_bit_t internal_fault;
 
   hal_u32_t fault_reset_retry;
@@ -168,6 +174,7 @@ static const lcec_pindesc_t slave_pins[] = {
     {HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, limit_active), "%s.%s.%s.srv-limit-active"},
     {HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, zero_speed), "%s.%s.%s.srv-zero-speed"},
     {HAL_BIT, HAL_IN, offsetof(lcec_deasda_data_t, switch_on), "%s.%s.%s.srv-switch-on"},
+    {HAL_BIT, HAL_IN, offsetof(lcec_deasda_data_t, req_homing), "%s.%s.%s.req-homing"},
     {HAL_BIT, HAL_IN, offsetof(lcec_deasda_data_t, enable_volt), "%s.%s.%s.srv-enable-volt"},
     {HAL_BIT, HAL_IN, offsetof(lcec_deasda_data_t, quick_stop), "%s.%s.%s.srv-quick-stop"},
     {HAL_BIT, HAL_IN, offsetof(lcec_deasda_data_t, enable), "%s.%s.%s.srv-enable"},
@@ -269,6 +276,7 @@ static int lcec_deasda_init(int comp_id, lcec_slave_t *slave) {
   lcec_syncs_add_sync(syncs, EC_DIR_OUTPUT, EC_WD_DEFAULT);
   lcec_syncs_add_pdo_info(syncs, 0x1602);
   lcec_syncs_add_pdo_entry(syncs, 0x6040, 0, 16);  // Control word
+  lcec_syncs_add_pdo_entry(syncs, 0x6060, 0, 8);   // Mode of operation
 
   // We could actually map both of these at the same time without
   // problems, but for compabilities's sake, I don't want to change it
@@ -377,6 +385,7 @@ static int lcec_deasda_init(int comp_id, lcec_slave_t *slave) {
     lcec_pdo_init(slave, 0x607A, 0x00, &hal_data->cmdvalue_pdo_os, NULL);
     lcec_pdo_init(slave, 0x6077, 0x00, &hal_data->torque_pdo_os, NULL);
     lcec_pdo_init(slave, 0x60FD, 0x00, &hal_data->divalue_pdo_os, NULL);
+    lcec_pdo_init(slave, 0x6060, 0x00, &hal_data->operation_mode_pdo_os, NULL);
 
     // export pins common
     if ((err = lcec_pin_newf_list(hal_data, slave_pins, LCEC_MODULE_NAME, master->name, slave->name)) != 0) return err;
@@ -414,6 +423,7 @@ static int lcec_deasda_init(int comp_id, lcec_slave_t *slave) {
   // TODO: Add additional registers here if avialalbe: e.g. DIDO based on servo type FLAG_SERVO_X2/FLAG_SERVO_X3
 
   hal_data->last_switch_on = 0;
+  hal_data->last_req_homing = 0;
   hal_data->internal_fault = 0;
 
   hal_data->fault_reset_retry = 0;
@@ -592,6 +602,7 @@ static void lcec_deasda_write_csp(lcec_slave_t *slave, long period) {
   uint16_t control;
   int32_t pos_puu;
   int switch_on_edge;
+  int req_homing_edge;
 
   // do digital outputs
   if (hal_data->dout) lcec_dout_write_all(slave, hal_data->dout);
@@ -610,10 +621,20 @@ static void lcec_deasda_write_csp(lcec_slave_t *slave, long period) {
   // check for change in scale value
   lcec_deasda_check_scales(hal_data);
 
+
+  // check for req homing edge
+  req_homing_edge = *(hal_data->req_homing) && !hal_data->last_req_homing;
+  hal_data->last_req_homing = *(hal_data->req_homing);
+  if (req_homing_edge) {
+    // set to 0x6060 to requested mode (HOM)
+    EC_WRITE_U8(&pd[hal_data->operation_mode_pdo_os], DEASDA_OPMODE_HOM);
+  }
+
   // write dev ctrl
   control = 0;
   if (*(hal_data->enable_volt)) control |= (1 << 1);
   if (!*(hal_data->quick_stop)) control |= (1 << 2);
+  if (req_homing_edge) control |= (1 << 5);
   if (*(hal_data->fault_reset)) control |= (1 << 7);
   if (*(hal_data->halt)) control |= (1 << 8);
 
