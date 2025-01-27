@@ -239,6 +239,8 @@ static int lcec_deasda_init(int comp_id, lcec_slave_t *slave) {
   flags = slave->flags;
 
   syncs = LCEC_HAL_ALLOCATE(lcec_syncs_t);
+  
+  rtapi_set_msg_level(RTAPI_MSG_ALL);
 
   // Determine Operation Mode (modParam opmode) as this defines everything else
   LCEC_CONF_MODPARAM_VAL_T *pval;
@@ -628,6 +630,7 @@ static void lcec_deasda_write_csp(lcec_slave_t *slave, long period) {
   if (req_homing_edge) {
     // set to 0x6060 to requested mode (HOM)
     EC_WRITE_U8(&pd[hal_data->operation_mode_pdo_os], DEASDA_OPMODE_HOM);
+    rtapi_print_msg(RTAPI_MSG_DBG, LCEC_MSG_PFX "  - started homing for %s \n", slave->name);
   }
 
   // write dev ctrl
@@ -638,6 +641,8 @@ static void lcec_deasda_write_csp(lcec_slave_t *slave, long period) {
   if (*(hal_data->fault_reset)) control |= (1 << 7);
   if (*(hal_data->halt)) control |= (1 << 8);
 
+  rtapi_print_msg(RTAPI_MSG_DBG, LCEC_MSG_PFX "  - control %s \n", control);
+  
   if (hal_data->fault_reset_retry > 0) {
     if (hal_data->fault_reset_state) control |= (1 << 7);
   } else {
