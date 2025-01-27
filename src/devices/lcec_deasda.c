@@ -640,8 +640,6 @@ static void lcec_deasda_write_csp(lcec_slave_t *slave, long period) {
   if (req_homing_edge) control |= (1 << 5);
   if (*(hal_data->fault_reset)) control |= (1 << 7);
   if (*(hal_data->halt)) control |= (1 << 8);
-
-  rtapi_print_msg(RTAPI_MSG_DBG, LCEC_MSG_PFX "  - control %s \n", control);
   
   if (hal_data->fault_reset_retry > 0) {
     if (hal_data->fault_reset_state) control |= (1 << 7);
