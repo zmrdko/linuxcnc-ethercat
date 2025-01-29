@@ -31,6 +31,7 @@
 
 #define M_OPERATIONMODE 0
 #define M_DIGITALOUT 1
+#define M_HOMINGMETHOD 2
 
 #define DEASDA_PULSES_PER_REV_DEFLT_LOWRES  (1280000)   // this is the default value for A2 (default value)
 #define DEASDA_PULSES_PER_REV_DEFLT_HIGHRES (16777216)  // this is the default value for A3
@@ -47,6 +48,47 @@
 #define DEASDA_OPMODE_CSV 9
 #define DEASDA_OPMODE_HOM 6
 
+//see manual
+#define DEASDA_HOMEMETHOD_1 1
+#define DEASDA_HOMEMETHOD_2 2
+#define DEASDA_HOMEMETHOD_3 3
+#define DEASDA_HOMEMETHOD_4 4
+#define DEASDA_HOMEMETHOD_5 5
+#define DEASDA_HOMEMETHOD_6 6
+#define DEASDA_HOMEMETHOD_7 7
+#define DEASDA_HOMEMETHOD_8 8
+#define DEASDA_HOMEMETHOD_9 9
+#define DEASDA_HOMEMETHOD_10 10
+#define DEASDA_HOMEMETHOD_11 11
+#define DEASDA_HOMEMETHOD_12 12
+#define DEASDA_HOMEMETHOD_13 13
+#define DEASDA_HOMEMETHOD_14 14
+#define DEASDA_HOMEMETHOD_15 15
+#define DEASDA_HOMEMETHOD_16 16
+#define DEASDA_HOMEMETHOD_17 17
+#define DEASDA_HOMEMETHOD_18 18
+#define DEASDA_HOMEMETHOD_19 19
+#define DEASDA_HOMEMETHOD_20 20
+#define DEASDA_HOMEMETHOD_21 21
+#define DEASDA_HOMEMETHOD_22 22
+#define DEASDA_HOMEMETHOD_23 23
+#define DEASDA_HOMEMETHOD_24 24
+#define DEASDA_HOMEMETHOD_25 25
+#define DEASDA_HOMEMETHOD_26 26
+#define DEASDA_HOMEMETHOD_27 27
+#define DEASDA_HOMEMETHOD_28 28
+#define DEASDA_HOMEMETHOD_29 29
+#define DEASDA_HOMEMETHOD_30 30
+//#define DEASDA_HOMEMETHOD_31 31 //reserved
+//#define DEASDA_HOMEMETHOD_32 32 //reserved
+#define DEASDA_HOMEMETHOD_33 33
+#define DEASDA_HOMEMETHOD_34 34
+#define DEASDA_HOMEMETHOD_35 35
+#define DEASDA_HOMEMETHOD_36 -1
+#define DEASDA_HOMEMETHOD_37 -2
+#define DEASDA_HOMEMETHOD_38 -3
+#define DEASDA_HOMEMETHOD_39 -4
+
 static int lcec_deasda_init(int comp_id, lcec_slave_t *slave);
 
 static const lcec_modparam_desc_t lcec_deasda_modparams[] = {
@@ -58,6 +100,7 @@ static const lcec_modparam_desc_t lcec_deasda_modparams[] = {
 static const lcec_modparam_desc_t lcec_deasda_modparams_b3[] = {
   {"opmode", M_OPERATIONMODE, MODPARAM_TYPE_STRING, "CSP", "Operation mode, CSV or CSP"},
   {"enableDigitalOutput", M_DIGITALOUT, MODPARAM_TYPE_BIT, "true", "Enable digital output ports"},
+  {"homingMethod", M_HOMINGMETHOD, MODPARAM_TYPE_STRING, "33", "Homing method"},
     {NULL},
 };
 
@@ -66,10 +109,20 @@ typedef struct {
   uint16_t value;    // Which value needs to be set in 0x6060:00 to enable this mode
 } drive_operationmodes_t;
 
+typedef struct {
+  const char *name;  // Mode type name
+  uint16_t value;    // Which value needs to be set in 0x6098:00 to enable this mode
+} drive_homingmethods_t;
+
 static const drive_operationmodes_t drive_operationmodes[] = {
     {"CSV", DEASDA_OPMODE_CSV},
     {"CSP", DEASDA_OPMODE_CSP},
-    {"HOM", DEASDA_OPMODE_HOM},
+    {NULL},
+};
+
+static const drive_homingmethods_t drive_homingmethods[] = {
+    {"1", DEASDA_HOMEMETHOD_1},
+    {"2", DEASDA_HOMEMETHOD_2},
     {NULL},
 };
 
@@ -102,7 +155,6 @@ typedef struct {
   hal_bit_t *limit_active;
   hal_bit_t *zero_speed;
   hal_bit_t *switch_on;
-  hal_bit_t *req_homing;
   hal_bit_t *enable_volt;
   hal_bit_t *quick_stop;
   hal_bit_t *enable;
@@ -110,6 +162,8 @@ typedef struct {
   hal_bit_t *halt;
   hal_u32_t *operation_mode;
   hal_float_t *cmd_value;
+  hal_u32_t *operation_mode_display;
+  hal_bit_t *is_homing;
 
   hal_float_t pos_scale;
   hal_float_t extenc_scale;
@@ -144,9 +198,10 @@ typedef struct {
   unsigned int divalue_pdo_os;
   unsigned int torque_pdo_os;
   unsigned int operation_mode_pdo_os;
+  unsigned int operation_mode_display_pdo_os;
+  unsigned int homing_method_pdo_os;
 
   hal_bit_t last_switch_on;
-  hal_bit_t last_req_homing;
   hal_bit_t internal_fault;
 
   hal_u32_t fault_reset_retry;
@@ -174,13 +229,12 @@ static const lcec_pindesc_t slave_pins[] = {
     {HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, limit_active), "%s.%s.%s.srv-limit-active"},
     {HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, zero_speed), "%s.%s.%s.srv-zero-speed"},
     {HAL_BIT, HAL_IN, offsetof(lcec_deasda_data_t, switch_on), "%s.%s.%s.srv-switch-on"},
-    {HAL_BIT, HAL_IN, offsetof(lcec_deasda_data_t, req_homing), "%s.%s.%s.req-homing"},
     {HAL_BIT, HAL_IN, offsetof(lcec_deasda_data_t, enable_volt), "%s.%s.%s.srv-enable-volt"},
     {HAL_BIT, HAL_IN, offsetof(lcec_deasda_data_t, quick_stop), "%s.%s.%s.srv-quick-stop"},
     {HAL_BIT, HAL_IN, offsetof(lcec_deasda_data_t, enable), "%s.%s.%s.srv-enable"},
     {HAL_BIT, HAL_IN, offsetof(lcec_deasda_data_t, fault_reset), "%s.%s.%s.srv-fault-reset"},
     {HAL_BIT, HAL_IN, offsetof(lcec_deasda_data_t, halt), "%s.%s.%s.srv-halt"},
-    {HAL_U32, HAL_OUT, offsetof(lcec_deasda_data_t, operation_mode), "%s.%s.%s.srv-operation-mode"},
+    {HAL_U32, HAL_IN, offsetof(lcec_deasda_data_t, operation_mode), "%s.%s.%s.srv-operation-mode"},
     {HAL_FLOAT, HAL_OUT, offsetof(lcec_deasda_data_t, torque),
         "%s.%s.%s.srv-torque-rel"},  // relative value (5) - hence current would be redundant
     {HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, di_1), "%s.%s.%s.din-1"},
@@ -193,6 +247,8 @@ static const lcec_pindesc_t slave_pins[] = {
     {HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, neg_lim_switch), "%s.%s.%s.din-neg-lim"},
     {HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, pos_lim_switch), "%s.%s.%s.din-pos-lim"},
     {HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, home_switch), "%s.%s.%s.din-home"},
+    {HAL_U32, HAL_OUT, offsetof(lcec_deasda_data_t, operation_mode_display), "%s.%s.%s.operation-mode-display"},
+    {HAL_BIT, HAL_IN, offsetof(lcec_deasda_data_t, is_homing), "%s.%s.%s.is-homing"},
 
     {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
@@ -237,10 +293,9 @@ static int lcec_deasda_init(int comp_id, lcec_slave_t *slave) {
   uint64_t flags;
   int enable_dout = slave->flags & FLAG_DOUT;
   flags = slave->flags;
+  int homing_method = 33;
 
   syncs = LCEC_HAL_ALLOCATE(lcec_syncs_t);
-  
-  rtapi_set_msg_level(RTAPI_MSG_ALL);
 
   // Determine Operation Mode (modParam opmode) as this defines everything else
   LCEC_CONF_MODPARAM_VAL_T *pval;
@@ -278,7 +333,7 @@ static int lcec_deasda_init(int comp_id, lcec_slave_t *slave) {
   lcec_syncs_add_sync(syncs, EC_DIR_OUTPUT, EC_WD_DEFAULT);
   lcec_syncs_add_pdo_info(syncs, 0x1602);
   lcec_syncs_add_pdo_entry(syncs, 0x6040, 0, 16);  // Control word
-  lcec_syncs_add_pdo_entry(syncs, 0x6060, 0, 8);   // Mode of operation
+  lcec_syncs_add_pdo_entry(syncs, 0x6060, 0,  8);  // Operation mode
 
   // We could actually map both of these at the same time without
   // problems, but for compabilities's sake, I don't want to change it
@@ -298,6 +353,7 @@ static int lcec_deasda_init(int comp_id, lcec_slave_t *slave) {
   lcec_syncs_add_sync(syncs, EC_DIR_INPUT, EC_WD_DEFAULT);
   lcec_syncs_add_pdo_info(syncs, 0x1a02);
   lcec_syncs_add_pdo_entry(syncs, 0x6041, 0, 16);  // Status word
+  lcec_syncs_add_pdo_entry(syncs, 0x6061, 0,  8);  // Operation mode display
   lcec_syncs_add_pdo_entry(syncs, 0x606c, 0, 32);  // Current velocity
   lcec_syncs_add_pdo_entry(syncs, 0x6064, 0, 32);  // Current position
   lcec_syncs_add_pdo_entry(syncs, 0x2511, 0, 32);  // External encoder
@@ -336,10 +392,25 @@ static int lcec_deasda_init(int comp_id, lcec_slave_t *slave) {
     }
   }
 
-  // set to 0x6060 to requested mode (CSV, CSP)
+  // set to 0x6060 to requested operation mode (CSV, CSP)
   if (lcec_write_sdo8(slave, 0x6060, 0x00, operationmode) != 0) {
     rtapi_print_msg(
         RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo to op mode %d\n", master->name, slave->name, operationmode);
+    return -1;
+  }
+  
+  pval = lcec_modparam_get(slave, M_HOMINGMETHOD);
+  if (pval) {
+    homing_method = pval->u32;
+  }
+  
+  rtapi_print_msg(
+    RTAPI_MSG_DBG, LCEC_MSG_PFX " slave %s.%s setting to homing method %d\n", master->name, slave->name, homing_method);
+  
+  // set to 0x6098 to requested homing method
+  if (lcec_write_sdo8(slave, 0x6098, 0x00, homing_method) != 0) {
+    rtapi_print_msg(
+        RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo to homing method %d\n", master->name, slave->name, homing_method);
     return -1;
   }
 
@@ -388,6 +459,7 @@ static int lcec_deasda_init(int comp_id, lcec_slave_t *slave) {
     lcec_pdo_init(slave, 0x6077, 0x00, &hal_data->torque_pdo_os, NULL);
     lcec_pdo_init(slave, 0x60FD, 0x00, &hal_data->divalue_pdo_os, NULL);
     lcec_pdo_init(slave, 0x6060, 0x00, &hal_data->operation_mode_pdo_os, NULL);
+    lcec_pdo_init(slave, 0x6061, 0x00, &hal_data->operation_mode_display_pdo_os, NULL);
 
     // export pins common
     if ((err = lcec_pin_newf_list(hal_data, slave_pins, LCEC_MODULE_NAME, master->name, slave->name)) != 0) return err;
@@ -425,7 +497,6 @@ static int lcec_deasda_init(int comp_id, lcec_slave_t *slave) {
   // TODO: Add additional registers here if avialalbe: e.g. DIDO based on servo type FLAG_SERVO_X2/FLAG_SERVO_X3
 
   hal_data->last_switch_on = 0;
-  hal_data->last_req_homing = 0;
   hal_data->internal_fault = 0;
 
   hal_data->fault_reset_retry = 0;
@@ -528,6 +599,9 @@ static void lcec_deasda_read(lcec_slave_t *slave, long period) {
 
   // read current
   *(hal_data->torque) = (double)EC_READ_S16(&pd[hal_data->torque_pdo_os]) * 0.1;
+  
+  // read current
+  *(hal_data->operation_mode_display) = EC_READ_U8(&pd[hal_data->operation_mode_display_pdo_os]);
 
   // read DI status word
   status_di = EC_READ_U32(&pd[hal_data->divalue_pdo_os]);
@@ -604,7 +678,6 @@ static void lcec_deasda_write_csp(lcec_slave_t *slave, long period) {
   uint16_t control;
   int32_t pos_puu;
   int switch_on_edge;
-  int req_homing_edge;
 
   // do digital outputs
   if (hal_data->dout) lcec_dout_write_all(slave, hal_data->dout);
@@ -623,24 +696,14 @@ static void lcec_deasda_write_csp(lcec_slave_t *slave, long period) {
   // check for change in scale value
   lcec_deasda_check_scales(hal_data);
 
-
-  // check for req homing edge
-  req_homing_edge = *(hal_data->req_homing) && !hal_data->last_req_homing;
-  hal_data->last_req_homing = *(hal_data->req_homing);
-  if (req_homing_edge) {
-    // set to 0x6060 to requested mode (HOM)
-    EC_WRITE_U8(&pd[hal_data->operation_mode_pdo_os], DEASDA_OPMODE_HOM);
-    rtapi_print_msg(RTAPI_MSG_DBG, LCEC_MSG_PFX "  - started homing for %s \n", slave->name);
-  }
-
   // write dev ctrl
   control = 0;
   if (*(hal_data->enable_volt)) control |= (1 << 1);
   if (!*(hal_data->quick_stop)) control |= (1 << 2);
-  if (req_homing_edge) control |= (1 << 5);
   if (*(hal_data->fault_reset)) control |= (1 << 7);
+  control |= (1 << 4);
   if (*(hal_data->halt)) control |= (1 << 8);
-  
+
   if (hal_data->fault_reset_retry > 0) {
     if (hal_data->fault_reset_state) control |= (1 << 7);
   } else {
@@ -648,6 +711,14 @@ static void lcec_deasda_write_csp(lcec_slave_t *slave, long period) {
     if (*(hal_data->enable) && *(hal_data->switched_on)) control |= (1 << 3);
   }
   EC_WRITE_U16(&pd[hal_data->control_pdo_os], control);
+  
+  if (*(hal_data->is_homing)) {
+    *(hal_data->operation_mode) = DEASDA_OPMODE_HOM;
+  }
+  else {
+    *(hal_data->operation_mode) = DEASDA_OPMODE_CSP;
+  }
+  EC_WRITE_U8(&pd[hal_data->operation_mode_pdo_os], *(hal_data->operation_mode));
 
   // ASDA Drives expect target Position in PUU (Pulse per User Unit)
   // See https://www.deltaww.com/en-US/FAQ/228
