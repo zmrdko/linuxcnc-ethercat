@@ -13,7 +13,7 @@ test:
 	@$(MAKE) -C src test
 
 install: configure
-	@$(MAKE) -C src install
+	@$(MAKE) -C src install-src
 	@$(MAKE) -C examples install-examples
 
 configure: config.mk

@@ -76,7 +76,7 @@ liblcecdevices.a: $(device-objs)
 #else
 
 # This throws a warning about ignoring the old recipe for the target.
-install: install-user install-realtime
+install-src: install-user install-realtime
 	true  # override 'install' from $(MODINC)
 
 realtime: lcec.so
