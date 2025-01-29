@@ -94,12 +94,6 @@ static int lcec_deasda_init(int comp_id, lcec_slave_t *slave);
 static const lcec_modparam_desc_t lcec_deasda_modparams[] = {
   {"opmode", M_OPERATIONMODE, MODPARAM_TYPE_STRING, "CSP", "Operation mode, CSV or CSP"},
   {"enableDigitalOutput", M_DIGITALOUT, MODPARAM_TYPE_BIT, "true", "Enable digital output ports"},
-    {NULL},
-};
-
-static const lcec_modparam_desc_t lcec_deasda_modparams_b3[] = {
-  {"opmode", M_OPERATIONMODE, MODPARAM_TYPE_STRING, "CSP", "Operation mode, CSV or CSP"},
-  {"enableDigitalOutput", M_DIGITALOUT, MODPARAM_TYPE_BIT, "true", "Enable digital output ports"},
   {"homingMethod", M_HOMINGMETHOD, MODPARAM_TYPE_STRING, "33", "Homing method"},
     {NULL},
 };
@@ -129,9 +123,10 @@ static const drive_homingmethods_t drive_homingmethods[] = {
 // Note that DeASDA refers to A2-E series of drives and is deliberatly not refering to A2 in its name to ensure compatability with legace
 // configurations.
 static lcec_typelist_t types[] = {
-    {"DeASDA", LCEC_DELTA_VID, 0x10305070, 0, NULL, lcec_deasda_init, lcec_deasda_modparams, FLAG_LOWRES_ENC | FLAG_DOUT},
+    {"DeASDA2", LCEC_DELTA_VID, 0x10305070, 0, NULL, lcec_deasda_init, lcec_deasda_modparams, FLAG_LOWRES_ENC | FLAG_DOUT},
     {"DeASDA3", LCEC_DELTA_VID, 0x00006010, 0, NULL, lcec_deasda_init, lcec_deasda_modparams, FLAG_HIGHRES_ENC | FLAG_DOUT},
-    {"DeASDB3", LCEC_DELTA_VID, 0x00006080, 0, NULL, lcec_deasda_init, lcec_deasda_modparams_b3, FLAG_HIGHRES_ENC | FLAG_DOUT},
+    {"DeASDB3", LCEC_DELTA_VID, 0x00006080, 0, NULL, lcec_deasda_init, lcec_deasda_modparams, FLAG_HIGHRES_ENC | FLAG_DOUT},
+    {"DeASDE3", LCEC_DELTA_VID, 0x10306081, 0, NULL, lcec_deasda_init, lcec_deasda_modparams, FLAG_HIGHRES_ENC | FLAG_DOUT},
     {NULL},
 };
 
@@ -152,8 +147,11 @@ typedef struct {
   hal_bit_t *warning;
   hal_bit_t *remote;
   hal_bit_t *at_speed;
-  hal_bit_t *limit_active;
-  hal_bit_t *zero_speed;
+  hal_bit_t *homing_complete;
+  hal_bit_t *homing_error;
+  hal_bit_t *pos_limit_active;
+  hal_bit_t *neg_limit_active;
+  hal_bit_t *following_error;
   hal_bit_t *switch_on;
   hal_bit_t *enable_volt;
   hal_bit_t *quick_stop;
@@ -226,8 +224,11 @@ static const lcec_pindesc_t slave_pins[] = {
     {HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, warning), "%s.%s.%s.srv-warning"},
     {HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, remote), "%s.%s.%s.srv-remote"},
     {HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, at_speed), "%s.%s.%s.srv-at-speed"},
-    {HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, limit_active), "%s.%s.%s.srv-limit-active"},
-    {HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, zero_speed), "%s.%s.%s.srv-zero-speed"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, homing_complete), "%s.%s.%s.srv-homing-complete"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, homing_error), "%s.%s.%s.srv-homing-error"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, following_error), "%s.%s.%s.srv-following-error"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, pos_limit_active), "%s.%s.%s.srv-pos-limit-active"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, neg_limit_active), "%s.%s.%s.srv-neg-limit-active"},
     {HAL_BIT, HAL_IN, offsetof(lcec_deasda_data_t, switch_on), "%s.%s.%s.srv-switch-on"},
     {HAL_BIT, HAL_IN, offsetof(lcec_deasda_data_t, enable_volt), "%s.%s.%s.srv-enable-volt"},
     {HAL_BIT, HAL_IN, offsetof(lcec_deasda_data_t, quick_stop), "%s.%s.%s.srv-quick-stop"},
@@ -539,14 +540,19 @@ static void lcec_deasda_read(lcec_slave_t *slave, long period) {
     *(hal_data->on_disabled) = 0;
     *(hal_data->warning) = 0;
     *(hal_data->remote) = 0;
-    *(hal_data->at_speed) = 0;
-    *(hal_data->limit_active) = 0;
-    *(hal_data->zero_speed) = 0;
+    *(hal_data->homing_complete) = 0;
+    *(hal_data->homing_error) = 0;
+    *(hal_data->following_error) = 0;
+    *(hal_data->pos_limit_active) = 0;
+    *(hal_data->neg_limit_active) = 0;
+    *(hal_data->following_error) = 0;
     return;
   }
 
   // check for change in scale value
   lcec_deasda_check_scales(hal_data);
+
+  *(hal_data->operation_mode_display) = EC_READ_U8(&pd[hal_data->operation_mode_display_pdo_os]);
 
   // read status word
   status = EC_READ_U16(&pd[hal_data->status_pdo_os]);
@@ -560,8 +566,14 @@ static void lcec_deasda_read(lcec_slave_t *slave, long period) {
   *(hal_data->warning) = (status >> 7) & 0x01;
   *(hal_data->remote) = (status >> 9) & 0x01;
   *(hal_data->at_speed) = (status >> 10) & 0x01;
-  *(hal_data->limit_active) = (status >> 11) & 0x01;
-  *(hal_data->zero_speed) = (status >> 12) & 0x01;
+  if (*(hal_data->operation_mode_display) == DEASDA_OPMODE_CSP) {
+  *(hal_data->following_error) = (status >> 13) & 0x01;
+  } else if (*(hal_data->operation_mode_display) == DEASDA_OPMODE_HOM) {
+  *(hal_data->homing_complete) = (status >> 12) & 0x01;
+  *(hal_data->homing_error) = (status >> 13) & 0x01;
+  }
+  *(hal_data->pos_limit_active) = (status >> 14) & 0x01;
+  *(hal_data->neg_limit_active) = (status >> 15) & 0x01;
 
   // clear pending fault reset if no fault
   if (!hal_data->internal_fault) hal_data->fault_reset_retry = 0;
