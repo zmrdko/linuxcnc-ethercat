@@ -601,6 +601,8 @@ static void lcec_deasda_read(lcec_slave_t *slave, long period) {
   *(hal_data->vel_fb_rpm_abs) = fabs(rpm);
   *(hal_data->vel_fb) = rpm * DEASDA_RPM_DIV * hal_data->pos_scale;
 
+  if (*(hal_data->operation_mode_display) == DEASDA_OPMODE_CSP) {
+
   // update raw position counter
   pos_cnt = EC_READ_U32(&pd[hal_data->currpos_pdo_os]);
   class_enc_update(&hal_data->enc, hal_data->pprev, hal_data->pos_scale, pos_cnt, 0, 0);
@@ -609,10 +611,12 @@ static void lcec_deasda_read(lcec_slave_t *slave, long period) {
   pos_cnt = EC_READ_U32(&pd[hal_data->extenc_pdo_os]);
   class_enc_update(&hal_data->extenc, 1, hal_data->extenc_scale, pos_cnt, 0, 0);
 
+  }
+
   // read current
   *(hal_data->torque) = (double)EC_READ_S16(&pd[hal_data->torque_pdo_os]) * 0.1;
   
-  // read current
+  // read operation mode
   *(hal_data->operation_mode_display) = EC_READ_U8(&pd[hal_data->operation_mode_display_pdo_os]);
 
   // read DI status word
@@ -728,6 +732,7 @@ static void lcec_deasda_write_csp(lcec_slave_t *slave, long period) {
     *(hal_data->operation_mode) = DEASDA_OPMODE_HOM;
   }
   else {
+    class_enc_update(&hal_data->enc, hal_data->pprev, hal_data->pos_scale, 0, 0, 0);
     *(hal_data->operation_mode) = DEASDA_OPMODE_CSP;
   }
   EC_WRITE_U8(&pd[hal_data->operation_mode_pdo_os], *(hal_data->operation_mode));
