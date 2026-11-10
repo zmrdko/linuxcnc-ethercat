@@ -39,7 +39,8 @@ To ensure that a change in operational mode does not occur during the linuxcnc r
     </slave>
 ```
 
-There is 1 `<modParam>` setting:
+There is 1 `<modParam>` setting that applies to all drives (the B3 has more for
+homing, see [Homing](#homing-asda-b3-only-csp-mode)):
 
 - `opmode`: controls the operational mode based on Object 6060h: Modes of operation.
   Supported modes are:
@@ -91,15 +92,139 @@ Another example:
 lcec.0.A3.extenc-scale 3200
 ```
 
-### Setting Pulses per Rev with Egear 
+### Setting Pulses per Rev with E-Gear
 
-TODO:
-```
-ASDA series drive follow the concept of using egear to translate between encoder pulses and external input. This setting relates the encoder's pprev with the pitch of the ballscrew and additional transmission factors of belt drives if these are in place.
+ASDA drives use an electronic gear (E-Gear) to translate between the
+position unit used on the bus, the PUU ("pulse per user unit"), and the
+drive's internal 24-bit resolution of 16,777,216 pulses per motor revolution,
+whatever the physical encoder resolution is.  The ratio is
 
-For a ball screw pitch of p = 5mm, a gearing ratio of 1:1 the calculcation would be as follows:
 ```
-TODO/
+internal pulses = PUU * N / M          (N = numerator, M = denominator)
+PUU per motor revolution = 16,777,216 * M / N
+```
+
+On the drive, N and M are parameters `P1.044` (N) and `P1.045` (M).  Over
+EtherCAT they are also available as object `0x6093` (position factor):
+sub-index 1 is N, sub-index 2 is M.
+
+**What the driver assumes.**  The driver sends and reads positions in PUU
+and converts them with `srv-pulses-per-rev` (pprev) and `pos-scale`:
+
+```
+target PUU      = srv-pos-cmd * srv-pulses-per-rev / pos-scale
+enc-pos [units] = PUU read from the drive / srv-pulses-per-rev * pos-scale
+```
+
+`pos-scale` is the distance (in your machine units) travelled per motor
+revolution.  So `srv-pulses-per-rev` must always equal the number of PUU per
+motor revolution that the drive is really using.  With the E-Gear at 1:1
+(N = M), one PUU is one internal pulse, so the number of PUU per revolution is
+16,777,216, which is the driver's default for the A3 and B3.  The
+B3's EtherCAT defaults for `0x6093` are N = 1 and M = 1, so the defaults
+work without any E-Gear setting.
+
+**When you need the E-Gear.**  Leave it at 1:1 if you are happy to work with
+`pos-scale` alone.  Set it if you want a round PUU, for example 1 PUU =
+1 um, so that the numbers seen on the bus and in the drive's own monitor are in
+real units, or if you must keep the PUU count per revolution small.
+
+**Example: 5 mm pitch ball screw, direct drive (gear ratio 1:1), 1 PUU = 1 um.**
+
+One motor revolution moves 5 mm = 5000 um, so we want 5000 PUU per revolution:
+
+```
+16,777,216 * M / N = 5000   ->   N = 16,777,216,  M = 5000
+```
+
+Set `P1.044 = 16777216` and `P1.045 = 5000` (or `0x6093:01 = 16777216`,
+`0x6093:02 = 5000`).  Then tell the driver:
+
+```
+lcec.0.B3.srv-pulses-per-rev 5000
+lcec.0.B3.pos-scale 5
+```
+
+Check: a command of 1 mm gives `1 * 5000 / 5 = 1000` PUU, which is 1000 um.
+
+Without the E-Gear (1:1) the same axis uses `srv-pulses-per-rev 16777216` and
+`pos-scale 5`; 1 mm is then 3,355,443 PUU (about 0.3 um per PUU).  Both give the
+same motion; only the PUU resolution differs.
+
+**Belts, gearboxes.**  Treat any transmission as part of `pos-scale`.  Divide
+the screw pitch (or the distance per revolution of the driven part) by the
+reduction between motor and load.  Example: 5 mm pitch with a 2:1 belt
+reduction (the motor turns twice per screw revolution) moves 2.5 mm per motor
+revolution, so `pos-scale = 2.5`.  If you also want 1 PUU = 1 um you then
+need 2500 PUU per revolution (`N = 16,777,216`, `M = 2500`) and
+`srv-pulses-per-rev 2500`.
+
+**E-Gear modParams (B3).**  The B3 driver can set the E-Gear for you at every
+start:
+
+| modParam | OD / parameter | Description |
+|---|---|---|
+| `eGearNumerator` | `0x6093:01` / `P1.044` | E-Gear numerator N. |
+| `eGearDenominator` | `0x6093:02` / `P1.045` | E-Gear denominator M. |
+
+```xml
+    <slave idx="1" type="DeASDB3" name="B3">
+      <modParam name="eGearNumerator" value="16777216"/>
+      <modParam name="eGearDenominator" value="5000"/>
+    </slave>
+```
+
+- Both must be given together and be non-zero, otherwise the driver refuses to start.
+- The driver also sets the default of `srv-pulses-per-rev` to
+  16,777,216 * M / N (rounded; 5000 in the example), so
+  you only need `pos-scale` in HAL.  You can still override
+  `srv-pulses-per-rev` with `setp`.
+- Without these modParams the driver does not touch `0x6093`, and the drive
+  uses its own value (1:1 after power-up in EtherCAT mode).
+- Over EtherCAT the drive resets the E-Gear to the protocol default (1:1)
+  after a power cycle, unless `P3.012.Z` is 1; since the modParams write it at every start,
+  that reset does not matter when you use them.  Changing the E-Gear still
+  loses the absolute position, so home again after changing it.
+- Alternatively, set `P1.044` / `P1.045` on the drive (keypad or ASDA-Soft), or
+  write `0x6093` yourself with `<sdoConfig>`.  In that case set
+  `srv-pulses-per-rev` in HAL as well.
+
+**Related modParams.**  `pos-scale` is set with a HAL parameter, and `srv-pulses-per-rev` follows the
+E-Gear modParams above unless you override it.  These modParams are affected by the
+E-Gear or needed for it to matter:
+
+| modParam | Relation to the E-Gear |
+|---|---|
+| `opmode` | `pos-scale` and `srv-pulses-per-rev` are used for the position target and feedback in `CSP`; `CSV` uses RPM and ignores the PUU scaling for the command. Use `CSP` for the example above. |
+| `homeOffset` (B3) | Written to `0x607C` in **PUU**, so it depends on the E-Gear. With 1 PUU = 1 um, `homeOffset="2000"` is 2 mm; at 1:1 E-Gear the same 2 mm of this screw is about 6,710,886 PUU. |
+| `homeSpeedFast`, `homeSpeedSlow`, `homeAccel` (B3) | Not affected: they are in 0.1 rpm and ms, independent of PUU. |
+| `enableHoming`, `homeMethod`, `homeFakeFeedback` (B3) | Not affected by the E-Gear. |
+
+Complete example for the 5 mm screw above (E-Gear N = 16,777,216, M = 5000,
+1 PUU = 1 um), using only modParams:
+
+```xml
+    <slave idx="1" type="DeASDB3" name="B3">
+      <modParam name="opmode" value="CSP"/>
+      <modParam name="enableHoming" value="true"/>
+      <modParam name="homeMethod" value="33"/>
+      <modParam name="homeOffset" value="0"/>
+      <modParam name="homeSpeedFast" value="1000"/>
+      <modParam name="homeSpeedSlow" value="200"/>
+      <modParam name="eGearNumerator" value="16777216"/>
+      <modParam name="eGearDenominator" value="5000"/>
+    </slave>
+```
+
+and in your HAL file (`srv-pulses-per-rev` is already 5000 from the E-Gear):
+
+```
+setp lcec.0.B3.pos-scale 5
+```
+
+Do not change the E-Gear while the servo is enabled.  The values above come
+from the ASDA-B3 manual (section 6.2.5, parameters `P1.044` / `P1.045`, object
+`0x6093`); the same idea applies to the A2/A3, but check their manuals for the defaults.
 
 
 ## Exposed Pins Common
@@ -214,6 +339,78 @@ float IN     lcec.0.A3.srv-pos-cmd| Connect to position command from either join
 
 Note: 
 - x.x.x.srv-operation-mode is set to 8 by the driver 
+
+## Homing (ASDA-B3 only, CSP mode)
+
+The B3 can home itself using the CiA 402 homing mode (mode 6, see chapter
+12.3.4 of the ASDA-B3 EtherCAT manual).  This is **opt-in** and only works
+together with `opmode="CSP"`.  When enabled, the driver additionally maps
+objects 0x6060 (modes of operation) and 0x6061 (modes of operation display)
+into the PDOs so it can switch between CSP and homing mode at runtime.
+
+```xml
+    <slave idx="1" type="DeASDB3" name="x-axis">
+      <modParam name="opmode" value="CSP"/>
+      <modParam name="enableHoming" value="true"/>
+      <modParam name="homeMethod" value="33"/>
+      <modParam name="homeSpeedFast" value="1000"/>
+      <modParam name="homeSpeedSlow" value="200"/>
+    </slave>
+```
+
+| modParam | OD | Default | Description |
+|---|---|---|---|
+| `enableHoming` | - | `false` | Enable homing (B3, CSP only). |
+| `homeMethod` | 6098h | `35` | `1`-`14`, `17`-`35`, or `-1`..`-4` (hard stop). `15`/`16` are reserved. `35` = current position becomes the origin (no motion). |
+| `homeOffset` | 607Ch | `0` | Home offset in PUU. |
+| `homeSpeedFast` | 6099h:01 | `100` | Speed while searching for the switch, in 0.1 rpm (1-20000). |
+| `homeSpeedSlow` | 6099h:02 | `20` | Speed while searching for the Z pulse, in 0.1 rpm (1-5000). |
+| `homeAccel` | 609Ah | `100` | Time for 0 to 3000 rpm in ms. |
+| `homeFakeFeedback` | - | `true` | While `srv-home` is set, `enc-pos` reports `srv-pos-cmd` instead of the real position (see below). |
+
+The values are written to the drive in its own units, exactly as in the manual.
+The home switch and limit switches are wired to, and assigned in, the drive's own digital
+inputs (see the drive's `P2.010`-`P2.017` DI settings); the driver does not
+configure them.  The drive must be enabled (operation enabled) for homing.
+
+Additional pins:
+
+```
+bit   IO  lcec.0.B3.srv-home         Set to start homing; cleared by the driver when homing is complete.
+bit   OUT lcec.0.B3.srv-homed        Homing attained (statusword bits 10 and 12 in homing mode).
+bit   OUT lcec.0.B3.srv-homing       Homing is running.
+bit   OUT lcec.0.B3.srv-home-error   Homing error (statusword bit 13 in homing mode).
+```
+
+`srv-operation-mode` shows the mode the drive reports in 0x6061 (8 = CSP, 6 = homing).
+
+Sequence: when `srv-home` is set, the driver requests mode 6.  Once the
+drive confirms mode 6 and is operation enabled, it asserts controlword bit 4 (the
+drive starts on the rising edge).  When the drive reports homing attained, the
+driver clears `srv-home` and returns the drive to CSP.  While the drive is not in
+CSP, the position target follows the actual position so the axis does not jump
+when CSP resumes.  `srv-home` is also cleared on a drive fault or loss of the bus.
+On a homing error `srv-home-error` is set and `srv-home` stays set; clear it (or
+abort in LinuxCNC) to leave homing mode.
+
+**Following error during homing:** the drive moves by itself, so LinuxCNC would
+see feedback moving without a command.  With `homeFakeFeedback` (default), the
+position feedback pin `enc-pos` is set equal to `srv-pos-cmd` for as long as
+`srv-home` is set, so no following error appears.  The driver's raw encoder
+tracking (`enc-raw`, `enc-pos-enc`, `enc-pos-abs`) and the velocity pins still show
+the real values.  Real feedback returns in the cycle after the driver clears
+`srv-home`; that is the cycle in which LinuxCNC latches its home position
+from `joint.N.index-enable`, so the jump from the old command to the drive's new
+position is absorbed by the homing offset.  If you abort homing yourself (clearing
+`srv-home` before it completes), the real feedback returns at once and the
+joint is normally disabled by LinuxCNC anyway.  Set `homeFakeFeedback` to `false`
+to see the real position at all times.
+
+Connect `srv-home` to `joint.N.index-enable` and use `HOME_USE_INDEX = YES`
+with `HOME_SEQUENCE`, as with the generic CiA 402 driver; see the
+[CiA 402 documentation](cia402.md).
+
+Note: this has not been tested on real hardware yet.
 
 ## How to file a bug
 

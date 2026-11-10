@@ -28,9 +28,21 @@
 #define FLAG_LOWRES_ENC  1 << 0  // Device uses low res encoder as default
 #define FLAG_HIGHRES_ENC 1 << 1  // Device uses high res encoder as default x3 series
 #define FLAG_DOUT        1 << 2  // Device has digital outputs
+#define FLAG_HOMING      (1 << 3)  // Device supports drive-internal CiA 402 homing (B3)
 
 #define M_OPERATIONMODE 0
 #define M_DIGITALOUT 1
+#define M_ENABLE_HOMING 2
+#define M_HOME_METHOD 3
+#define M_HOME_OFFSET 4
+#define M_HOME_SPEED_FAST 5
+#define M_HOME_SPEED_SLOW 6
+#define M_HOME_ACCEL 7
+#define M_HOME_FAKE_FB 8
+#define M_EGEAR_NUM 9
+#define M_EGEAR_DEN 10
+
+#define DEASDA_EGEAR_PULSES_PER_REV 16777216ULL  // internal drive resolution (24 bit)
 
 #define DEASDA_PULSES_PER_REV_DEFLT_LOWRES  (1280000)   // this is the default value for A2 (default value)
 #define DEASDA_PULSES_PER_REV_DEFLT_HIGHRES (16777216)  // this is the default value for A3
@@ -43,8 +55,16 @@
 #define DEASDA_FAULT_AUTORESET_CYCLES  100
 #define DEASDA_FAULT_AUTORESET_RETRIES 3
 
+#define DEASDA_OPMODE_HM  6
 #define DEASDA_OPMODE_CSP 8
 #define DEASDA_OPMODE_CSV 9
+
+// Homing (ASDA-B3, CiA 402 homing mode, see B3 manual chapter 12.3.4).
+// Defaults match the drive defaults for objects 6098h/6099h/609Ah.
+#define DEASDA_HOME_METHOD_DEFLT     35   // 35 = current position is the origin (no motion)
+#define DEASDA_HOME_SPEED_FAST_DEFLT 100  // 6099h:01, unit 0.1 rpm
+#define DEASDA_HOME_SPEED_SLOW_DEFLT 20   // 6099h:02, unit 0.1 rpm
+#define DEASDA_HOME_ACCEL_DEFLT      100  // 609Ah, ms from 0 to 3000 rpm
 
 static int lcec_deasda_init(int comp_id, lcec_slave_t *slave);
 
@@ -56,6 +76,15 @@ static const lcec_modparam_desc_t lcec_deasda_modparams[] = {
 
 static const lcec_modparam_desc_t lcec_deasda_modparams_b3[] = {
   {"opmode", M_OPERATIONMODE, MODPARAM_TYPE_STRING, "CSP", "Operation mode, CSV or CSP"},
+  {"enableHoming", M_ENABLE_HOMING, MODPARAM_TYPE_BIT, "false", "Enable drive-internal CiA 402 homing (CSP mode only)"},
+  {"homeMethod", M_HOME_METHOD, MODPARAM_TYPE_S32, "35", "Homing method (OD 6098h): 1-35, or -1..-4 for hard stop"},
+  {"homeOffset", M_HOME_OFFSET, MODPARAM_TYPE_S32, "0", "Home offset in PUU (OD 607Ch)"},
+  {"homeSpeedFast", M_HOME_SPEED_FAST, MODPARAM_TYPE_U32, "100", "Speed searching for switch, 0.1 rpm (OD 6099h:01)"},
+  {"homeSpeedSlow", M_HOME_SPEED_SLOW, MODPARAM_TYPE_U32, "20", "Speed searching for Z pulse, 0.1 rpm (OD 6099h:02)"},
+  {"homeAccel", M_HOME_ACCEL, MODPARAM_TYPE_U32, "100", "Homing accel/decel time 0-3000 rpm in ms (OD 609Ah)"},
+  {"eGearNumerator", M_EGEAR_NUM, MODPARAM_TYPE_U32, "1", "E-Gear ratio numerator N (OD 6093h:01 / P1.044); set together with eGearDenominator"},
+  {"eGearDenominator", M_EGEAR_DEN, MODPARAM_TYPE_U32, "1", "E-Gear ratio denominator M (OD 6093h:02 / P1.045); PUU per rev = 16777216 * M / N"},
+  {"homeFakeFeedback", M_HOME_FAKE_FB, MODPARAM_TYPE_BIT, "true", "While srv-home is set, report enc-pos = srv-pos-cmd (avoids following error)"},
     {NULL},
 };
 
@@ -75,7 +104,7 @@ static const drive_operationmodes_t drive_operationmodes[] = {
 static lcec_typelist_t types[] = {
     {"DeASDA", LCEC_DELTA_VID, 0x10305070, 0, NULL, lcec_deasda_init, lcec_deasda_modparams, FLAG_LOWRES_ENC | FLAG_DOUT},
     {"DeASDA3", LCEC_DELTA_VID, 0x00006010, 0, NULL, lcec_deasda_init, lcec_deasda_modparams, FLAG_HIGHRES_ENC | FLAG_DOUT},
-    {"DeASDB3", LCEC_DELTA_VID, 0x00006080, 0, NULL, lcec_deasda_init, lcec_deasda_modparams_b3, FLAG_HIGHRES_ENC},
+    {"DeASDB3", LCEC_DELTA_VID, 0x00006080, 0, NULL, lcec_deasda_init, lcec_deasda_modparams_b3, FLAG_HIGHRES_ENC | FLAG_HOMING},
     {NULL},
 };
 
@@ -106,6 +135,12 @@ typedef struct {
   hal_bit_t *halt;
   hal_u32_t *operation_mode;
   hal_float_t *cmd_value;
+
+  // Homing pins, only exported when enableHoming is set (B3, CSP).
+  hal_bit_t *home;
+  hal_bit_t *homed;
+  hal_bit_t *homing;
+  hal_bit_t *home_error;
 
   lcec_param_float_t pos_scale;
   lcec_param_float_t extenc_scale;
@@ -139,6 +174,17 @@ typedef struct {
   unsigned int cmdvalue_pdo_os;
   unsigned int divalue_pdo_os;
   unsigned int torque_pdo_os;
+  unsigned int opmode_cmd_pdo_os;   // 0x6060, only mapped when homing is enabled
+  unsigned int opmode_disp_pdo_os;  // 0x6061, only mapped when homing is enabled
+
+  int homing_enabled;
+  int home_fake_fb;         // report enc-pos = command while srv-home is set
+  uint16_t last_status;    // last statusword (0x6041)
+  int32_t last_pos_raw;     // last position actual value (0x6064)
+  int8_t opmode_disp;       // last modes of operation display (0x6061)
+  int home_start_sent;      // controlword bit 4 is being asserted
+  int home_seen_unhomed;    // drive reported "not attained" after start (ignores stale bits)
+  int home_start_cycles;    // cycles since the start edge was first sent
 
   hal_bit_t last_switch_on;
   hal_bit_t internal_fault;
@@ -197,6 +243,14 @@ static const lcec_pindesc_t slave_pins_csv[] = {
 
 static const lcec_pindesc_t slave_pins_csp[] = {
     {HAL_FLOAT, HAL_IN, offsetof(lcec_deasda_data_t, cmd_value), "%s.%s.%s.srv-pos-cmd"},
+    {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
+};
+
+static const lcec_pindesc_t slave_pins_homing[] = {
+    {HAL_BIT, HAL_IO, offsetof(lcec_deasda_data_t, home), "%s.%s.%s.srv-home"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, homed), "%s.%s.%s.srv-homed"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, homing), "%s.%s.%s.srv-homing"},
+    {HAL_BIT, HAL_OUT, offsetof(lcec_deasda_data_t, home_error), "%s.%s.%s.srv-home-error"},
     {HAL_TYPE_UNSPECIFIED, HAL_DIR_UNSPECIFIED, -1, NULL},
 };
 
@@ -260,6 +314,18 @@ static int lcec_deasda_init(int comp_id, lcec_slave_t *slave) {
     enable_dout = pval->bit;
   }
 
+  // Homing is only available on the B3 (the only type that registers the homing modparams)
+  // and only together with CSP: the drive needs a position target to resume after homing.
+  int enable_homing = 0;
+  if (slave->flags & FLAG_HOMING) {
+    pval = lcec_modparam_get(slave, M_ENABLE_HOMING);
+    if (pval) enable_homing = pval->bit;
+  }
+  if (enable_homing && operationmode != DEASDA_OPMODE_CSP) {
+    rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "enableHoming requires opmode CSP for slave %s.%s !\n", master->name, slave->name);
+    return -1;
+  }
+
   // Set up PDO sync configuration
   lcec_syncs_init(slave, syncs);
   lcec_syncs_add_sync(syncs, EC_DIR_OUTPUT, EC_WD_DEFAULT);
@@ -279,6 +345,10 @@ static int lcec_deasda_init(int comp_id, lcec_slave_t *slave) {
     lcec_syncs_add_pdo_entry(syncs, 0x607a, 0, 32);  // Target Position
   }
 
+  if (enable_homing) {
+    lcec_syncs_add_pdo_entry(syncs, 0x6060, 0, 8);  // Modes of operation (switched to homing at runtime)
+  }
+
   // Only add digital outs on models that actually have the hardware.
   if (enable_dout) {
     lcec_syncs_add_pdo_entry(syncs, 0x60fe, 1, 32);  // Digital outputs
@@ -293,6 +363,9 @@ static int lcec_deasda_init(int comp_id, lcec_slave_t *slave) {
   lcec_syncs_add_pdo_entry(syncs, 0x2511, 0, 32);  // External encoder
   lcec_syncs_add_pdo_entry(syncs, 0x6077, 0, 16);  // Current torque
   lcec_syncs_add_pdo_entry(syncs, 0x60fd, 0, 32);  // Digital inputs
+  if (enable_homing) {
+    lcec_syncs_add_pdo_entry(syncs, 0x6061, 0, 8);  // Modes of operation display
+  }
   slave->sync_info = &syncs->syncs[0];
 
   // initialize callbacks
@@ -331,6 +404,65 @@ static int lcec_deasda_init(int comp_id, lcec_slave_t *slave) {
     rtapi_print_msg(
         RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure slave %s.%s sdo to op mode %d\n", master->name, slave->name, operationmode);
     return -1;
+  }
+
+  // homing configuration (OD 6098h, 6099h, 609Ah, 607Ch); only the values are
+  // written here, homing itself is started at runtime via srv-home.
+  if (enable_homing) {
+    int32_t home_method = DEASDA_HOME_METHOD_DEFLT;
+    int32_t home_offset = 0;
+    uint32_t home_fast = DEASDA_HOME_SPEED_FAST_DEFLT;
+    uint32_t home_slow = DEASDA_HOME_SPEED_SLOW_DEFLT;
+    uint32_t home_accel = DEASDA_HOME_ACCEL_DEFLT;
+
+    if ((pval = lcec_modparam_get(slave, M_HOME_METHOD)) != NULL) home_method = pval->s32;
+    if ((pval = lcec_modparam_get(slave, M_HOME_OFFSET)) != NULL) home_offset = pval->s32;
+    if ((pval = lcec_modparam_get(slave, M_HOME_SPEED_FAST)) != NULL) home_fast = pval->u32;
+    if ((pval = lcec_modparam_get(slave, M_HOME_SPEED_SLOW)) != NULL) home_slow = pval->u32;
+    if ((pval = lcec_modparam_get(slave, M_HOME_ACCEL)) != NULL) home_accel = pval->u32;
+
+    // B3 supports 1..35 and -1..-4 (hard stop); 15/16 are reserved.
+    if (home_method < -4 || home_method > 35 || home_method == 0 || home_method == 15 || home_method == 16) {
+      rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "invalid homeMethod %d for slave %s.%s (valid: 1-14, 17-35, -1..-4)\n", home_method,
+          master->name, slave->name);
+      return -1;
+    }
+
+    if (lcec_write_sdo8(slave, 0x6098, 0x00, (uint8_t)(int8_t)home_method) != 0 ||
+        lcec_write_sdo32(slave, 0x607c, 0x00, (uint32_t)home_offset) != 0 || lcec_write_sdo32(slave, 0x6099, 0x01, home_fast) != 0 ||
+        lcec_write_sdo32(slave, 0x6099, 0x02, home_slow) != 0 || lcec_write_sdo32(slave, 0x609a, 0x00, home_accel) != 0) {
+      rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure homing sdos for slave %s.%s\n", master->name, slave->name);
+      return -1;
+    }
+  }
+
+  // E-Gear (OD 6093h = P1.044 / P1.045).  Optional; without it the drive keeps its
+  // EtherCAT default of 1:1.  Both values must be given together.
+  uint64_t egear_pprev = 0;  // PUU per motor revolution implied by the E-Gear, 0 = not set
+  if (slave->flags & FLAG_HOMING) {
+    LCEC_CONF_MODPARAM_VAL_T *pnum = lcec_modparam_get(slave, M_EGEAR_NUM);
+    LCEC_CONF_MODPARAM_VAL_T *pden = lcec_modparam_get(slave, M_EGEAR_DEN);
+    if (pnum || pden) {
+      uint32_t egear_num, egear_den;
+      if (!pnum || !pden || pnum->u32 == 0 || pden->u32 == 0) {
+        rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "eGearNumerator and eGearDenominator must both be set and non-zero for slave %s.%s\n",
+            master->name, slave->name);
+        return -1;
+      }
+      egear_num = pnum->u32;
+      egear_den = pden->u32;
+      // PUU per revolution = 16777216 * M / N, rounded
+      egear_pprev = (DEASDA_EGEAR_PULSES_PER_REV * egear_den + egear_num / 2) / egear_num;
+      if (egear_pprev == 0 || egear_pprev > 0xffffffffULL) {
+        rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "E-Gear %u/%u gives an unusable PUU per revolution for slave %s.%s\n", egear_num,
+            egear_den, master->name, slave->name);
+        return -1;
+      }
+      if (lcec_write_sdo32(slave, 0x6093, 0x01, egear_num) != 0 || lcec_write_sdo32(slave, 0x6093, 0x02, egear_den) != 0) {
+        rtapi_print_msg(RTAPI_MSG_ERR, LCEC_MSG_PFX "fail to configure E-Gear sdo 6093h for slave %s.%s\n", master->name, slave->name);
+        return -1;
+      }
+    }
   }
 
   // set interpolation time period
@@ -382,7 +514,16 @@ static int lcec_deasda_init(int comp_id, lcec_slave_t *slave) {
     if ((err = lcec_pin_newf_list(hal_data, slave_pins, LCEC_MODULE_NAME, master->name, slave->name)) != 0) return err;
     // export pins specific
     if ((err = lcec_pin_newf_list(hal_data, slave_pins_csp, LCEC_MODULE_NAME, master->name, slave->name)) != 0) return err;
+
+    if (enable_homing) {
+      lcec_pdo_init(slave, 0x6060, 0x00, &hal_data->opmode_cmd_pdo_os, NULL);
+      lcec_pdo_init(slave, 0x6061, 0x00, &hal_data->opmode_disp_pdo_os, NULL);
+      if ((err = lcec_pin_newf_list(hal_data, slave_pins_homing, LCEC_MODULE_NAME, master->name, slave->name)) != 0) return err;
+    }
   }
+  hal_data->homing_enabled = enable_homing;
+  hal_data->home_fake_fb = 1;
+  if (enable_homing && (pval = lcec_modparam_get(slave, M_HOME_FAKE_FB)) != NULL) hal_data->home_fake_fb = pval->bit;
 
   LCEC_PIN_U32_SET(hal_data->operation_mode, operationmode);
   // export parameters
@@ -411,10 +552,24 @@ static int lcec_deasda_init(int comp_id, lcec_slave_t *slave) {
         RTAPI_MSG_DBG, LCEC_MSG_PFX "Setting pprev to High Res Encoder (16,777,216) for device %s.%s.\n", master->name, slave->name);
   }
 
+  // an E-Gear set via modParams defines the PUU per revolution; srv-pulses-per-rev can still be overridden in HAL
+  if (egear_pprev != 0) {
+    LCEC_PARAM_U32_SET(hal_data->pprev, (hal_u32_t)egear_pprev);
+    rtapi_print_msg(RTAPI_MSG_DBG, LCEC_MSG_PFX "Setting pprev to %llu from E-Gear for device %s.%s.\n", (unsigned long long)egear_pprev,
+        master->name, slave->name);
+  }
+
   // TODO: Add additional registers here if avialalbe: e.g. DIDO based on servo type FLAG_SERVO_X2/FLAG_SERVO_X3
 
   hal_data->last_switch_on = 0;
   hal_data->internal_fault = 0;
+
+  hal_data->last_status = 0;
+  hal_data->last_pos_raw = 0;
+  hal_data->opmode_disp = 0;
+  hal_data->home_start_sent = 0;
+  hal_data->home_seen_unhomed = 0;
+  hal_data->home_start_cycles = 0;
 
   hal_data->fault_reset_retry = 0;
   hal_data->fault_reset_state = 0;
@@ -466,6 +621,11 @@ static void lcec_deasda_read(lcec_slave_t *slave, long period) {
 
   // read status word
   status = EC_READ_U16(&pd[hal_data->status_pdo_os]);
+  hal_data->last_status = status;
+  if (hal_data->homing_enabled) {
+    hal_data->opmode_disp = (int8_t)EC_READ_U8(&pd[hal_data->opmode_disp_pdo_os]);
+    LCEC_PIN_U32_SET(hal_data->operation_mode, (hal_u32_t)(uint8_t)hal_data->opmode_disp);
+  }
   LCEC_PIN_BIT_SET(hal_data->ready, (status >> 0) & 0x01);
   LCEC_PIN_BIT_SET(hal_data->switched_on, (status >> 1) & 0x01);
   LCEC_PIN_BIT_SET(hal_data->oper_enabled, (status >> 2) & 0x01);
@@ -507,7 +667,17 @@ static void lcec_deasda_read(lcec_slave_t *slave, long period) {
 
   // update raw position counter
   pos_cnt = EC_READ_U32(&pd[hal_data->currpos_pdo_os]);
+  hal_data->last_pos_raw = (int32_t)pos_cnt;
   class_enc_update(&hal_data->enc, LCEC_PARAM_U32_GET(hal_data->pprev), LCEC_PARAM_FLOAT_GET(hal_data->pos_scale), pos_cnt, 0, 0);
+
+  // During drive-internal homing LinuxCNC does not command the motion the drive
+  // performs, so the real feedback would look like a following error.  Report the
+  // command as feedback instead.  The encoder tracking above keeps running on the
+  // real position; real feedback resumes in the cycle after srv-home is cleared,
+  // which is when LinuxCNC latches its home offset.
+  if (hal_data->homing_enabled && hal_data->home_fake_fb && LCEC_PIN_BIT_GET(hal_data->home)) {
+    LCEC_PIN_FLOAT_SET(hal_data->enc.pos, LCEC_PIN_FLOAT_GET(hal_data->cmd_value));
+  }
 
   // update external encoder counter
   pos_cnt = EC_READ_U32(&pd[hal_data->extenc_pdo_os]);
@@ -583,12 +753,75 @@ static void lcec_deasda_write_csv(lcec_slave_t *slave, long period) {
   EC_WRITE_S32(&pd[hal_data->cmdvalue_pdo_os], (int32_t)speed_raw);
 }
 
+// Drive-internal homing (B3, CiA 402 homing mode), called every cycle from the
+// CSP write function.  Sequence, as required by the B3 manual (12.3.4):
+//   1. srv-home set -> request modes of operation 6 (homing) via 0x6060
+//   2. wait until 0x6061 reports 6 and the drive is operation enabled
+//   3. assert controlword bit 4 (rising edge starts homing)
+//   4. statusword bit 12 (homing attained) + bit 10 (target reached) = done
+//      (bit 13 = homing error)
+//   5. clear srv-home, request mode 8 (CSP) again
+// While the drive is not in CSP the position target follows the actual position,
+// so the drive does not jump when CSP resumes.
+// Returns the controlword bits to OR in; *hold_position is set while the CSP
+// target must not be taken from srv-pos-cmd.
+#define DEASDA_HOME_ACCEPT_CYCLES 20  // accept "attained" this many cycles after start even if never seen cleared
+
+static uint16_t lcec_deasda_homing(lcec_slave_t *slave, lcec_deasda_data_t *hal_data, uint8_t *pd, int *hold_position) {
+  uint16_t status = hal_data->last_status;
+  uint16_t control = 0;
+  int home = LCEC_PIN_BIT_GET(hal_data->home);
+  int in_hm = (hal_data->opmode_disp == DEASDA_OPMODE_HM);
+  int attained = in_hm && ((status >> 10) & 1) && ((status >> 12) & 1);
+  int error = in_hm && ((status >> 13) & 1);
+
+  // never keep a homing request across a fault or a lost bus
+  if (home && (!slave->state.operational || hal_data->internal_fault)) {
+    home = 0;
+    LCEC_PIN_BIT_SET(hal_data->home, 0);
+  }
+
+  if (!home) {
+    hal_data->home_seen_unhomed = 0;
+    hal_data->home_start_cycles = 0;
+  }
+
+  // note whether the drive reported "not attained" after the start edge, so that
+  // stale status bits can not complete a request that has not run yet
+  if (home && hal_data->home_start_sent && !attained) hal_data->home_seen_unhomed = 1;
+
+  if (home && attained && !error && (hal_data->home_seen_unhomed || hal_data->home_start_cycles >= DEASDA_HOME_ACCEPT_CYCLES)) {
+    home = 0;
+    LCEC_PIN_BIT_SET(hal_data->home, 0);
+    hal_data->home_seen_unhomed = 0;
+    hal_data->home_start_cycles = 0;
+  }
+
+  // request the mode first; assert the start edge only once the drive confirms
+  // homing mode and is operation enabled
+  hal_data->home_start_sent = 0;
+  if (home && in_hm && ((status >> 2) & 1) && !error) {
+    control |= (1 << 4);
+    hal_data->home_start_sent = 1;
+    if (hal_data->home_start_cycles < 0x7fffffff) hal_data->home_start_cycles++;
+  }
+  EC_WRITE_S8(&pd[hal_data->opmode_cmd_pdo_os], home ? DEASDA_OPMODE_HM : DEASDA_OPMODE_CSP);
+
+  LCEC_PIN_BIT_SET(hal_data->homed, attained);
+  LCEC_PIN_BIT_SET(hal_data->homing, hal_data->home_start_sent && !attained && !error);
+  LCEC_PIN_BIT_SET(hal_data->home_error, error);
+
+  *hold_position = home || hal_data->opmode_disp != DEASDA_OPMODE_CSP;
+  return control;
+}
+
 static void lcec_deasda_write_csp(lcec_slave_t *slave, long period) {
   lcec_deasda_data_t *hal_data = (lcec_deasda_data_t *)slave->hal_data;
   uint8_t *pd = lcec_slave_pd(slave);
   uint16_t control;
   int32_t pos_puu;
   int switch_on_edge;
+  int hold_position = 0;
 
   // do digital outputs
   if (hal_data->dout) lcec_dout_write_all(slave, hal_data->dout);
@@ -620,12 +853,17 @@ static void lcec_deasda_write_csp(lcec_slave_t *slave, long period) {
     if (LCEC_PIN_BIT_GET(hal_data->switch_on)) control |= (1 << 0);
     if (LCEC_PIN_BIT_GET(hal_data->enable) && LCEC_PIN_BIT_GET(hal_data->switched_on)) control |= (1 << 3);
   }
+  if (hal_data->homing_enabled) control |= lcec_deasda_homing(slave, hal_data, pd, &hold_position);
   EC_WRITE_U16(&pd[hal_data->control_pdo_os], control);
 
   // ASDA Drives expect target Position in PUU (Pulse per User Unit)
   // See https://www.deltaww.com/en-US/FAQ/228
   // Calculation accordingly based on pprev and pos_scale (i.e. pitch of ball screw)
-  pos_puu = (int32_t)(LCEC_PIN_FLOAT_GET(hal_data->cmd_value) * LCEC_PARAM_U32_GET(hal_data->pprev) / LCEC_PARAM_FLOAT_GET(hal_data->pos_scale));
+  if (hold_position) {
+    pos_puu = hal_data->last_pos_raw;  // homing: keep the target on the actual position
+  } else {
+    pos_puu = (int32_t)(LCEC_PIN_FLOAT_GET(hal_data->cmd_value) * LCEC_PARAM_U32_GET(hal_data->pprev) / LCEC_PARAM_FLOAT_GET(hal_data->pos_scale));
+  }
   EC_WRITE_S32(&pd[hal_data->cmdvalue_pdo_os], pos_puu);
 }
 
