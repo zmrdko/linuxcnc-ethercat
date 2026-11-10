@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<masters>
+  <master idx="0" appTimePeriod="1000000" refClockSyncCycles="1000">
+    <slave idx="0" type="DeASDB3" name="B3">
+      <!-- CSP: LinuxCNC sends positions, the drive closes the position loop -->
+      <modParam name="opmode" value="CSP"/>
+
+      <!-- E-Gear: 5 mm pitch screw, 1:1, so that 1 PUU = 1 um.
+           PUU per revolution = 16777216 * M / N = 5000 -->
+      <modParam name="eGearNumerator" value="16777216"/>
+      <modParam name="eGearDenominator" value="5000"/>
+
+      <!-- Drive-internal homing.  Method 35 = current position becomes the
+           origin (no motion): use it for the first test. -->
+      <modParam name="enableHoming" value="true"/>
+      <modParam name="homeMethod" value="35"/>
+      <modParam name="homeOffset" value="0"/>      <!-- PUU (um with the E-Gear above) -->
+      <modParam name="homeSpeedFast" value="1000"/> <!-- 0.1 rpm -->
+      <modParam name="homeSpeedSlow" value="200"/>  <!-- 0.1 rpm -->
+      <modParam name="homeAccel" value="500"/>      <!-- ms for 0 - 3000 rpm -->
+      <modParam name="homeFakeFeedback" value="true"/>
+    </slave>
+  </master>
+</masters>

@@ -1,0 +1,77 @@
+# Delta ASDA-B3 on one joint: CSP position mode, drive-internal homing.
+#
+# Needs the slave from ethercat-conf.xml in this folder (type="DeASDB3",
+# name="B3", master 0).  Pin names are lcec.<master>.<slave name>.<pin>, so
+# adjust "lcec.0.B3" if you use another master or name.
+#
+# Needs these lines in the INI (see the end of this file for the details):
+#   [JOINT_0]  SCALE = 1   HOME_USE_INDEX = YES   HOME_SEARCH_VEL = 0   HOME_LATCH_VEL = <small>
+#
+# Not tested on hardware yet.  Try homeMethod 35 (no motion) first.
+
+###########################################################
+# Scaling
+###########################################################
+# srv-pulses-per-rev is set from the eGearNumerator/eGearDenominator modParams
+# in ethercat-conf.xml (5000 PUU per revolution there), so it is not set here.
+# pos-scale = machine units (mm) per motor revolution.  5 mm pitch ball screw,
+# direct drive.  Keep the joint SCALE in the INI at 1; scaling is done here.
+setp lcec.0.B3.pos-scale 5
+
+###########################################################
+# Drive state machine
+###########################################################
+# voltage is enabled as soon as LinuxCNC runs
+setp lcec.0.B3.srv-enable-volt 1
+# srv-quick-stop is a quick stop REQUEST: leave it at 0 (not requested).
+# Switch on and enable operation when the joint is enabled.  srv-switch-on is
+# also what triggers the fault auto reset.  The driver delays srv-enable until
+# the drive reports "switched on".
+net j0-enable  joint.0.amp-enable-out => lcec.0.B3.srv-switch-on
+net j0-enable                         => lcec.0.B3.srv-enable
+net j0-fault   lcec.0.B3.srv-fault    => joint.0.amp-fault-in
+
+###########################################################
+# Position loop (CSP): the drive closes the position loop
+###########################################################
+net j0-pos-cmd joint.0.motor-pos-cmd  => lcec.0.B3.srv-pos-cmd
+net j0-pos-fb  lcec.0.B3.enc-pos      => joint.0.motor-pos-fb
+
+###########################################################
+# Homing (drive-internal, needs enableHoming in ethercat-conf.xml)
+###########################################################
+# LinuxCNC "index" homing is used as the handshake: it sets index-enable,
+# the driver starts homing in the drive and clears the pin when the drive
+# reports homing attained.  While the pin is set, enc-pos reports srv-pos-cmd
+# (homeFakeFeedback), so LinuxCNC sees no following error.
+net j0-home    joint.0.index-enable   <=> lcec.0.B3.srv-home
+
+# status pins, for monitoring (halshow, halscope, or hook up to your own logic)
+# lcec.0.B3.srv-homing       homing in progress
+# lcec.0.B3.srv-homed        homing attained
+# lcec.0.B3.srv-home-error   homing error (drive statusword bit 13)
+# lcec.0.B3.srv-operation-mode   8 = CSP, 6 = homing
+
+# Limit and home inputs come from the drive's own digital inputs (P2.010 -
+# P2.017 and P2.036 in the drive).  These pins only show their state:
+# lcec.0.B3.din-pos-lim  lcec.0.B3.din-neg-lim  lcec.0.B3.din-home
+
+###########################################################
+# INI settings used by this file
+###########################################################
+# [JOINT_0]
+# TYPE = LINEAR
+# SCALE = 1                  ;scaling is done by lcec.0.B3.pos-scale
+# HOME_USE_INDEX = YES       ;use index-enable as the homing handshake
+# HOME_SEARCH_VEL = 0        ;no search move is commanded for a switch
+# HOME_LATCH_VEL = 1         ;small, non-zero: LinuxCNC waits for the index handshake.
+#                            ;Use a negative value to change the direction LinuxCNC assumes.
+# HOME_OFFSET = 0            ;position of the home point in machine units
+# HOME_SEQUENCE = 0
+# FERROR = 1.0               ;LinuxCNC's own following error limit, tune for your axis
+# MIN_FERROR = 0.1
+#
+# The real homing speed, direction and method are set by the homeMethod,
+# homeSpeedFast, homeSpeedSlow and homeAccel modParams in ethercat-conf.xml.
+# The drive moves by itself, so make sure the axis has room and a hand is on
+# the E-stop for the first runs.
