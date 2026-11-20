@@ -8,7 +8,7 @@ It currently supports 2 basic families of devices:
 - ASDA-A3-E series of drives (type "DeASDA3")
 - ASDA-B3-E Series of Drives (type "DeASDB3")
 
-Note that to support the legacy driver, DeASDA at CSV mode is the default setting of the driver.
+The default operation mode is CSP. Older versions of this driver defaulted to CSV: a configuration that relies on that (it uses `srv-vel-cmd` and has no `opmode` modParam) needs `<modParam name="opmode" value="CSV"/>` added to each drive.
 
 See the [source code](../src/devices/lcec_deasda.c) or [device
 documentation](devices/) for precise details on which hardware is
@@ -31,7 +31,7 @@ Example for A3 series:
     <slave idx="1" type="DeASDA3" name="A3"/>
 ```
 
-To ensure that a change in operational mode does not occur during the linuxcnc runtime, mode setting is done using modParam in the configuration file. This setting is optional. The default mode is CSV (Cyclic Synchronous Velocity).
+To ensure that a change in operational mode does not occur during the linuxcnc runtime, mode setting is done using modParam in the configuration file. This setting is optional. The default mode is CSP (Cyclic Synchronous Position).
 
 ```xml
     <slave idx="1" type="DeASDA" name="x-axis">
@@ -43,8 +43,8 @@ The following `<modParam>` settings are available:
 
 - `opmode`: controls the operational mode based on Object 6060h: Modes of operation.
   Supported modes are:
-  - `CSV`: Cyclic Synchronous Velocity mode (Value for 0x6060: 9) DEFAULT when modParam not used.
-  - `CSP`: Cyclic Synchronous Position mode (Value for 0x6060: 8)
+  - `CSP`: Cyclic Synchronous Position mode (Value for 0x6060: 8) DEFAULT when modParam not used.
+  - `CSV`: Cyclic Synchronous Velocity mode (Value for 0x6060: 9)
 - `enableDigitalOutput`: `true`/`false`, maps the digital outputs (A2 and A3 only, default `true`).
 - `enableHM`: `true`/`false`, enables drive-internal homing (default `false`). See [Homing Mode](#homing-mode).
 - `homeMethod`: homing method, written to Object 6098h at startup. See [Homing Mode](#homing-mode).
@@ -370,7 +370,7 @@ bit   IN lcec.0.A3.dout-d04
 ```
 
 
-## CSV Mode (Default)
+## CSV Mode
 
 When the CSV mode is chosen, the driver exposes the following additional pin:
 
@@ -379,11 +379,11 @@ float IN     lcec.0.A3.srv-vel-cmd| Connect to velocity command from either join
 ```
 
 Note: 
-- To support easy migration from legacy linuxcnc-ethercat, CSV mode has been made the default setting.
+- CSV mode has to be selected with `<modParam name="opmode" value="CSV"/>`.
 - x.x.x.srv-operation-mode is set to 9 by the driver 
 
 
-## CSP Mode
+## CSP Mode (Default)
 
 When the CSP mode is chosen, the driver exposes the following additional pin:
 

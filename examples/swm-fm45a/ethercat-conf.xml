@@ -8,12 +8,15 @@
     <slave idx="5" type="EL2008" name="D7"/>
     <slave idx="6" type="DeASDA" name="3A1">
       <dcConf assignActivate="300" sync0Cycle="*1" sync0Shift="-25000"/>
+      <modParam name="opmode" value="CSV"/>
     </slave>
     <slave idx="7" type="DeASDA" name="3A2">
       <dcConf assignActivate="300" sync0Cycle="*1" sync0Shift="-25000"/>
+      <modParam name="opmode" value="CSV"/>
     </slave>
     <slave idx="8" type="DeASDA" name="4A3">
       <dcConf assignActivate="300" sync0Cycle="*1" sync0Shift="-25000"/>
+      <modParam name="opmode" value="CSV"/>
     </slave>
   </master>
 </masters>

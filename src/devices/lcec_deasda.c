@@ -380,9 +380,9 @@ static int lcec_deasda_init(int comp_id, lcec_slave_t *slave) {
       return -1;
     }
   } else {
-    // This would be the case when modparam mode has not been set ==> back to CSV
-    rtapi_print_msg(RTAPI_MSG_DBG, LCEC_MSG_PFX "    - no opmode param for %s \n found. Defaulting to CSV.", slave->name);
-    operationmode = DEASDA_OPMODE_CSV;
+    // No opmode modparam: use CSP, which is also the default that the modparam description advertises.
+    rtapi_print_msg(RTAPI_MSG_DBG, LCEC_MSG_PFX "    - no opmode param found for %s. Defaulting to CSP.\n", slave->name);
+    operationmode = DEASDA_OPMODE_CSP;
   }
 
   pval = lcec_modparam_get(slave, M_DIGITALOUT);
