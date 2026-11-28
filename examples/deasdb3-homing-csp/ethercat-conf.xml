@@ -2,6 +2,9 @@
   Example: two Delta ASDA-B3-E drives in CSP mode, homed by the drives.
 
   appTimePeriod must equal [EMCMOT]SERVO_PERIOD in the INI file.
+  refClockSyncCycles="-1" makes the clock of the first drive the reference
+  that the servo thread follows.  With a positive value the clocks of the
+  drives did not stay in sync here (lcec.0.dc-sync-converged stayed off).
 
   eGearRatio  OD 6093h.  16777216/500000 gives 500000 PUU per motor revolution
               with the 24 bit encoder.  The driver sets srv-pulses-per-rev to
@@ -19,7 +22,7 @@
   The homing speeds and acceleration are set from the HAL file.
 -->
 <masters>
-  <master idx="0" appTimePeriod="1000000" refClockSyncCycles="1000">
+  <master idx="0" appTimePeriod="1000000" refClockSyncCycles="-1">
     <slave idx="0" type="DeASDB3" name="x">
       <dcConf assignActivate="300" sync0Cycle="*1" sync0Shift="0"/>
       <modParam name="opmode" value="CSP"/>

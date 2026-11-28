@@ -42,6 +42,11 @@ needed. Add one to the slave to use other values, for example a SYNC0 shift:
     </slave>
 ```
 
+Use `refClockSyncCycles="-1"` on the `<master>`, so that the servo thread follows the clock of the
+drives (see [Distributed Clocks](distributed-clocks.md)). With a positive value the clocks of two
+ASDA-B3-E drives drifted apart steadily on a test bench, at 1 ms as well as at 125 µs;
+`lcec.0.dc-sync-converged` and `lcec.0.dc-sync-diff` show whether the clocks are in sync.
+
 To ensure that a change in operational mode does not occur during the linuxcnc runtime, mode setting is done using modParam in the configuration file. This setting is optional. The default mode is CSV (Cyclic Synchronous Velocity).
 
 ```xml
