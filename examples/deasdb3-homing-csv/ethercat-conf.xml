@@ -2,9 +2,9 @@
   Example: two Delta ASDA-B3-E drives in CSV mode, homed by the drives.
 
   appTimePeriod must equal [EMCMOT]SERVO_PERIOD in the INI file.
-  refClockSyncCycles="-1" makes the clock of the first drive the reference
-  that the servo thread follows.  With a positive value the clocks of the
-  drives did not stay in sync here (lcec.0.dc-sync-converged stayed off).
+  refClockSyncCycles="-1" makes the servo thread follow the clock of the
+  drives.  Small positive values work as well; with 1000 the clocks of the
+  drives did not stay in sync (lcec.0.dc-sync-converged stayed off).
 
   eGearRatio  OD 6093h.  16777216/500000 gives 500000 PUU per motor revolution
               with the 24 bit encoder.  The driver sets srv-pulses-per-rev to
